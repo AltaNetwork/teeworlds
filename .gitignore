@@ -12,7 +12,7 @@ map_resave*
 map_version*
 packetgen*
 teeworlds*
-server*
+server
 teeworlds_srv*
 tileset_border*
 
