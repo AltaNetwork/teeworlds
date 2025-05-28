@@ -602,7 +602,6 @@ void CGameContext::OnClientEnter(int ClientID)
 {
 	//world.insert_entity(&players[client_id]);
 	std::string name = Server()->ClientName(ClientID);
-
 	//Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", Server()->ClientName(ClientID));
 	//std::cout << m_playerNames[ClientID] << "=?" << name << "\n";
 	// spectator stay spectator after map change
@@ -625,8 +624,8 @@ void CGameContext::OnClientEnter(int ClientID)
 	for(int i = 0; i < MAX_CLIENTS; i++)
 		if(m_apPlayers[i] && m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
 			Pl++;
-	if(Pl > 2 && m_pController->IsIFreeze() && g_Config.m_SvIFreezeJoinFrozen)
-		m_apPlayers[ClientID]->m_FreezeOnSpawn = true;
+	// if(Pl > 2 && m_pController->IsIFreeze() && g_Config.m_SvIFreezeJoinFrozen)
+	// 	m_apPlayers[ClientID]->m_FreezeOnSpawn = true;
 }
 
 void CGameContext::OnClientConnected(int ClientID)

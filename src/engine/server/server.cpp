@@ -19,7 +19,6 @@
 #include <engine/shared/demo.h>
 #include <engine/shared/econ.h>
 #include <engine/shared/filecollection.h>
-// #include <engine/shared/mapchecker.h>
 #include <engine/shared/netban.h>
 #include <engine/shared/network.h>
 #include <engine/shared/packer.h>
@@ -29,12 +28,6 @@
 #include "mastersrv.h"
 #include "register.h"
 #include "server.h"
-
-#if defined(CONF_FAMILY_WINDOWS)
-#define _WIN32_WINNT 0x0501
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
 
 static const char *StrLtrim(const char *pStr)
 {
@@ -1810,18 +1803,6 @@ static CServer *CreateServer() { return new CServer(); }
 
 int main(int argc, const char **argv) // ignore_convention
 {
-
-	#if defined(CONF_FAMILY_WINDOWS)
-	for (int i = 1; i < argc; i++) // ignore_convention
-	{
-		if (str_comp("-s", argv[i]) == 0 || str_comp("--silent", argv[i]) == 0) // ignore_convention
-		{
-			ShowWindow(GetConsoleWindow(), SW_HIDE);
-			break;
-		}
-	}
-	#endif
-
 	CServer *pServer = CreateServer();
 	IKernel *pKernel = IKernel::Create();
 
@@ -1863,26 +1844,16 @@ int main(int argc, const char **argv) // ignore_convention
 	pServer->RegisterCommands();
 
 	// execute autoexec file (try multiple files)
-	IOHANDLE File = pStorage->OpenFile("autoexec_server_twplus.cfg", IOFLAG_READ, IStorage::TYPE_ALL);
 	char aBuf[256];
-	if(File)
+	IOHANDLE File2 = pStorage->OpenFile("autoexec_server.cfg", IOFLAG_READ, IStorage::TYPE_ALL);
+	if(File2)
 	{
-		io_close(File);
-		pConsole->ExecuteFile("autoexec_server_twplus.cfg");
+		pConsole->ExecuteFile("autoexec_server.cfg");
+		io_close(File2);
 	} else {
-		str_format(aBuf, sizeof(aBuf), "failed to open 'autoexec_server_twplus.cfg', trying next config file...");
+		str_format(aBuf, sizeof(aBuf), "failed to open 'autoexec_server.cfg', trying next config file...");
 		pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
-
-		IOHANDLE File2 = pStorage->OpenFile("autoexec_server.cfg", IOFLAG_READ, IStorage::TYPE_ALL);
-		if(File2)
-		{
-			pConsole->ExecuteFile("autoexec_server.cfg");
-			io_close(File2);
-		} else {
-			str_format(aBuf, sizeof(aBuf), "failed to open 'autoexec_server.cfg', trying next config file...");
-			pConsole->Print(IConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
-			pConsole->ExecuteFile("autoexec.cfg");
-		}
+		pConsole->ExecuteFile("autoexec.cfg");
 	}
 
 	// parse the command line arguments

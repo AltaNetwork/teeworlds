@@ -18,7 +18,7 @@ public:
 	int m_AtStand;
 	int m_DropTick;
 	int m_GrabTick;
-	int m_inTele;
+	// int m_inTele;
 
 	CFlag(CGameWorld *pGameWorld, int Team);
 

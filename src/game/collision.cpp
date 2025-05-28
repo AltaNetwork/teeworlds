@@ -32,79 +32,6 @@ void CCollision::Init(class CLayers *pLayers)
 	m_Width = m_pLayers->GameLayer()->m_Width;
 	m_Height = m_pLayers->GameLayer()->m_Height;
 	m_pTiles = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->GameLayer()->m_Data));
-
-	for(int i = 0; i < m_Width*m_Height; i++)
-	{
-		int Index = m_pTiles[i].m_Index;
-		int x = i % m_Width;
-		int y = floor(i/m_Width);
-
-		if(Index > 128)
-			continue;
-
-		switch(Index)
-		{
-		case TILE_DEATH:
-			// m_pTiles[i].m_Index = COLFLAG_DEATH;
-			break;
-		case TILE_SOLID:
-			// m_pTiles[i].m_Index = COLFLAG_SOLID;
-			break;
-		case TILE_NOHOOK:
-			// m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
-			break;
-		case TILE_TELEONE:
-			if (m_telePositions[0].exists == false)
-			{
-				m_telePositions[0].x = x;
-				m_telePositions[0].y = y;
-				m_telePositions[0].exists = true;
-			}
-			// m_pTiles[i].m_Index = COLFLAG_TELEONE;
-			break;
-		case TILE_TELETWO:
-			if (m_telePositions[1].exists == false)
-			{
-				m_telePositions[1].x = x;
-				m_telePositions[1].y = y;
-				m_telePositions[1].exists = true;
-			}
-			// m_pTiles[i].m_Index = COLFLAG_TELETWO;
-			break;
-		case TILE_TELETHREE:
-			if (m_telePositions[2].exists == false)
-			{
-				m_telePositions[2].x = x;
-				m_telePositions[2].y = y;
-				m_telePositions[2].exists = true;
-			}
-			// m_pTiles[i].m_Index = COLFLAG_TELETHREE;
-			break;
-		case TILE_TELEFOUR:
-			if (m_telePositions[3].exists == false)
-			{
-				m_telePositions[3].x = x;
-				m_telePositions[3].y = y;
-				m_telePositions[3].exists = true;
-			}
-			// m_pTiles[i].m_Index = COLFLAG_TELEFOUR;
-			break;
-		case TILE_SLOWDEATH:
-			// m_pTiles[i].m_Index = COLFLAG_SLOWDEATH;
-			break;
-		case TILE_NOFLAG:
-			// m_pTiles[i].m_Index = COLFLAG_SOLID;
-			break;
-		case TILE_HEALTHZONE:
-			// m_pTiles[i].m_Index = COLFLAG_SOLID;
-			break;
-		case TILE_ARMORZONE:
-			// m_pTiles[i].m_Index = COLFLAG_SOLID;
-			break;
-		// default:
-		// 	m_pTiles[i].m_Index = 0;
-		}
-	}
 }
 
 int CCollision::GetTile(int x, int y)
@@ -123,21 +50,6 @@ int CCollision::GetTile(int x, int y)
 		break;
 	case TILE_NOHOOK:
 		return COLFLAG_SOLID|COLFLAG_NOHOOK;
-		break;
-	case TILE_TELEONE:
-		return COLFLAG_TELEONE;
-		break;
-	case TILE_TELETWO:
-		return COLFLAG_TELETWO;
-		break;
-	case TILE_TELETHREE:
-		return COLFLAG_TELETHREE;
-		break;
-	case TILE_TELEFOUR:
-		return COLFLAG_TELEFOUR;
-		break;
-	case TILE_SLOWDEATH:
-		return COLFLAG_SLOWDEATH;
 		break;
 	default:
 		return 0;

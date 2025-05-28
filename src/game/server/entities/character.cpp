@@ -52,7 +52,7 @@ CCharacter::CCharacter(CGameWorld *pWorld)
 	m_Armor = 0;
 	m_FreezeTicks = 0;
 	m_DeepFreeze = false;
-	m_inTele = false;
+	// m_inTele = false;
 	m_slowDeathTick = 0;
 	m_healthArmorZoneTick = 0;
 	m_has_plasmagun = false;
@@ -71,24 +71,24 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 
-	if (GameServer()->m_pController->IsInstagib())
-	{
-		if (GameServer()->m_pController->m_Flags & IGameController::GAMETYPE_GCTF)
-		{
-			m_ActiveWeapon = WEAPON_GRENADE;
-			m_LastWeapon = WEAPON_GRENADE;
-		}
-		else
-		{
-			m_ActiveWeapon = WEAPON_RIFLE;
-			m_LastWeapon = WEAPON_RIFLE;
-		}
-	}
-	else
-	{
+	// if (GameServer()->m_pController->IsInstagib())
+	// {
+	// 	if (GameServer()->m_pController->m_Flags & IGameController::GAMETYPE_GCTF)
+	// 	{
+	// 		m_ActiveWeapon = WEAPON_GRENADE;
+	// 		m_LastWeapon = WEAPON_GRENADE;
+	// 	}
+	// 	else
+	// 	{
+	// 		m_ActiveWeapon = WEAPON_RIFLE;
+	// 		m_LastWeapon = WEAPON_RIFLE;
+	// 	}
+	// }
+	// else
+	// {
 		m_ActiveWeapon = WEAPON_GUN;
 		m_LastWeapon = WEAPON_HAMMER;
-	}
+	// }
 
 	m_LastNoAmmoSound = -1;
 	m_QueuedWeapon = -1;
@@ -105,11 +105,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	if (g_Config.m_SvSpawnprotection)
 		m_SpawnProtectTick = Server()->Tick() + Server()->TickSpeed() * g_Config.m_SvSpawnprotection;
 
-	if (m_pPlayer->m_FreezeOnSpawn)
-	{
-		Freeze(g_Config.m_SvIFreezeAutomeltTime);
-		m_pPlayer->m_FreezeOnSpawn = false;
-	}
+	// if (m_pPlayer->m_FreezeOnSpawn)
+	// {
+	// 	Freeze(g_Config.m_SvIFreezeAutomeltTime);
+	// 	m_pPlayer->m_FreezeOnSpawn = false;
+	// }
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
@@ -387,20 +387,48 @@ void CCharacter::FireWeapon()
 			pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 								m_pPlayer->GetCID(), m_ActiveWeapon);
 			pTarget->Melt();
-			GameServer()->CreateLolText(pTarget, "+1");
+			GameServer()->CreateLolText(pTarget, "KURWA");
 			Hits++;
+		}
+		vec2 ProjStartPos = m_Pos;
+		ProjStartPos.x+=(int)m_Input.m_TargetX;
+		ProjStartPos.y+=(int)m_Input.m_TargetY;
+
+		// (int)m_Input.m_TargetX+m_Pos.x;
+		// (int)m_Input.m_TargetY+m_Pos.y;
+		// reset objects Hit
+		// CCharacter *apEnts[MAX_CLIENTS];
+		Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius * 0.5f, (CEntity **)apEnts,
+													 MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+
+		for (int i = 0; i < Num; ++i)
+		{
+			CCharacter *pTarget = apEnts[i];
+
+			if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+				continue;
+
+
+			// set his velocity to fast upward (for now)
+			// if (length(pTarget->m_Pos - ProjStartPos) > 0.0f)
+			// 	GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * m_ProximityRadius * 0.5f);
+			// else
+			// 	GameServer()->CreateHammerHit(ProjStartPos);
+
+			vec2 Dir;
+			if (length(pTarget->m_Pos - m_Pos) > 0.0f)
+				Dir = normalize(pTarget->m_Pos - m_Pos);
+			else
+				Dir = vec2(0.f, -1.f);
+			pTarget->Die(-1,0);
 		}
 
 		// if we Hit anything, we have to wait for the reload
 		if (Hits)
 			m_ReloadTimer = Server()->TickSpeed() / 3;
+		// (int)m_Input.m_TargetX+m_Pos.x;
+		// (int)m_Input.m_TargetY+m_Pos.y;
 
-		if (m_has_superhammer) {
-			GameServer()->CreateSound(m_Pos + Direction*WIDTH_TILE*4, SOUND_GRENADE_EXPLODE);
-			GameServer()->CreateExplosion(m_Pos + Direction*WIDTH_TILE*4, m_pPlayer->GetCID(), WEAPON_HAMMER, false);
-			// GameServer()->CreateExplosion(m_Pos + Direction*WIDTH_TILE*6, m_pPlayer->GetCID(), WEAPON_HAMMER, false);
-			// GameServer()->CreateExplosion(m_Pos + Direction*WIDTH_TILE*8, m_pPlayer->GetCID(), WEAPON_HAMMER, false);
-		}
 	}
 	break;
 
@@ -671,21 +699,21 @@ bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 	}
 
 	// hammer has infinite ammo, always
-	if (Weapon == WEAPON_HAMMER || Weapon == WEAPON_HAMMER_SUPER)
+	if (Weapon == WEAPON_HAMMER)
 		Ammo = -1;
 
 	// enable custom weapons
-	if (Weapon >= NUM_WEAPONS)
-	{
-		if (Weapon == WEAPON_PLASMAGUN) {
-			Weapon = WEAPON_RIFLE; m_aWeapons[Weapon].m_Ammo = 0; m_has_plasmagun = true;
-		} else if (Weapon == WEAPON_HAMMER_SUPER) {
-			Weapon = WEAPON_HAMMER; m_aWeapons[Weapon].m_Ammo = 0; m_has_superhammer = true;
-		} else if (Weapon == WEAPON_GUN_SUPER) {
-			Weapon = WEAPON_GUN; m_aWeapons[Weapon].m_Ammo = 0; m_has_supergun = true;
-		} else
-			Weapon = WEAPON_SHOTGUN;
-	}
+	// if (Weapon >= NUM_WEAPONS)
+	// {
+	// 	if (Weapon == WEAPON_PLASMAGUN) {
+	// 		Weapon = WEAPON_RIFLE; m_aWeapons[Weapon].m_Ammo = 0; m_has_plasmagun = true;
+	// 	} else if (Weapon == WEAPON_HAMMER_SUPER) {
+	// 		Weapon = WEAPON_HAMMER; m_aWeapons[Weapon].m_Ammo = 0; m_has_superhammer = true;
+	// 	} else if (Weapon == WEAPON_GUN_SUPER) {
+	// 		Weapon = WEAPON_GUN; m_aWeapons[Weapon].m_Ammo = 0; m_has_supergun = true;
+	// 	} else
+	// 		Weapon = WEAPON_SHOTGUN;
+	// }
 
 	if (m_aWeapons[Weapon].m_Ammo < g_pData->m_Weapons.m_aId[Weapon].m_Maxammo || !m_aWeapons[Weapon].m_Got || (g_Config.m_SvShotgunRepeater && m_aWeapons[Weapon].m_Ammo < g_Config.m_SvShotgunRepeaterAmmo))
 	{
@@ -698,14 +726,7 @@ bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 	return false;
 }
 
-void CCharacter::SetAmmo(int Weapon, int Ammo)
-{
-	if (Weapon == WEAPON_PLASMAGUN)
-		Weapon = WEAPON_RIFLE;
-	else if (Weapon == WEAPON_HAMMER_SUPER)
-		Weapon = WEAPON_HAMMER;
-	else if (Weapon == WEAPON_GUN_SUPER)
-		Weapon = WEAPON_GUN;
+void CCharacter::SetAmmo(int Weapon, int Ammo)  {
 	m_aWeapons[Weapon].m_Got = true;
 	m_aWeapons[Weapon].m_Ammo = Ammo;
 }
@@ -744,9 +765,6 @@ void CCharacter::SetEmoteFix(int Emote, int Tick)
 
 void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 {
-	if (m_FreezeTicks || m_DeepFreeze)
-		return;
-
 	// check for changes
 	if (mem_comp(&m_Input, pNewInput, sizeof(CNetObj_PlayerInput)) != 0)
 		m_LastAction = Server()->Tick();
@@ -755,15 +773,20 @@ void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
 	mem_copy(&m_Input, pNewInput, sizeof(m_Input));
 	m_NumInputs++;
 
+	if (m_FreezeTicks || m_DeepFreeze)
+	    ResetInput();
+
 	// it is not allowed to aim in the center
 	if (m_Input.m_TargetX == 0 && m_Input.m_TargetY == 0)
 		m_Input.m_TargetY = -1;
+
 }
 
 void CCharacter::OnDirectInput(CNetObj_PlayerInput *pNewInput)
 {
-	if (m_FreezeTicks || m_DeepFreeze)
-		return;
+	// if (m_FreezeTicks || m_DeepFreeze)
+	//     if(!m_pPlayer->m_Invincible)
+	// 		return;
 
 	mem_copy(&m_LatestPrevInput, &m_LatestInput, sizeof(m_LatestInput));
 	mem_copy(&m_LatestInput, pNewInput, sizeof(m_LatestInput));
@@ -1091,6 +1114,8 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)  {
     Dmg = 0; // DAMAGE DISABLED HERE!!!
+    if(Weapon==WEAPON_RIFLE) // UNFREEZE HERE
+        Melt();
     m_Core.m_Vel += Force;
 
 	// int From2 = From;   if (From < 0)   From2 = m_pPlayer->GetCID(); //
@@ -1250,13 +1275,22 @@ void CCharacter::Snap(int SnappingClient)
 		pDDNetCharacter->m_FreezeEnd = m_FreezeTicks == 0 ? 0 : Server()->Tick() + m_FreezeTicks;
 		pDDNetCharacter->m_FreezeStart = m_FreezeStart+1;//m_FreezeTicks / Server()->TickSpeed()) % 10 + 1;//300-m_FreezeTicks;//m_Core.m_FreezeStart;
 		pDDNetCharacter->m_Jumps = 2;
-		pDDNetCharacter->m_TeleCheckpoint = -1;
+		// pDDNetCharacter->m_TeleCheckpoint = -1;
 		pDDNetCharacter->m_StrongWeakId = 0;
 
 		pDDNetCharacter->m_JumpedTotal = m_Core.m_Jumped;
 		pDDNetCharacter->m_NinjaActivationTick = m_Ninja.m_ActivationTick;
 		pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 		pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
+
+		// TEST NIGGA
+		CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+		if(!pP)
+			return;
+		pP->m_X = (int)m_Input.m_TargetX+m_Pos.x;
+		pP->m_Y = (int)m_Input.m_TargetY+m_Pos.y;
+		pP->m_Type = 0;
+		pP->m_Subtype = 0;
 }
 
 void CCharacter::Freeze(int Secs)   {

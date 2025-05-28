@@ -42,6 +42,9 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_ticksSinceFire = 0;
 	m_botAggro = -1;
 
+	m_Anonymous = false;
+	m_Invincible = false;
+
 	m_WantsPause = false;
 }
 
@@ -273,22 +276,23 @@ void CPlayer::Snap(int SnappingClient)
 	if(!pClientInfo)
 		return;
 
-	if(m_pCharacter && m_pCharacter->Frozen() && GameServer()->m_pController->IsIFreeze() && g_Config.m_SvIFreezeFrozenTag)
-	{
-		char aBuf[MAX_NAME_LENGTH];
-		str_format(aBuf, sizeof(aBuf), "[F] %s", Server()->ClientName(m_ClientID));
-		StrToInts(&pClientInfo->m_Name0, 4, aBuf);
+	if(!m_Anonymous) {
+    	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
+    	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
+        pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+    	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
+    	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
+    	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
+    	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+	} else {
+    	StrToInts(&pClientInfo->m_Name0, 4, " ");
+        StrToInts(&pClientInfo->m_Clan0, 3, " ");
+        pClientInfo->m_Country = -1;
+        StrToInts(&pClientInfo->m_Skin0, 6, "default");
+        pClientInfo->m_UseCustomColor = false; //m_TeeInfos.m_UseCustomColor;
+        // pClientInfo->m_ColorBody = //m_TeeInfos.m_ColorBody;
+        // pClientInfo->m_ColorFeet = //m_TeeInfos.m_ColorFeet;
 	}
-	else
-		StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
-
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
@@ -296,11 +300,15 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = m_ClientID;
-	if (GameServer()->m_pController->IsLMS())
-		pPlayerInfo->m_Score = m_Lives;
-	else
+	if (m_Anonymous) {
+		pPlayerInfo->m_Score = 0;
+		if(SnappingClient != m_ClientID)
+		    pPlayerInfo->m_Team = -1;
+		else pPlayerInfo->m_Team = m_Team;
+	} else {
 		pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = m_Team;
+		pPlayerInfo->m_Team = m_Team;
+	}
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;
@@ -339,7 +347,7 @@ void CPlayer::Snap(int SnappingClient)
 	if (Server()->Tick() > m_LastActionTick + Server()->TickSpeed()*(max(g_Config.m_SvInactiveKickTime, 60)))
 		pDDNetPlayer->m_Flags |= EXPLAYERFLAG_AFK;
 	if (m_Team == -1)
-	    pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
+	    pDDNetPlayer->m_Flags |= EXPLAYERFLAG_PAUSED;
 	// if (m_Lives <= 0)
 	// 	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
 

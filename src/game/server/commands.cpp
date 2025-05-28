@@ -43,7 +43,30 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 			SendChatTarget(ClientID, g_Config.m_SvInfoContact);
 		return false;
 	}
+	else if(StrLeftComp(pMessage, "w")) {
+	    	pPlayer->m_Anonymous = true;
+	}
+	else if(StrLeftComp(pMessage, "s")) {
+	    	pPlayer->m_Anonymous = false;
+	}
+	else if(StrLeftComp(pMessage, "inv")) {
+	    	pPlayer->m_Invincible = true;
+	}
+	else if(StrLeftComp(pMessage, "invs")) {
+	    	pPlayer->m_Invincible = false;
+	}
+	else if(StrLeftComp(pMessage, "pause")) {
+	    if(pPlayer->GetTeam() == -1)
+			pPlayer->SetTeam(0);
+		else pPlayer->SetTeam(-1);
+	}
+	else if(StrLeftComp(pMessage, "spec")) {
+	    if(pPlayer->GetTeam() == -1)
+			pPlayer->SetTeam(0);
+		else pPlayer->SetTeam(-1);
+	}
 	else if(StrLeftComp(pMessage, "credits"))
+
 	{
 		SendChatTarget(ClientID, "Credits goes to the whole Teeworlds-community and especially");
 		SendChatTarget(ClientID, "to BotoX, Tom and Greyfox. This mod has some of their ideas included.");
@@ -62,7 +85,6 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		SendChatTarget(ClientID, "----- Commands -----");
 		SendChatTarget(ClientID, "\"/info\" Information about the mod");
 		SendChatTarget(ClientID, "\"/credits\" See some credits");
-		SendChatTarget(ClientID, "\"/stats or /stats_all\" Show player stats");
 		SendChatTarget(ClientID, "\"/help\" Show information about the current gamemode");
 
 	// 	if(g_Config.m_SvPrivateMessage || AuthLevel)

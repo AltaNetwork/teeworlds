@@ -11,14 +11,14 @@ class CCollision
 	int m_Width;
 	int m_Height;
 	class CLayers *m_pLayers;
-	
+
 	struct telePos
 	{
 		int x;
 		int y;
 		bool exists = false;
 	};
-	
+
 	telePos m_telePositions[4]; // positions of teleports
 
 	bool IsTileSolid(int x, int y);
@@ -31,10 +31,10 @@ public:
 		COLFLAG_SOLID=1,
 		COLFLAG_DEATH=2,
 		COLFLAG_NOHOOK=4,
-		COLFLAG_TELEONE=8,
-		COLFLAG_TELETWO=16,
-		COLFLAG_TELETHREE=32,
-		COLFLAG_TELEFOUR=64,
+		// COLFLAG_TELEONE=8,
+		// COLFLAG_TELETWO=16,
+		// COLFLAG_TELETHREE=32,
+		// COLFLAG_TELEFOUR=64,
 		COLFLAG_SLOWDEATH=128,
 	};
 

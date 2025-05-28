@@ -129,6 +129,8 @@ public:
 	int m_botDirection; // last moved direction
 	int m_ticksSinceFire; // ticks since last fire
 	int m_botAggro; // whether it is aggroed and on whom
+	bool m_Anonymous; // Anonymous player
+	bool m_Invincible;
 	bool m_WantsPause;
 private:
 	CCharacter *m_pCharacter;

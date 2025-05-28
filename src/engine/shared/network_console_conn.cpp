@@ -16,15 +16,9 @@ void CConsoleNetConnection::Reset()
 	m_BufferOffset = 0;
 
 	m_LineEndingDetected = false;
-	#if defined(CONF_FAMILY_WINDOWS)
-		m_aLineEnding[0] = '\r';
-		m_aLineEnding[1] = '\n';
-		m_aLineEnding[2] = 0;
-	#else
-		m_aLineEnding[0] = '\n';
-		m_aLineEnding[1] = 0;
-		m_aLineEnding[2] = 0;
-	#endif
+	m_aLineEnding[0] = '\n';
+	m_aLineEnding[1] = 0;
+	m_aLineEnding[2] = 0;
 }
 
 void CConsoleNetConnection::Init(NETSOCKET Socket, const NETADDR *pAddr)

@@ -32,8 +32,6 @@ void ClolPlasma::Tick()
 		return;
 	}
 	m_Life--;
-
-	CEntity::m_Pos = (m_pParent?m_pParent->m_Pos:vec2(0.0f,0.0f)) + m_StartOff + (m_LocalPos += m_Vel);
 }
 
 void ClolPlasma::Snap(int SnappingClient)
@@ -42,14 +40,21 @@ void ClolPlasma::Snap(int SnappingClient)
 		return;
 
 
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser*>
+	CNetObj_Projectile *pObj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
+    pObj->m_X = (int)m_Pos.x;
+	pObj->m_Y = (int)m_Pos.y;
+	pObj->m_VelX = (int)(0.0f);
+	pObj->m_VelY = (int)(0.0f);
+	pObj->m_StartTick = m_StartTick;
+	pObj->m_Type = 0;
+	/*CNetObj_Laser *pObj = static_cast<CNetObj_Laser*>
 	            (Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
 
 	pObj->m_X = (int)m_Pos.x;
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_FromX = (int)m_Pos.x;
 	pObj->m_FromY = (int)m_Pos.y;
-	pObj->m_StartTick = m_StartTick;
+	pObj->m_StartTick = m_StartTick;*/
 
 }
 
@@ -139,7 +144,7 @@ void CLoltext::Destroy(CGameWorld *pGameWorld, int TextID)
 			Destroy(pGameWorld, i);
 		return;
 	}
-	
+
 	if (TextID < 0 || TextID >= MAX_LOLTEXTS)
 		return;
 
@@ -148,7 +153,7 @@ void CLoltext::Destroy(CGameWorld *pGameWorld, int TextID)
 		s_aExpire[TextID] = 0; //explicitly unset incase map cycles because Tick counting starts over with 0 then.
 		return;
 	}
-	
+
 	for(int i = 0; i < MAX_PLASMA_PER_LOLTEXT; i++)
 		if (s_aapPlasma[TextID][i])
 			s_aapPlasma[TextID][i]->Reset();
@@ -241,7 +246,7 @@ bool CLoltext::s_aaaChars[256][5][3] = {
 	{ {1,0,1}, {1,0,1}, {1,1,1}, {1,0,1}, {1,0,1} }, // H
 	{ {1,0,0}, {1,0,0}, {1,0,0}, {1,0,0}, {1,0,0} }, // I
 	{ {0,0,1}, {0,0,1}, {1,0,1}, {1,0,1}, {1,1,1} }, // J
-	{ {1,0,0}, {1,0,0}, {1,0,1}, {1,1,0}, {1,0,1} }, // K
+	{ {1,0,1}, {1,0,1}, {1,1,0}, {1,0,1}, {1,0,1} }, // K
 	{ {1,0,0}, {1,0,0}, {1,0,0}, {1,0,0}, {1,1,1} }, // L
 	{ {1,0,1}, {1,1,1}, {1,1,1}, {1,0,1}, {1,0,1} }, // M
 	{ {0,0,0}, {0,0,0}, {1,1,1}, {1,0,1}, {1,0,1} }, // N
