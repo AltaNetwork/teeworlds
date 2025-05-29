@@ -69,8 +69,8 @@ public:
 	void Freeze(int);
 	int Frozen();
 	CCharacterCore* GetCore() {return &m_Core;}
-	void AddSpree();
-	void EndSpree(int Killer);
+	// void AddSpree();
+	// void EndSpree(int Killer);
 	void KillChar();
 	void Melt();
 	bool TakeWeapon(int Weapon);
@@ -156,7 +156,7 @@ private:
 	int m_FreezeTicks;
 	int m_MeltTicks;
 	bool m_DeepFreeze;
-	int m_SpawnProtectTick;
+	// int m_SpawnProtectTick;
 
 	// anticamper
 	// int Anticamper();
@@ -166,10 +166,10 @@ private:
 	int m_healthArmorZoneTick; // how many ticks are left before gaining a heart or shield in a health/armor-zone
 	int StrLeftComp(const char *pOrigin, const char *pSub);
 
-	bool m_has_plasmagun;
-	bool m_has_superhammer;
-	bool m_has_supergun;
-	int m_superhammer_charge_time;
+	// bool m_has_plasmagun;
+	// bool m_has_superhammer;
+	// bool m_has_supergun;
+	// int m_superhammer_charge_time;
 };
 
 #endif

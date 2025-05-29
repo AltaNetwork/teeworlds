@@ -3,3 +3,6 @@
  - full needed ddnet support (freeze & spec & and command stuff  & tele teams etc)
  - add zones and infc stuff
  - maybe database for blocking
+/// DID:
+ - 75% alike of ddnet freeze
+ - half working spec to debug

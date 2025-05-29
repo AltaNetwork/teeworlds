@@ -10,8 +10,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, bool remove_on_p
 {
 	m_Type = Type;
 	m_Subtype = SubType;
-	m_ProximityRadius = PickupPhysSize;
-	// m_ID2 = Server()->SnapNewID();
+	// m_ProximityRadius = PickupPhysSize;
 	m_Remove_on_pickup = remove_on_pickup;
 
 	Reset();
@@ -30,34 +29,26 @@ void CPickup::Tick()
 
 	// Check if a player intersected us
 	CCharacter *pChr = GameServer()->m_World.ClosestCharacter(m_Pos, 20.0f, 0);
-	if(pChr && pChr->IsAlive()) {
+	if(pChr && pChr->IsAlive() && m_SpawnTick == -1) {
 		// player picked us up, is someone was hooking us, let them go
 		int RespawnTime = -1;
 		int amount = 1; // amount of heart/shields
 		bool success = false; // to reset if its picked up
 		switch (m_Type) {
 			case POWERUP_HEALTH:
-				if(pChr->IncreaseHealth(amount))    {
-                    success = true;
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
-				}
+				if(pChr->IncreaseHealth(amount)) { success = true;  GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);  }
 				break;
-
 			case POWERUP_ARMOR:
-				if(pChr->IncreaseArmor(amount)) {
-				    success = true;
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
-				}
+				if(pChr->IncreaseArmor(amount)) {   success = true; GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);   }
 				break;
-
 			case POWERUP_WEAPON:
 				if(m_Subtype >= 0 && m_Subtype < NUM_WEAPONS+NUM_WEAPONS_EXTRA) {
 					if(pChr->GiveWeapon(m_Subtype, 10)) {
 	                    success = true;
 						if(m_Subtype == WEAPON_GRENADE)   GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE);
 						else if(m_Subtype == WEAPON_SHOTGUN || m_Subtype == WEAPON_RIFLE)   GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN);
-						if(pChr->GetPlayer())
-							GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);
+						// if(pChr->GetPlayer())
+							// GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);
 				}   }
 				break;
 			case POWERUP_NINJA: {
@@ -71,7 +62,7 @@ void CPickup::Tick()
 		};
 		if(success) { RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime; } // only remove itself if player can recieve pickup
 		if(RespawnTime >= 0) {   m_SpawnTick = Server()->Tick() + Server()->TickSpeed() * RespawnTime; // respawn it
-    		if (m_Remove_on_pickup) {   GameWorld()->DestroyEntity(this);   }   } // if its to be removed ( used in add pickup cmd )
+    		if (m_Remove_on_pickup) {   GameWorld()->DestroyEntity(this);   }   } // if its to be removed ( used in add pickup cmd ) also dont remove this is part of IF
 	}
 }
 
@@ -83,7 +74,7 @@ void CPickup::TickPaused()  {
 void CPickup::Snap(int SnappingClient)
 {
 	if(m_SpawnTick != -1 || NetworkClipped(SnappingClient))
-	    return;
+	    return; // Do not show if its not respawned yet
 	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 	if(!pP)
 		return;
