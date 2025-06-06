@@ -62,6 +62,9 @@ void CProjectile::Tick()    {
 	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 	m_LifeSpan--;
 
+	if(!GameServer()->Tuning()->m_PlayerHit && Collide == 0) // 0 means it hit player
+	    return;
+
 	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if (Collide && m_Weapon == WEAPON_GRENADE && g_Config.m_SvBouncyGrenade) {

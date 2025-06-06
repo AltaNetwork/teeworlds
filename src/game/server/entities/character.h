@@ -83,6 +83,7 @@ public:
 	bool m_SentCampMsg;
 	int m_CampTick;
 	vec2 m_CampPos;
+	int m_BombTick;
 
 private:
 	// player controlling this character

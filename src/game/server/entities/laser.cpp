@@ -10,16 +10,18 @@
 // # define M_PI		3.14159265358979323846	/* pi */
 // #endif
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int clockwise)
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int clockwise, int Type)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
+	m_Type = Type;
 	m_Owner = Owner;
 	m_Energy = StartEnergy;
 	m_Dir = Direction;
 	m_Bounces = 0;
 	m_EvalTick = 0;
 	m_Clockwise = clockwise;
+	m_StartTick = Server()->Tick();
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
@@ -28,15 +30,43 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);
-	if(!pHit)
+	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At);//, pOwnerChar);
+	if(m_Bounces == 0)
+	    pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);// else
+	//     *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At);
+	if(!pHit || !GameServer()->Tuning()->m_PlayerHit)
 		return false;
 
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
 	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE);
+	pHit->Melt();
+	/////////////////////////////////////////////////////////////////////////////////////// UGH TO FINISH LATER...
+		//if(m_Type == WEAPON_SHOTGUN)    {
+			float Strength = 10;//Tuning()->m_ShotgunStrength;
+
+			const vec2 &HitPos = pHit->GetCore()->m_Pos;
+			// if(!g_Config.m_SvOldLaser)
+			// {
+				// if(m_PrevPos != HitPos)
+				// {
+				    vec2 newvel = vec2(normalize(pOwnerChar->GetCore()->m_Pos - HitPos) * Strength);
+					//pHit->TakeDamage(vec2(100.f, 100.f), 0, m_Owner, WEAPON_RIFLE);
+					pHit->GetCore()->m_Vel += newvel;
+			// 	if(pOwnerChar->Core()->m_Pos != HitPos)
+			// 	{
+			// 		pHit->AddVelocity(normalize(pOwnerChar->Core()->m_Pos - HitPos) * Strength);
+			// 	}
+			// 	else
+			// 	{
+			// 		pHit->SetRawVelocity(StackedLaserShotgunBugSpeed);
+			// 	}
+			// }
+			//}
+		// else if(m_Type == WEAPON_RIFLE) //
 	return true;
+	/////////////////////////////////////////////////////////////////////////////////////////////
 }
 
 void CLaser::DoBounce()
@@ -136,10 +166,27 @@ void CLaser::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
+	// int LaserType = -1;//m_Type == WEAPON_RIFLE ? 0 : m_Type == WEAPON_SHOTGUN ? 1 : -1;
+
 	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
 	if(!pObj)
 		return;
 
+	//CNetObj_DDNetLaser *pObj = Server()->SnapNewItem<CNetObj_DDNetLaser>(m_ID);
+	// CNetObj_DDNetLaser *pObj = static_cast<CNetObj_DDNetLaser *>(Server()->SnapNewItem(NETOBJTYPE_DDNETLASER, m_ID, sizeof(CNetObj_Laser)));
+	// if(!pObj)
+	// 	return false;
+
+	// pObj->m_ToX = (int)m_Pos.x;
+	// pObj->m_ToY = (int)m_Pos.y;
+	// pObj->m_FromX = (int)m_From.x;
+	// pObj->m_FromY = (int)m_From.y;
+	// pObj->m_StartTick = m_StartTick;
+	// pObj->m_Owner = m_Owner;
+	// pObj->m_Type = 0;//LaserType;
+	// pObj->m_Subtype = 0;//Subtype;
+	// pObj->m_SwitchNumber = 0;
+	// pObj->m_Flags = 0;
 	pObj->m_X = (int)m_Pos.x;
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_FromX = (int)m_From.x;

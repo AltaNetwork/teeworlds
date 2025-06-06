@@ -66,6 +66,8 @@ protected:
 
 public:
 	const char *m_pGameType;
+	bool m_pTimeScore;
+	bool m_pTakeDamage;
 
 	bool IsTeamplay() const;
 	bool IsGameOver() const { return m_GameOverTick != -1; }
@@ -130,7 +132,8 @@ public:
 	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
 
 
-	virtual void OnPlayerInfoChange(class CPlayer *pP);
+
+	// virtual void OnPlayerInfoChange(class CPlayer *pP);
 
 	//
 	virtual bool CanSpawn(int Team, vec2 *pPos);
@@ -138,7 +141,7 @@ public:
 	/*
 
 	*/
-	virtual const char *GetTeamName(int Team);
+	virtual const char *GetTeamName(int Team) { return Team == -1 ? "spectators" : "game" ;};
 	virtual int GetAutoTeam(int NotThisID);
 	virtual bool CanJoinTeam(int Team, int NotThisID);
 	bool CheckTeamBalance();
@@ -158,6 +161,7 @@ public:
 	};
 	int m_Flags;
 
+	static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c == '\t'; }
 	virtual bool IsInstagib() { return false; }//m_Flags&GAMETYPE_INSTAGIB; }
 	virtual bool IsGrenade() { return false; }//m_Flags&GAMETYPE_GCTF; }
 	virtual bool IsLMS() { return false; }//m_Flags&GAMETYPE_LMS; }

@@ -19,7 +19,10 @@ IGameController::IGameController(class CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 	m_pServer = m_pGameServer->Server();
-	m_pGameType = "gametype BW";
+	m_pGameType = "unknown";
+
+	m_pTimeScore = false;
+	m_pTakeDamage = true;
 
 	//
 	DoWarmup(g_Config.m_SvWarmup);
@@ -346,30 +349,7 @@ void IGameController::EndRound()
 	}
 }
 
-void IGameController::ResetGame()
-{
-	GameServer()->m_World.m_ResetRequested = true;
-}
-
-const char *IGameController::GetTeamName(int Team)
-{
-	if(IsTeamplay())
-	{
-		if(Team == TEAM_RED)
-			return "red team";
-		else if(Team == TEAM_BLUE)
-			return "blue team";
-	}
-	else
-	{
-		if(Team == 0)
-			return "game";
-	}
-
-	return "spectators";
-}
-
-static bool IsSeparator(char c) { return c == ';' || c == ' ' || c == ',' || c == '\t'; }
+void IGameController::ResetGame()   {	GameServer()->m_World.m_ResetRequested = true;  }
 
 void IGameController::StartRound()
 {
@@ -485,7 +465,7 @@ void IGameController::PostReset()
 	{
 		if(GameServer()->m_apPlayers[i])
 		{
-			GameServer()->m_apPlayers[i]->Respawn();
+			// GameServer()->m_apPlayers[i]->Respawn();
 			GameServer()->m_apPlayers[i]->m_Score = 0;
 			GameServer()->m_apPlayers[i]->m_ScoreTick = 0;
 			GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
@@ -494,24 +474,24 @@ void IGameController::PostReset()
 	}
 }
 
-void IGameController::OnPlayerInfoChange(class CPlayer *pP)
-{
-	const int aTeamColors[2] = {65387, 10223467};
-	if(IsTeamplay())
-	{
-		pP->m_TeeInfos.m_UseCustomColor = 1;
-		if(pP->GetTeam() >= TEAM_RED && pP->GetTeam() <= TEAM_BLUE)
-		{
-			pP->m_TeeInfos.m_ColorBody = aTeamColors[pP->GetTeam()];
-			pP->m_TeeInfos.m_ColorFeet = aTeamColors[pP->GetTeam()];
-		}
-		else
-		{
-			pP->m_TeeInfos.m_ColorBody = 12895054;
-			pP->m_TeeInfos.m_ColorFeet = 12895054;
-		}
-	}
-}
+// void IGameController::OnPlayerInfoChange(class CPlayer *pP) {}
+// {
+// 	const int aTeamColors[2] = {65387, 10223467};
+// 	// if(IsTeamplay())
+// 	// {
+// 		// pP->m_TeeInfos.m_UseCustomColor = 1;
+// 		// if(pP->GetTeam() >= TEAM_RED && pP->GetTeam() <= TEAM_BLUE)
+// 		// {
+// 			// pP->m_TeeInfos.m_ColorBody = aTeamColors[pP->GetTeam()];
+// 			// pP->m_TeeInfos.m_ColorFeet = aTeamColors[pP->GetTeam()];
+// 		// }
+// 		// else
+// 		// {
+// 			// pP->m_TeeInfos.m_ColorBody = 12895054;
+// 			// pP->m_TeeInfos.m_ColorFeet = 12895054;
+// 		// }
+// 	// }
+// }
 
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
@@ -519,51 +499,40 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	// do scoreing
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
-	// if(pKiller == pVictim->GetPlayer())
-	// {
-	// 	pVictim->GetPlayer()->m_Score--; // suicide
-	// 	if(g_Config.m_SvLoltextShow)
-	// 		GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
-	// }
-	// else
-	// {
-	// 	if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
-	// 	{
-	// 		pKiller->m_Score--; // teamkill
-	// 		if(g_Config.m_SvLoltextShow)
-	// 			GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
-	// 	}
-	// 	else
-	// 	{
-	// 		pKiller->m_Score++; // normal kill
-	// 		if(g_Config.m_SvLoltextShow)
-	// 			GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
-	// 	}
-	// }
+	if(pKiller == pVictim->GetPlayer())
+	{
+		pVictim->GetPlayer()->m_Score--; // suicide
+		if(g_Config.m_SvLoltextShow)
+			GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
+	}
+	else
+	{
+		if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
+		{
+			pKiller->m_Score--; // teamkill
+			if(g_Config.m_SvLoltextShow)
+				GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
+		}
+		else
+		{
+			pKiller->m_Score++; // normal kill
+			if(g_Config.m_SvLoltextShow)
+				GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
+		}
+	}
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = 0;//Server()->Tick()+Server()->TickSpeed()*3.0f;
 	return 0;
 }
 
-void IGameController::OnCharacterSpawn(class CCharacter *pChr)
-{
+void IGameController::OnCharacterSpawn(class CCharacter *pChr)  {
 	// default health
 	pChr->IncreaseHealth(10);
-
-	// if (IsInstagib() && IsGrenade())
-	// 	pChr->GiveWeapon(WEAPON_GRENADE, g_Config.m_SvGrenadeAmmo);
-	// else if(IsInstagib())
-	// 	pChr->GiveWeapon(WEAPON_RIFLE, -1);
-	// else
-	// {
-		// give default weapons
-		pChr->GiveWeapon(WEAPON_HAMMER, -1);
-		pChr->GiveWeapon(WEAPON_GUN, 10);
-	// }
+	pChr->GiveWeapon(WEAPON_HAMMER, -1);
+	pChr->GiveWeapon(WEAPON_GUN, 10);
 }
 
-void IGameController::DoWarmup(int Seconds)
-{
+void IGameController::DoWarmup(int Seconds) {
 	if(Seconds < 0)
 		m_Warmup = 0;
 	else
@@ -759,6 +728,7 @@ void IGameController::Snap(int SnappingClient)
 		return;
 
 	pGameInfoObj->m_GameFlags = m_GameFlags;
+	// pGameInfoObj->m_GameFlags |= GAMEFLAG_TEAMS;
 	pGameInfoObj->m_GameStateFlags = 0;
 	if(m_GameOverTick != -1)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_GAMEOVER;
@@ -773,10 +743,7 @@ void IGameController::Snap(int SnappingClient)
 	else
 		pGameInfoObj->m_WarmupTimer = m_Warmup;
 
-	if (GameServer()->m_pController->IsLMS())
-		pGameInfoObj->m_ScoreLimit = g_Config.m_SvLMSLives;
-	else
-		pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
+	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
 	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
 
 	pGameInfoObj->m_RoundNum = (str_length(g_Config.m_SvMaprotation) && g_Config.m_SvRoundsPerMap) ? g_Config.m_SvRoundsPerMap : 0;
@@ -793,17 +760,17 @@ void IGameController::Snap(int SnappingClient)
 		GAMEINFOFLAG_ENTITIES_VANILLA |
 		GAMEINFOFLAG_PREDICT_VANILLA |
 		GAMEINFOFLAG_ENTITIES_DDNET;
-		//GAMEINFOFLAG_ENTITIES_DDRACE |
-		//GAMEINFOFLAG_ENTITIES_RACE;
+	if(m_pTimeScore)
+	    pGameInfoEx->m_Flags |= GAMEINFOFLAG_TIMESCORE;
 	if (g_Config.m_SvDDAllowZoom)
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_ALLOW_ZOOM;
-	// if (SnappingClient==0) //
+	// if (SnappingClient==0) // try make this exclusive or smth i dont like it anyway
  //        pGameInfoEx->m_Flags |= GAMEINFOFLAG_ALLOW_EYE_WHEEL;
 	if (g_Config.m_SvGrenadeAmmo == -1 && IsGrenade())
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_UNLIMITED_AMMO;
 	pGameInfoEx->m_Flags2 =
 		GAMEINFOFLAG2_HUD_AMMO;
-	if (!(g_Config.m_SvDDInstagibHideHealth && IsInstagib()))
+	if (m_pTakeDamage)//!(g_Config.m_SvDDInstagibHideHealth && IsInstagib()))
 		pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
 	if (g_Config.m_SvDDShowHud)
 		pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_DDRACE;

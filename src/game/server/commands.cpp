@@ -35,12 +35,12 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		str_format(aBuf, sizeof(aBuf), "Gametype: %s", GameType());
 		SendChatTarget(ClientID, aBuf);
 
-		if(m_pController->IsIFreeze())
-				SendChatTarget(ClientID, "iFreeze is originally created by Tom94. Big thanks to him");
-		if (strcmp(g_Config.m_SvInfoGithub, "") != 0)
-			SendChatTarget(ClientID, g_Config.m_SvInfoGithub);
-		if (strcmp(g_Config.m_SvInfoContact, "") != 0)
-			SendChatTarget(ClientID, g_Config.m_SvInfoContact);
+		// if(m_pController->IsIFreeze())
+		// 		SendChatTarget(ClientID, "iFreeze is originally created by Tom94. Big thanks to him");
+		// if (strcmp(g_Config.m_SvInfoGithub, "") != 0)
+		// 	SendChatTarget(ClientID, g_Config.m_SvInfoGithub);
+		// if (strcmp(g_Config.m_SvInfoContact, "") != 0)
+		// 	SendChatTarget(ClientID, g_Config.m_SvInfoContact);
 		return false;
 	}
 	else if(StrLeftComp(pMessage, "w")) {
@@ -49,21 +49,21 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 	else if(StrLeftComp(pMessage, "s")) {
 	    	pPlayer->m_Anonymous = false;
 	}
-	else if(StrLeftComp(pMessage, "inv")) {
-	    	pPlayer->m_Invincible = true;
-	}
-	else if(StrLeftComp(pMessage, "invs")) {
-	    	pPlayer->m_Invincible = false;
-	}
+	// else if(StrLeftComp(pMessage, "inv")) {
+	//     	pPlayer->m_Invincible = true;
+	// }
+	// else if(StrLeftComp(pMessage, "invs")) {
+	//     	pPlayer->m_Invincible = false;
+	// }
 	else if(StrLeftComp(pMessage, "pause")) {
 	    if(pPlayer->GetTeam() == -1)
-			pPlayer->SetTeam(0);
-		else pPlayer->SetTeam(-1);
+			pPlayer->SetTeam(0,false);
+		else pPlayer->SetTeam(-1,false);
 	}
 	else if(StrLeftComp(pMessage, "spec")) {
 	    if(pPlayer->GetTeam() == -1)
-			pPlayer->SetTeam(0);
-		else pPlayer->SetTeam(-1);
+			pPlayer->SetTeam(0,false);
+		else pPlayer->SetTeam(-1,false);
 	}
 	else if(StrLeftComp(pMessage, "credits"))
 

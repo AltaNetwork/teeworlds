@@ -15,7 +15,10 @@
 #include <game/gamecore.h>
 #include <string>
 
-#include "tick.h"
+#include "gamemode/unknown.h"
+#include "gamemode/race.h"
+#include "gamemode/gores.h"
+#include "gamemode/lmb.h"
 /*
 #include "gamemodes/dm.h"
 #include "gamemodes/tdm.h"
@@ -611,7 +614,7 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	m_client_msgcount[ClientID] = 0;
 
-	m_apPlayers[ClientID]->Respawn();
+	m_apPlayers[ClientID]->TryRespawn();
 	char aBuf[512];
 	str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), m_pController->GetTeamName(m_apPlayers[ClientID]->GetTeam()));
 	SendChat(-1, CGameContext::CHAT_ALL, aBuf);
@@ -641,13 +644,13 @@ void CGameContext::OnClientConnected(int ClientID)
 
 	(void)m_pController->CheckTeamBalance();
 
-#ifdef CONF_DEBUG
-	if(g_Config.m_DbgDummies)
-	{
-		if(ClientID >= MAX_CLIENTS-g_Config.m_DbgDummies)
-			return;
-	}
-#endif
+// #ifdef CONF_DEBUG
+// 	if(g_Config.m_DbgDummies)
+// 	{
+// 		if(ClientID >= MAX_CLIENTS-g_Config.m_DbgDummies)
+// 			return;
+// 	}
+// #endif
 
 	// send active vote
 	if(m_VoteCloseTime)
@@ -1121,7 +1124,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_TeeInfos.m_UseCustomColor = pMsg->m_UseCustomColor;
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
-			m_pController->OnPlayerInfoChange(pPlayer);
+			// m_pController->OnPlayerInfoChange(pPlayer);
 		}
 		else if (MsgID == NETMSGTYPE_CL_EMOTICON && !m_World.m_Paused)
 		{
@@ -1197,7 +1200,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			pPlayer->m_TeeInfos.m_UseCustomColor = pMsg->m_UseCustomColor;
 			pPlayer->m_TeeInfos.m_ColorBody = pMsg->m_ColorBody;
 			pPlayer->m_TeeInfos.m_ColorFeet = pMsg->m_ColorFeet;
-			m_pController->OnPlayerInfoChange(pPlayer);
+			// m_pController->OnPlayerInfoChange(pPlayer);
 
 			// send vote options
 			CNetMsg_Sv_VoteClearOptions ClearMsg;
@@ -1869,24 +1872,15 @@ void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *p
 	}
 }
 
-void CGameContext::ConFreeze(IConsole::IResult *pResult, void *pUserData)
-{
+void CGameContext::ConFreeze(IConsole::IResult *pResult, void *pUserData)   {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int ClientID = pResult->GetInteger(0);
-
 	if(!pSelf->IsValidCID(ClientID) && !pSelf->GetPlayerChar(ClientID))
 		return;
-
 	pSelf->GetPlayerChar(ClientID)->Freeze(pResult->GetInteger(1));
-
-	if(pResult->GetInteger(1) == -1)
-		pSelf->SendBroadcast("You have been deep-freezed", ClientID);
-	else
-		pSelf->SendBroadcast("You have been frozen", ClientID);
 }
 
-void CGameContext::ConUnFreeze(IConsole::IResult *pResult, void *pUserData)
-{
+void CGameContext::ConUnFreeze(IConsole::IResult *pResult, void *pUserData) {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int ClientID = pResult->GetInteger(0);
 	if(!pSelf->IsValidCID(ClientID) && !pSelf->GetPlayerChar(ClientID))
@@ -2094,13 +2088,7 @@ void CGameContext::ConAddPickup(IConsole::IResult *pResult, void *pUserData)
 
 	CPickup *pPickup = new CPickup(&pSelf->m_World, type, sub, true);
 	pPickup->m_Pos = {(float)x, (float)y};
-	// if(pSelf->IsValidCID(playerID))	{
-	// 	CCharacter* pChr = pSelf->GetPlayerChar(playerID);
-	// 	if(pChr)
-	// 		pChr->SetShields(amount);
-	// }
 }
-// #endif
 
 void CGameContext::AddBot(int difficulty) {
 	int id = g_Config.m_SvMaxClients - 1 - m_pServer->m_numberBots;
@@ -2174,7 +2162,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("set_name", "ir", CFGFLAG_SERVER, ConSetName, this, "Set the name of a player");
 	Console()->Register("set_clan", "ir", CFGFLAG_SERVER, ConSetClan, this, "Set the clan of a player");
 	Console()->Register("kill", "i", CFGFLAG_SERVER, ConKill, this, "Kill a player");
-// #ifdef USECHEATS
 	Console()->Register("give", "ii?i", CFGFLAG_SERVER, ConGive, this, "Give a player the a weapon (-2=Award;-1=All weapons;0=Hammer;1=Gun;2=Shotgun;3=Grenade;4=Riffle,5=Ninja)");
 	Console()->Register("takeweapon", "ii", CFGFLAG_SERVER, ConTakeWeapon, this, "Takes away a weapon of a player (-2=Award;-1=All weapons;0=Hammer;1=Gun;2=Shotgun;3=Grenade;4=Riffle");
 	Console()->Register("tele", "ii", CFGFLAG_SERVER, ConTeleport, this, "Teleports a player to another");
@@ -2182,7 +2169,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("player_set_health", "ii", CFGFLAG_SERVER, ConPlayerSetHealth, this, "Sets the health of a player");
 	Console()->Register("player_set_shields", "ii", CFGFLAG_SERVER, ConPlayerSetShields, this, "Sets the armor of a player");
 	Console()->Register("add_pickup", "iiii", CFGFLAG_SERVER, ConAddPickup, this, "Add a one-time pickup at your position (x, y, type, sub)");
-// #endif
 	Console()->Register("add_bot", "?i", CFGFLAG_SERVER, ConAddBot, this, "Add a bot with type (1=dummy,2=shoot,3=move,4,5,6=aim)");
 	Console()->Register("remove_bot", "", CFGFLAG_SERVER, ConRemoveBot, this, "Remove a bot");
 	m_Mute.OnConsoleInit(m_pConsole);
@@ -2196,9 +2182,6 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_Events.SetGameServer(this);
 	m_Mute.Init(this);
 
-	//if(!data) // only load once
-		//data = load_data_from_memory(internal_data);
-
 	for(int i = 0; i < NUM_NETOBJTYPES; i++)
 		Server()->SnapSetStaticsize(i, m_NetObjHandler.GetObjSize(i));
 
@@ -2207,99 +2190,18 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	m_pServer->m_numberBots = 0; // reset bot count
 
-	// reset everything here
-	//world = new GAMEWORLD;
-	//players = new CPlayer[MAX_CLIENTS];
-
-	// select gametype
-	//if(str_comp_nocase(g_Config.m_SvGametype, "mod") == 0)
-	m_pController = new CGameControllerMOD(this);
-/*	else if(!str_comp_nocase(g_Config.m_SvGametype, "ictf") || !str_comp_nocase(g_Config.m_SvGametype, "ictf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "ctf") && g_Config.m_SvInstagib == 1))		// iCTF
-		m_pController = new CGameControllerCTF(this, IGameController::GAMETYPE_INSTAGIB);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "idm") || !str_comp_nocase(g_Config.m_SvGametype, "idm+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "dm") && g_Config.m_SvInstagib == 1))			// iDM
-		m_pController = new CGameControllerDM(this, IGameController::GAMETYPE_INSTAGIB);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "itdm") || !str_comp_nocase(g_Config.m_SvGametype, "itdm+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "tdm") && g_Config.m_SvInstagib == 1))		// iTDM
-		m_pController = new CGameControllerTDM(this, IGameController::GAMETYPE_INSTAGIB);
-
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "gctf") || !str_comp_nocase(g_Config.m_SvGametype, "gctf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "ctf") && g_Config.m_SvInstagib == 2))		// gCTF
-		m_pController = new CGameControllerGCTF(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "gdm") || !str_comp_nocase(g_Config.m_SvGametype, "gdm+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "dm") && g_Config.m_SvInstagib == 2))			// gDM
-		m_pController = new CGameControllerGDM(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "gtdm") || !str_comp_nocase(g_Config.m_SvGametype, "gtdm+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "tdm") && g_Config.m_SvInstagib == 2))		// gTDM
-		m_pController = new CGameControllerGTDM(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
-
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "gfreeze") || !str_comp_nocase(g_Config.m_SvGametype, "gfreeze+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "ifreeze") && g_Config.m_SvInstagib == 2))	// gFreeze
-		m_pController = new CGameControllerIFreeze(this, IGameController::GAMETYPE_IFREEZE|IGameController::GAMETYPE_INSTAGIB|IGameController::GAMETYPE_GCTF);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ifreeze") || !str_comp_nocase(g_Config.m_SvGametype, "ifreeze+"))	// iFreeze
-		m_pController = new CGameControllerIFreeze(this, IGameController::GAMETYPE_IFREEZE|IGameController::GAMETYPE_INSTAGIB);
-
-
-	else if(str_comp_nocase(g_Config.m_SvGametype, "ghtf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "ghtf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "htf") && g_Config.m_SvInstagib == 2))		// gHTF
-		m_pController = new CGameControllerGHTF(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ihtf") || !str_comp_nocase(g_Config.m_SvGametype, "ihtf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "htf") && g_Config.m_SvInstagib == 1))		// iHTF
-		m_pController = new CGameControllerHTF(this, IGameController::GAMETYPE_INSTAGIB);
-	else if(str_comp_nocase(g_Config.m_SvGametype, "htf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "htf+"))		// HTF
-		m_pController = new CGameControllerHTF(this, IGameController::GAMETYPE_VANILLA);
-
-	else if(str_comp_nocase(g_Config.m_SvGametype, "gthtf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "gthtf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "thtf") && g_Config.m_SvInstagib == 2))		// gHTF (team)
-		m_pController = new CGameControllerGHTF(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB | IGameController::GAMETYPE_ISTEAM);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ithtf") || !str_comp_nocase(g_Config.m_SvGametype, "ithtf+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "thtf") && g_Config.m_SvInstagib == 1))		// iHTF (team)
-		m_pController = new CGameControllerHTF(this, IGameController::GAMETYPE_INSTAGIB | IGameController::GAMETYPE_ISTEAM);
-	else if(str_comp_nocase(g_Config.m_SvGametype, "thtf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "thtf+"))		// HTF (team)
-		m_pController = new CGameControllerHTF(this, IGameController::GAMETYPE_VANILLA | IGameController::GAMETYPE_ISTEAM);
-
-	else if(str_comp_nocase(g_Config.m_SvGametype, "glms") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "glms+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "lms") && g_Config.m_SvInstagib == 2))		// gLMS
-		m_pController = new CGameControllerGLMS(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB|IGameController::GAMETYPE_LMS);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ilms") || !str_comp_nocase(g_Config.m_SvGametype, "ilms+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "lms") && g_Config.m_SvInstagib == 1))		// iLMS
-		m_pController = new CGameControllerLMS(this, IGameController::GAMETYPE_INSTAGIB|IGameController::GAMETYPE_LMS);
-	else if(str_comp_nocase(g_Config.m_SvGametype, "lms") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "lms+"))		// LMS
-		m_pController = new CGameControllerLMS(this, IGameController::GAMETYPE_VANILLA|IGameController::GAMETYPE_LMS);
-
-	else if(str_comp_nocase(g_Config.m_SvGametype, "glts") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "glts+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "lts") && g_Config.m_SvInstagib == 2))		// gTLMS
-		m_pController = new CGameControllerGLMS(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB|IGameController::GAMETYPE_LMS | IGameController::GAMETYPE_ISTEAM);
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ilts") || !str_comp_nocase(g_Config.m_SvGametype, "ilts+") ||
-		(!str_comp_nocase(g_Config.m_SvGametype, "lts") && g_Config.m_SvInstagib == 1))		// iTLMS
-		m_pController = new CGameControllerLMS(this, IGameController::GAMETYPE_INSTAGIB|IGameController::GAMETYPE_LMS | IGameController::GAMETYPE_ISTEAM);
-	else if(str_comp_nocase(g_Config.m_SvGametype, "lts") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "lts+"))		// TLMS
-		m_pController = new CGameControllerLMS(this, IGameController::GAMETYPE_VANILLA|IGameController::GAMETYPE_LMS | IGameController::GAMETYPE_ISTEAM);
-
-	else if(!str_comp_nocase(g_Config.m_SvGametype, "ndm") || !str_comp_nocase(g_Config.m_SvGametype, "ndm+"))		// iLMS
-		m_pController = new CGameControllerNDM(this, IGameController::GAMETYPE_VANILLA);
-
-	else if(str_comp_nocase(g_Config.m_SvGametype, "ctf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "ctf+"))		// CTF
-		m_pController = new CGameControllerCTF(this, IGameController::GAMETYPE_VANILLA);
-	else if(str_comp_nocase(g_Config.m_SvGametype, "tdm") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "tdm+"))		// TDM
-		m_pController = new CGameControllerTDM(this, IGameController::GAMETYPE_VANILLA);
+	if(str_comp(g_Config.m_SvGametype, "race") == 0)
+		m_pController = new CGameControllerRACE(this);
+	else if (str_comp(g_Config.m_SvGametype, "gores") == 0)
+        m_pController = new CGameControllerGORES(this);
+    else if (str_comp(g_Config.m_SvGametype, "lmb") == 0)
+        m_pController = new CGameControllerLMB(this);
 	else
-		m_pController = new CGameControllerDM(this, IGameController::GAMETYPE_VANILLA);
-*/
-	// setup core world
-	//for(int i = 0; i < MAX_CLIENTS; i++)
-	//	game.players[i].core.world = &game.world.core;
+		m_pController = new CGameControllerUNKNOWN(this);
 
-	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
 	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
 
-	/*
-	num_spawn_points[0] = 0;
-	num_spawn_points[1] = 0;
-	num_spawn_points[2] = 0;
-	*/
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
 		for(int x = 0; x < pTileMap->m_Width; x++)
@@ -2409,21 +2311,12 @@ void CGameContext::OnSnap(int ClientID)
 		m_apPlayers[ClientID]->Snap(ClientID);
 	}
 }
+
 void CGameContext::OnPreSnap() {}
-void CGameContext::OnPostSnap() {
-	m_Events.Clear();
-}
-
-bool CGameContext::IsClientReady(int ClientID)  {
-	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_IsReady ? true : false;
-}
-
-bool CGameContext::IsClientPlayer(int ClientID) {
-	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true;
-}
-
+void CGameContext::OnPostSnap() {   	m_Events.Clear();   }
+bool CGameContext::IsClientReady(int ClientID)  {	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->m_IsReady ? true : false;    }
+bool CGameContext::IsClientPlayer(int ClientID) {	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true; }
 const char *CGameContext::GameType() { return m_pController && m_pController->m_pGameType ? m_pController->m_pGameType : ""; }
 const char *CGameContext::Version() { return GAME_VERSION; }
 const char *CGameContext::NetVersion() { return GAME_NETVERSION; }
-
 IGameServer *CreateGameServer() { return new CGameContext; }

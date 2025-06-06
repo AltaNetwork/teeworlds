@@ -73,7 +73,7 @@ Flags = [
 	Flags("GAMESTATEFLAG", GameStateFlags),
 	Flags("CHARACTERFLAG", CharacterFlags),
 	Flags("GAMEINFOFLAG", GameInfoFlags),
-	Flags("GAMEINFOFLAG2", GameInfoFlags2), 
+	Flags("GAMEINFOFLAG2", GameInfoFlags2),
 	Flags("EXPLAYERFLAG", ExPlayerFlags),
 ]
 
@@ -261,6 +261,19 @@ Objects = [
 		NetIntAny("m_TargetY"),
 	]),
 
+	NetObject("DDNetLaser", [
+			NetIntAny("m_ToX"),
+			NetIntAny("m_ToY"),
+			NetIntAny("m_FromX"),
+			NetIntAny("m_FromY"),
+			NetTick("m_StartTick"),
+			NetIntRange("m_Owner", -1, 'MAX_CLIENTS-1'),
+			NetIntAny("m_Type"),
+			NetIntAny("m_SwitchNumber"),
+			NetIntAny("m_Subtype"),
+			NetIntAny("m_Flags"),
+	]),
+
 	NetObject("GameInfoEx", [
 		NetIntAny("m_Flags"),
 		NetIntAny("m_Version"),
@@ -396,6 +409,6 @@ Messages = [
 		NetStringStrict("m_Value"),
 		NetStringStrict("m_Reason"),
 	]),
-    
+
 	NetMessage("Cl_IsDDNetLegacy", []),
 ]

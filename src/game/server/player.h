@@ -19,7 +19,7 @@ public:
 	void Init(int CID);
 
 	void TryRespawn();
-	void Respawn();
+	// void Respawn();
 	void SetTeam(int Team, bool DoChatMsg=true);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
@@ -130,7 +130,7 @@ public:
 	int m_ticksSinceFire; // ticks since last fire
 	int m_botAggro; // whether it is aggroed and on whom
 	bool m_Anonymous; // Anonymous player
-	bool m_Invincible;
+	// bool m_Invincible;
 	bool m_WantsPause;
 private:
 	CCharacter *m_pCharacter;
