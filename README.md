@@ -1,8 +1,6 @@
 /// TODO:
- - figure out why tf does freeze display fucking blink and make freeze work like in ddnet
- - full needed ddnet support (freeze & spec & and command stuff  & tele teams etc)
+ - fix blinking freeze display and allow weapon switch in freeze
+ - only essential ddnet support (freeze & spec & and command stuff  & tele teams etc)
  - add zones and infc stuff
+ - 128 player support and display skins in browser
  - maybe database for blocking
-/// DID:
- - 75% alike of ddnet freeze
- - half working spec to debug
