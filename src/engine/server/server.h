@@ -157,6 +157,10 @@ public:
 	unsigned char *m_pCurrentMapData;
 	int m_CurrentMapSize;
 
+	bool m_ServerInfoHighLoad;
+	int64 m_ServerInfoFirstRequest;
+	int m_ServerInfoNumRequests;
+
 	CDemoRecorder m_DemoRecorder;
 	CRegister m_Register;
 	// CMapChecker m_MapChecker;
@@ -211,7 +215,8 @@ public:
 
 	void ProcessClientPacket(CNetChunk *pPacket);
 
-	void SendServerInfo(const NETADDR *pAddr, int Token, bool Extended=false, int Offset=0);
+	void SendServerInfoConnless(const NETADDR *pAddr, int Token, int Type);
+	void SendServerInfo(const NETADDR *pAddr, int Token, int Type, bool SendClients);
 	void UpdateServerInfo();
 
 	void PumpNetwork();

@@ -1,5 +1,5 @@
-/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
-/* If you are missing that file, acquire a complete release at teeworlds.com.                */
+
+
 #include <base/system.h>
 
 
@@ -58,10 +58,13 @@ int CNetRecvUnpacker::FetchChunk(CNetChunk *pChunk)
 		// handle sequence stuff
 		if(m_pConnection && (Header.m_Flags&NET_CHUNKFLAG_VITAL))
 		{
-			if(Header.m_Sequence == (m_pConnection->m_Ack+1)%NET_MAX_SEQUENCE)
+			// anti spoof: ignore unknown sequence
+			if(Header.m_Sequence == (m_pConnection->m_Ack+1)%NET_MAX_SEQUENCE || m_pConnection->m_UnknownSeq)
 			{
+				m_pConnection->m_UnknownSeq = false;
+
 				// in sequence
-				m_pConnection->m_Ack = (m_pConnection->m_Ack+1)%NET_MAX_SEQUENCE;
+				m_pConnection->m_Ack = Header.m_Sequence;
 			}
 			else
 			{
@@ -80,28 +83,33 @@ int CNetRecvUnpacker::FetchChunk(CNetChunk *pChunk)
 		// fill in the info
 		pChunk->m_ClientID = m_ClientID;
 		pChunk->m_Address = m_Addr;
-		pChunk->m_Flags = 0;
+		pChunk->m_Flags = Header.m_Flags;
 		pChunk->m_DataSize = Header.m_Size;
 		pChunk->m_pData = pData;
 		return 1;
 	}
 }
-
+static const unsigned char NET_HEADER_EXTENDED[] = {'x', 'e'};
 // packs the data tight and sends it
-void CNetBase::SendPacketConnless(NETSOCKET Socket, NETADDR *pAddr, const void *pData, int DataSize)
+void CNetBase::SendPacketConnless(NETSOCKET Socket, NETADDR *pAddr, const void *pData, int DataSize, bool Extended, unsigned char aExtra[4])
 {
 	unsigned char aBuffer[NET_MAX_PACKETSIZE];
-	aBuffer[0] = 0xff;
-	aBuffer[1] = 0xff;
-	aBuffer[2] = 0xff;
-	aBuffer[3] = 0xff;
-	aBuffer[4] = 0xff;
-	aBuffer[5] = 0xff;
-	mem_copy(&aBuffer[6], pData, DataSize);
-	net_udp_send(Socket, pAddr, aBuffer, 6+DataSize);
+	const int DATA_OFFSET = 6;
+	if(!Extended)
+	{
+		for(int i = 0; i < DATA_OFFSET; i++)
+			aBuffer[i] = 0xff;
+	}
+	else
+	{
+		mem_copy(aBuffer, NET_HEADER_EXTENDED, sizeof(NET_HEADER_EXTENDED));
+		mem_copy(aBuffer + sizeof(NET_HEADER_EXTENDED), aExtra, 4);
+	}
+	mem_copy(aBuffer + DATA_OFFSET, pData, DataSize);
+	net_udp_send(Socket, pAddr, aBuffer, DataSize + DATA_OFFSET);
 }
 
-void CNetBase::SendPacket(NETSOCKET Socket, NETADDR *pAddr, CNetPacketConstruct *pPacket)
+void CNetBase::SendPacket(NETSOCKET Socket, NETADDR *pAddr, CNetPacketConstruct *pPacket, SECURITY_TOKEN SecurityToken)
 {
 	unsigned char aBuffer[NET_MAX_PACKETSIZE];
 	int CompressedSize = -1;
@@ -115,6 +123,15 @@ void CNetBase::SendPacket(NETSOCKET Socket, NETADDR *pAddr, CNetPacketConstruct 
 		io_write(ms_DataLogSent, &pPacket->m_DataSize, sizeof(pPacket->m_DataSize));
 		io_write(ms_DataLogSent, &pPacket->m_aChunkData, pPacket->m_DataSize);
 		io_flush(ms_DataLogSent);
+	}
+
+	if (SecurityToken != NET_SECURITY_TOKEN_UNSUPPORTED)
+	{
+		// append security token
+		// if SecurityToken is NET_SECURITY_TOKEN_UNKNOWN we will still append it hoping to negotiate it
+		//TODO: antispoof check size
+		mem_copy(&pPacket->m_aChunkData[pPacket->m_DataSize], &SecurityToken, sizeof(SecurityToken));
+		pPacket->m_DataSize += sizeof(SecurityToken);
 	}
 
 	// compress
@@ -183,7 +200,8 @@ int CNetBase::UnpackPacket(unsigned char *pBuffer, int Size, CNetPacketConstruct
 
 	if(pPacket->m_Flags&NET_PACKETFLAG_CONNLESS)
 	{
-		if(Size < 6)
+		const int DATA_OFFSET = 6;
+		if(Size < DATA_OFFSET)
 		{
 			dbg_msg("", "connection less packet too small, %d", Size);
 			return -1;
@@ -192,8 +210,14 @@ int CNetBase::UnpackPacket(unsigned char *pBuffer, int Size, CNetPacketConstruct
 		pPacket->m_Flags = NET_PACKETFLAG_CONNLESS;
 		pPacket->m_Ack = 0;
 		pPacket->m_NumChunks = 0;
-		pPacket->m_DataSize = Size - 6;
-		mem_copy(pPacket->m_aChunkData, &pBuffer[6], pPacket->m_DataSize);
+		pPacket->m_DataSize = Size - DATA_OFFSET;
+		mem_copy(pPacket->m_aChunkData, pBuffer + DATA_OFFSET, pPacket->m_DataSize);
+
+		if(mem_comp(pBuffer, NET_HEADER_EXTENDED, sizeof(NET_HEADER_EXTENDED)) == 0)
+		{
+			pPacket->m_Flags |= NET_PACKETFLAG_EXTENDED;
+			mem_copy(pPacket->m_aExtraData, pBuffer + sizeof(NET_HEADER_EXTENDED), sizeof(pPacket->m_aExtraData));
+		}
 	}
 	else
 	{
@@ -226,7 +250,7 @@ int CNetBase::UnpackPacket(unsigned char *pBuffer, int Size, CNetPacketConstruct
 }
 
 
-void CNetBase::SendControlMsg(NETSOCKET Socket, NETADDR *pAddr, int Ack, int ControlMsg, const void *pExtra, int ExtraSize)
+void CNetBase::SendControlMsg(NETSOCKET Socket, NETADDR *pAddr, int Ack, int ControlMsg, const void *pExtra, int ExtraSize, SECURITY_TOKEN SecurityToken)
 {
 	CNetPacketConstruct Construct;
 	Construct.m_Flags = NET_PACKETFLAG_CONTROL;
@@ -237,7 +261,7 @@ void CNetBase::SendControlMsg(NETSOCKET Socket, NETADDR *pAddr, int Ack, int Con
 	mem_copy(&Construct.m_aChunkData[1], pExtra, ExtraSize);
 
 	// send the control message
-	CNetBase::SendPacket(Socket, pAddr, &Construct);
+	CNetBase::SendPacket(Socket, pAddr, &Construct, SecurityToken);
 }
 
 

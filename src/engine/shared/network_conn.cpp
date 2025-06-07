@@ -1,32 +1,47 @@
-/* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
-/* If you are missing that file, acquire a complete release at teeworlds.com.                */
+
+
 #include <base/system.h>
 #include "config.h"
 #include "network.h"
+
+static SECURITY_TOKEN ToSecurityToken(const unsigned char* pData)
+{
+	return (int)pData[0] | (pData[1] << 8) | (pData[2] << 16) | (pData[3] << 24);
+}
 
 void CNetConnection::ResetStats()
 {
 	mem_zero(&m_Stats, sizeof(m_Stats));
 }
 
-void CNetConnection::Reset()
+void CNetConnection::Reset(bool Rejoin)
 {
 	m_Sequence = 0;
 	m_Ack = 0;
+	m_PeerAck = 0;
 	m_RemoteClosed = 0;
 
-	m_State = NET_CONNSTATE_OFFLINE;
+	if (!Rejoin)
+	{
+		m_TimeoutProtected = false;
+		m_TimeoutSituation = false;
+
+		m_State = NET_CONNSTATE_OFFLINE;
+		m_Token = -1;
+		m_SecurityToken = NET_SECURITY_TOKEN_UNKNOWN;
+	}
+
 	m_LastSendTime = 0;
 	m_LastRecvTime = 0;
-	m_LastUpdateTime = 0;
-	m_Token = -1;
-	mem_zero(&m_PeerAddr, sizeof(m_PeerAddr));
+	//m_LastUpdateTime = 0;
+
+	//mem_zero(&m_PeerAddr, sizeof(m_PeerAddr));
+	m_UnknownSeq = false;
 
 	m_Buffer.Init();
 
 	mem_zero(&m_Construct, sizeof(m_Construct));
 }
-
 const char *CNetConnection::ErrorString()
 {
 	return m_ErrorString;
@@ -75,7 +90,7 @@ int CNetConnection::Flush()
 
 	// send of the packets
 	m_Construct.m_Ack = m_Ack;
-	CNetBase::SendPacket(m_Socket, &m_PeerAddr, &m_Construct);
+	CNetBase::SendPacket(m_Socket, &m_PeerAddr, &m_Construct, m_SecurityToken);
 
 	// update send times
 	m_LastSendTime = time_get();
@@ -145,7 +160,7 @@ void CNetConnection::SendControl(int ControlMsg, const void *pExtra, int ExtraSi
 {
 	// send the control message
 	m_LastSendTime = time_get();
-	CNetBase::SendControlMsg(m_Socket, &m_PeerAddr, m_Ack, ControlMsg, pExtra, ExtraSize);
+	CNetBase::SendControlMsg(m_Socket, &m_PeerAddr, m_Ack, ControlMsg, pExtra, ExtraSize, m_SecurityToken);
 }
 
 void CNetConnection::ResendChunk(CNetChunkResend *pResend)
@@ -186,16 +201,64 @@ void CNetConnection::Disconnect(const char *pReason)
 		else
 			SendControl(NET_CTRLMSG_CLOSE, 0, 0);
 
-		m_ErrorString[0] = 0;
-		if(pReason)
-			str_copy(m_ErrorString, pReason, sizeof(m_ErrorString));
+		if(pReason != m_ErrorString)
+		{
+			if(pReason)
+				str_copy(m_ErrorString, pReason, sizeof(m_ErrorString));
+			else
+				m_ErrorString[0] = 0;
+		}
 	}
 
 	Reset();
 }
 
+void CNetConnection::DirectInit(NETADDR &Addr, SECURITY_TOKEN SecurityToken)
+{
+	Reset();
+
+	m_State = NET_CONNSTATE_ONLINE;
+
+	m_PeerAddr = Addr;
+	mem_zero(m_ErrorString, sizeof(m_ErrorString));
+
+	int64 Now = time_get();
+	m_LastSendTime = Now;
+	m_LastRecvTime = Now;
+	m_LastUpdateTime = Now;
+
+	m_SecurityToken = SecurityToken;
+}
+
 int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr)
 {
+	if (State() != NET_CONNSTATE_OFFLINE && m_SecurityToken != NET_SECURITY_TOKEN_UNKNOWN && m_SecurityToken != NET_SECURITY_TOKEN_UNSUPPORTED)
+	{
+		// supposed to have a valid token in this packet, check it
+		if (pPacket->m_DataSize < (int)sizeof(m_SecurityToken))
+			return 0;
+		pPacket->m_DataSize -= sizeof(m_SecurityToken);
+		if (m_SecurityToken != ToSecurityToken(&pPacket->m_aChunkData[pPacket->m_DataSize]))
+		{
+			if(g_Config.m_Debug)
+				dbg_msg("security", "token mismatch, expected %d got %d", m_SecurityToken, ToSecurityToken(&pPacket->m_aChunkData[pPacket->m_DataSize]));
+			return 0;
+		}
+	}
+
+	// check if actual ack value is valid(own sequence..latest peer ack)
+	if(m_Sequence >= m_PeerAck)
+	{
+		if(pPacket->m_Ack < m_PeerAck || pPacket->m_Ack > m_Sequence)
+			return 0;
+	}
+	else
+	{
+		if(pPacket->m_Ack < m_PeerAck && pPacket->m_Ack > m_Sequence)
+			return 0;
+	}
+	m_PeerAck = pPacket->m_Ack;
+
 	int64 Now = time_get();
 
 	// check if resend is requested

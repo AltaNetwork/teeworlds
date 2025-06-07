@@ -2252,7 +2252,7 @@ void CGameContext::OnSnap(int ClientID)
 {
 	// make sure vanilla clients don't crash if there are more than 16 tees online possible
 	bool actuallySnap = true;
-	if (g_Config.m_SvMaxClients <= MAX_CLIENTS_VANILLA)
+	if (g_Config.m_SvMaxClients <= VANILLA_MAX_CLIENTS)
 		actuallySnap = true;
 	else {
 		IServer::CClientInfo Info;

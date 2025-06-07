@@ -301,38 +301,39 @@ void CCharacter::FireWeapon()
 		m_NumObjectsHit = 0;
 		// m_Core.m_Vel.y = 10;
 		GameServer()->CreateSound(m_Pos, SOUND_HAMMER_FIRE);
-
-		CCharacter *apEnts[MAX_CLIENTS];
 		int Hits = 0;
-		int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius * 0.5f, (CEntity **)apEnts,
-													 MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+		if(GameServer()->Tuning()->m_PlayerHit) {
+    		CCharacter *apEnts[MAX_CLIENTS];
 
-		for (int i = 0; i < Num; ++i)
-		{
-			CCharacter *pTarget = apEnts[i];
+    		int Num = GameServer()->m_World.FindEntities(ProjStartPos, m_ProximityRadius * 0.5f, (CEntity **)apEnts,
+													    MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
-			if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
-				continue;
+    		for (int i = 0; i < Num; ++i)	{
+    			CCharacter *pTarget = apEnts[i];
 
-			// set his velocity to fast upward (for now)
-			if (length(pTarget->m_Pos - ProjStartPos) > 0.0f)
-				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * m_ProximityRadius * 0.5f);
-			else
-				GameServer()->CreateHammerHit(ProjStartPos);
+    			if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+    				continue;
 
-			vec2 Dir;
-			if (length(pTarget->m_Pos - m_Pos) > 0.0f)
-				Dir = normalize(pTarget->m_Pos - m_Pos);
-			else
-				Dir = vec2(0.f, -1.f);
+    			// set his velocity to fast upward (for now)
+    			if (length(pTarget->m_Pos - ProjStartPos) > 0.0f)
+    				GameServer()->CreateHammerHit(pTarget->m_Pos - normalize(pTarget->m_Pos - ProjStartPos) * m_ProximityRadius * 0.5f);
+    			else
+    				GameServer()->CreateHammerHit(ProjStartPos);
 
-			pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-								m_pPlayer->GetCID(), m_ActiveWeapon);
-			pTarget->m_BombTick = m_BombTick;//Server()->TickSpeed() * 5;
-			pTarget->Melt();//Server()->TickSpeed() * 5
-			// GameServer()->CreateLolText(pTarget, "KYPBA");
-			Hits++;
-		}
+    			vec2 Dir;
+    			if (length(pTarget->m_Pos - m_Pos) > 0.0f)
+    				Dir = normalize(pTarget->m_Pos - m_Pos);
+    			else
+    				Dir = vec2(0.f, -1.f);
+
+    			pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f,
+                                    GameServer()->m_pController->m_pTakeDamage ? g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage : m_BombTick,
+    								m_pPlayer->GetCID(), m_ActiveWeapon); // TO FIX CAUSE IM KINDA LAZY RN...
+
+    			pTarget->Melt();
+    			// GameServer()->CreateLolText(pTarget, "KYPBA");
+    			Hits++;
+    		}}
 		if (Hits)
 			m_ReloadTimer = Server()->TickSpeed() / 3;
 		/// BOTTOM IS SOME TESTING I DID #####################################################################
@@ -928,6 +929,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)  {
     // if(Weapon==WEAPON_RIFLE) Melt();
 
 	if(!GameServer()->m_pController->m_pTakeDamage)//IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
+	    m_BombTick = Dmg;
 		return false;
 
 	// m_pPlayer only inflicts half damage on self
