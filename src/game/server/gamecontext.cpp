@@ -458,11 +458,11 @@ void CGameContext::OnTick()
 		}
 	}
 
-	if(g_Config.m_SvChatMessage[0] && Server()->Tick() % (Server()->TickSpeed()*g_Config.m_SvChatMessageInterval*60) == 0)
-	{
-		str_sanitize_cc(g_Config.m_SvChatMessage);
-		SendChat(-1, CHAT_ALL, g_Config.m_SvChatMessage);
-	}
+	// if(g_Config.m_SvChatMessage[0] && Server()->Tick() % (Server()->TickSpeed()*g_Config.m_SvChatMessageInterval*60) == 0)
+	// {
+	// 	str_sanitize_cc(g_Config.m_SvChatMessage);
+	// 	SendChat(-1, CHAT_ALL, g_Config.m_SvChatMessage);
+	// }
 
 	// update voting
 	if(m_VoteCloseTime)
@@ -629,6 +629,7 @@ void CGameContext::OnClientEnter(int ClientID)
 			Pl++;
 	// if(Pl > 2 && m_pController->IsIFreeze() && g_Config.m_SvIFreezeJoinFrozen)
 	// 	m_apPlayers[ClientID]->m_FreezeOnSpawn = true;
+	m_Mute.AddMute(ClientID,g_Config.m_SvMuteOnJoin,false);
 }
 
 void CGameContext::OnClientConnected(int ClientID)

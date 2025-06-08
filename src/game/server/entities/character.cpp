@@ -327,9 +327,8 @@ void CCharacter::FireWeapon()
     				Dir = vec2(0.f, -1.f);
 
     			pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f,
-                                    GameServer()->m_pController->m_pTakeDamage ? g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage : m_BombTick,
-    								m_pPlayer->GetCID(), m_ActiveWeapon); // TO FIX CAUSE IM KINDA LAZY RN...
-
+                                    g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+    								m_pPlayer->GetCID(), m_ActiveWeapon);
     			pTarget->Melt();
     			// GameServer()->CreateLolText(pTarget, "KYPBA");
     			Hits++;
@@ -545,8 +544,8 @@ void CCharacter::FireWeapon()
 			FireDelay = g_Config.m_SvShotgunRepeaterFireDelay;
 		}
 
-		if (m_pPlayer->m_GotAward)
-			FireDelay = g_Config.m_SvKillingspreeAwardFiredelay;
+		// if (m_pPlayer->m_GotAward)
+		// 	FireDelay = g_Config.m_SvKillingspreeAwardFiredelay;
 
 		m_ReloadTimer = FireDelay * Server()->TickSpeed() / 1000;
 	}
@@ -600,7 +599,7 @@ void CCharacter::HandleWeapons()
 
 bool CCharacter::GiveWeapon(int Weapon, int Ammo)   {
 	// hammer has infinite ammo, always
-	if (Weapon == WEAPON_HAMMER)
+	if (Weapon == WEAPON_HAMMER || GameServer()->m_pController->m_pNoAmmo)
 		Ammo = -1;
 
 	if (m_aWeapons[Weapon].m_Ammo < g_pData->m_Weapons.m_aId[Weapon].m_Maxammo || !m_aWeapons[Weapon].m_Got || (g_Config.m_SvShotgunRepeater && m_aWeapons[Weapon].m_Ammo < g_Config.m_SvShotgunRepeaterAmmo))
@@ -834,11 +833,11 @@ void CCharacter::TickDefered()
 	if (Events & COREEVENT_HOOK_HIT_NOHOOK)
 		GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
 
-	if (m_pPlayer->GetTeam() == TEAM_SPECTATORS)
-	{
-		m_Pos.x = m_Input.m_TargetX;
-		m_Pos.y = m_Input.m_TargetY;
-	}
+	// if (m_pPlayer->GetTeam() == TEAM_SPECTATORS)
+	// {
+	// 	m_Pos.x = m_Input.m_TargetX;
+	// 	m_Pos.y = m_Input.m_TargetY;
+	// }
 
 	// update the m_SendCore if needed
 	{
@@ -929,7 +928,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)  {
     // if(Weapon==WEAPON_RIFLE) Melt();
 
 	if(!GameServer()->m_pController->m_pTakeDamage)//IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
-	    m_BombTick = Dmg;
 		return false;
 
 	// m_pPlayer only inflicts half damage on self
@@ -969,8 +967,9 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)  {
 }
 
 void CCharacter::Snap(int SnappingClient)   {
-	if (NetworkClipped(SnappingClient))
-		return;
+
+    if (NetworkClipped(SnappingClient))
+        return;
 
 	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, m_pPlayer->GetCID(), sizeof(CNetObj_Character)));
 	CNetObj_DDNetCharacter *pDDNetCharacter = (CNetObj_DDNetCharacter *)Server()->SnapNewItem(32764, m_pPlayer->GetCID(), 40);
@@ -989,7 +988,6 @@ void CCharacter::Snap(int SnappingClient)   {
 	}
 
 	// set emote
-	// if (m_BombTick < Server()->Tick()) {   m_BombTick = -1;    }
 	if (m_EmoteStop < Server()->Tick()) {   m_EmoteType = EMOTE_NORMAL; m_EmoteStop = -1;   }
 	if (m_pPlayer->m_SetEmoteStop < Server()->Tick())   {   m_pPlayer->m_SetEmoteType = EMOTE_NORMAL;   m_pPlayer->m_SetEmoteStop = -1; }
 	pCharacter->m_Emote = (m_EmoteType == EMOTE_NORMAL ) ? m_pPlayer->m_SetEmoteType : m_EmoteType;
@@ -1005,7 +1003,7 @@ void CCharacter::Snap(int SnappingClient)   {
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 	pDDNetCharacter->m_FreezeEnd = m_FreezeTicks == 0 ? 0 : Server()->Tick() + m_FreezeTicks;
 	pDDNetCharacter->m_FreezeStart = m_FreezeStart;
-	pDDNetCharacter->m_NinjaActivationTick = m_Ninja.m_ActivationTick;
+	pDDNetCharacter->m_NinjaActivationTick = -1;//m_Ninja.m_ActivationTick;
 	pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 	pDDNetCharacter->m_Flags = 0;

@@ -55,9 +55,9 @@ public:
 	 */
 	void PurgeMutes();
 	/**
-	 * Mutes a player by given ClientID for Secs seconds
+	 * Mutes a player by given ClientID for Secs seconds. And if to show the message publicly
 	 */
-	void AddMute(int ClientID, int Secs);
+	void AddMute(int ClientID, int Secs, bool ShowMsg=true );
 	/**
 	 * Returns a pointer to the mute or null if not muted
 	 */

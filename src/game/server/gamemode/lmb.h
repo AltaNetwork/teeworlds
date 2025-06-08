@@ -9,6 +9,7 @@ class CGameControllerLMB : public IGameController
 {
 public:
 	CGameControllerLMB(class CGameContext *pGameServer);
+	// int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
 	virtual void Tick();
 };
 #endif

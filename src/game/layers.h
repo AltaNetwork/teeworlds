@@ -14,6 +14,9 @@ class CLayers
 	int m_LayersStart;
 	CMapItemGroup *m_pGameGroup;
 	CMapItemLayerTilemap *m_pGameLayer;
+	CMapItemLayerTilemap *m_pSpeedupLayer;
+	CMapItemLayerTilemap *m_pFrontLayer;
+	CMapItemLayerTilemap *m_pSwitchLayer;
 	class IMap *m_pMap;
 
 public:
@@ -23,6 +26,9 @@ public:
 	class IMap *Map() const { return m_pMap; };
 	CMapItemGroup *GameGroup() const { return m_pGameGroup; };
 	CMapItemLayerTilemap *GameLayer() const { return m_pGameLayer; };
+	CMapItemLayerTilemap *SpeedupLayer() const { return m_pSpeedupLayer; }
+	CMapItemLayerTilemap *FrontLayer() const { return m_pFrontLayer; }
+	CMapItemLayerTilemap *SwitchLayer() const { return m_pSwitchLayer; }
 	CMapItemGroup *GetGroup(int Index) const;
 	CMapItemLayer *GetLayer(int Index) const;
 };

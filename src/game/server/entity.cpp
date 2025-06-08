@@ -38,6 +38,9 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	if(SnappingClient == -1)
 		return 0;
 
+	if(GameServer()->m_apPlayers[SnappingClient]->GetTeam() == TEAM_SPECTATORS)
+	    return 0;
+
 	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
 	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
 
@@ -46,6 +49,7 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 
 	if(distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 1100.0f)
 		return 1;
+
 	return 0;
 }
 

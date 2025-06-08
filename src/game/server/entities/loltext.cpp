@@ -62,7 +62,7 @@ vec2 CLoltext::TextSize(const char *pText)
 			continue;
 		++Count;
 	}//no there ain't linebreaks
-	return vec2(Count*g_Config.m_SvLoltextHspace*4.0f, g_Config.m_SvLoltextVspace*5.0f);
+	return vec2(Count*56.0f, 56.0f);
 }
 
 int CLoltext::Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Vel, int Lifespan, const char *pText, bool Center, bool Follow)
@@ -105,8 +105,8 @@ int CLoltext::Create(CGameWorld *pGameWorld, CEntity *pParent, vec2 Pos, vec2 Ve
 			for(int x = 0; x < 3/*XXX*/; ++x)
 				if (s_aaaChars[(unsigned)c][y][x] && NumPlasmas < MAX_PLASMA_PER_LOLTEXT)
 					s_aapPlasma[TextID][NumPlasmas++] =
-						        new ClolPlasma(pGameWorld, pParent, CurPos + vec2(x*g_Config.m_SvLoltextHspace, y*g_Config.m_SvLoltextVspace), Vel, Lifespan);
-		CurPos.x += 4*g_Config.m_SvLoltextHspace;
+						        new ClolPlasma(pGameWorld, pParent, CurPos + vec2(x*56.0f, y*56.0f), Vel, Lifespan);
+		CurPos.x += 56.0f;
 	}
 	return TextID;
 }

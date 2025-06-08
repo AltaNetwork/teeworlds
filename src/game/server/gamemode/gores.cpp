@@ -6,5 +6,7 @@ CGameControllerGORES::CGameControllerGORES(class CGameContext *pGameServer) : IG
     m_pGameType = "Gores";
     m_pTimeScore = true;
     m_pTakeDamage = false;
+    m_pNoAmmo = true;
+    m_pPausable = true;
 }
 void CGameControllerGORES::Tick() {	IGameController::Tick();    }

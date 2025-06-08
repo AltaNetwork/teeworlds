@@ -75,12 +75,12 @@ bool CMute::AddMute(const char* pIP, int Secs)
 	return true;
 }
 
-void CMute::AddMute(int ClientID, int Secs)
+void CMute::AddMute(int ClientID, int Secs, bool ShowMsg)
 {
 	char aAddrStr[NETADDR_MAXSTRSIZE] = { 0 };
 	Server()->GetClientAddr(ClientID, aAddrStr, sizeof(aAddrStr));
 
-	if(AddMute(aAddrStr, Secs))
+	if(AddMute(aAddrStr, Secs) && ShowMsg == true)
 	{
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "%s has been muted for %d min and %d sec.", Server()->ClientName(ClientID), Secs / 60, Secs % 60);
@@ -223,7 +223,7 @@ bool CMute::CheckSpam(int ClientID, const char* msg)
 		if (str_find_nocase(msg, disallowedStrings[i]))
 			count++;
 	}
-	
+
 	// anti whisper ad bot
 	if ((str_find_nocase(msg, "/whisper") || str_find_nocase(msg, "/w")) && str_find_nocase(msg, "bro, check out this client"))
 		count += 2;

@@ -72,14 +72,14 @@ MACRO_CONFIG_INT(SvLaserReloadTime, sv_laser_reload_time, 800, 0, 2400, CFGFLAG_
 MACRO_CONFIG_STR(SvStatsFile, sv_stats_file, 256, "stats.txt", CFGFLAG_SERVER, "Name of the file where the statistics are stored in")
 MACRO_CONFIG_INT(SvStatsOutputlevel, sv_stats_outputlevel, 0, 0, 3, CFGFLAG_SERVER, "How much informations in the statistics-file should be saved (0 to disable saving)")
 // useless shit here
-MACRO_CONFIG_STR(SvChatMessage, sv_chat_message, 256, "", CFGFLAG_SERVER, "A message which will be periodically shown in chat")
-MACRO_CONFIG_INT(SvChatMessageInterval, sv_chat_message_interval, 15, 7, 1000000, CFGFLAG_SERVER, "The interval in minutes where the message is sent to chat")
+// MACRO_CONFIG_STR(SvChatMessage, sv_chat_message, 256, "", CFGFLAG_SERVER, "A message which will be periodically shown in chat")
+// MACRO_CONFIG_INT(SvChatMessageInterval, sv_chat_message_interval, 15, 7, 1000000, CFGFLAG_SERVER, "The interval in minutes where the message is sent to chat")
 
 // Loltext
-MACRO_CONFIG_INT(SvLoltextHspace, sv_loltext_hspace, 14, 10, 25, CFGFLAG_SERVER, "Horizontal offset between loltext 'pixels'")
-MACRO_CONFIG_INT(SvLoltextVspace, sv_loltext_vspace, 14, 10, 25, CFGFLAG_SERVER, "Vertical offset between loltext 'pixels'")
+// MACRO_CONFIG_INT(SvLoltextHspace, sv_loltext_hspace, 14, 10, 25, CFGFLAG_SERVER, "Horizontal offset between loltext 'pixels'")
+// MACRO_CONFIG_INT(SvLoltextVspace, sv_loltext_vspace, 14, 10, 25, CFGFLAG_SERVER, "Vertical offset between loltext 'pixels'")
 MACRO_CONFIG_INT(SvLoltextLifespan, sv_loltext_lifespan, 50, 25, 100, CFGFLAG_SERVER, "How long the loltext is shown")
-MACRO_CONFIG_INT(SvLoltextShow, sv_loltext_show, 0, 0, 1, CFGFLAG_SERVER, "Show loltext")
+// MACRO_CONFIG_INT(SvLoltextShow, sv_loltext_show, 0, 0, 1, CFGFLAG_SERVER, "Show loltext")
 
 // Grenade
 MACRO_CONFIG_INT(SvGrenadeMinDamage, sv_grenade_min_damage, 4, 3, 6, CFGFLAG_SERVER, "Minimum damage the grenade must make to kill the player (depends how far away the bullet explodes)")
@@ -95,12 +95,12 @@ MACRO_CONFIG_INT(SvGrenadeAmmoRegen, sv_grenade_ammo_regen, 1000, 800, 2000, CFG
 // MACRO_CONFIG_INT(SvIFreezeJoinFrozen, sv_ifreeze_join_frozen, 0, 0, 1, CFGFLAG_SERVER, "New players join a current game as frozen players")
 
 // Killingspree
-MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER, "How many kills are needed to be on a killing-spree")
-MACRO_CONFIG_INT(SvKillingspreeIFreeze, sv_kspree_ifreeze, 1, 0, 1, CFGFLAG_SERVER, "Give the killingspree award only in iFreeze")
-MACRO_CONFIG_INT(SvKillingspreeAward, sv_kspree_award, 0, 0, 1, CFGFLAG_SERVER, "If players with more than \"sv_killingspree_kills\" kills get the killingspree award")
-MACRO_CONFIG_INT(SvKillingspreeAwardLasers, sv_kspree_award_laser, 3, 1, 10, CFGFLAG_SERVER, "How many lasers will shot when you got the award")
-MACRO_CONFIG_INT(SvKillingspreeAwardLasersSplit, sv_kspree_award_laser_split, 1, 1, 10, CFGFLAG_SERVER, "Split of the lasers while having the award")
-MACRO_CONFIG_INT(SvKillingspreeAwardFiredelay, sv_kspree_award_laser_firedelay, 100, 0, 800, CFGFLAG_SERVER, "Firedelay of the weapon when you got the award")
+// MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER, "How many kills are needed to be on a killing-spree")
+// MACRO_CONFIG_INT(SvKillingspreeIFreeze, sv_kspree_ifreeze, 1, 0, 1, CFGFLAG_SERVER, "Give the killingspree award only in iFreeze")
+// MACRO_CONFIG_INT(SvKillingspreeAward, sv_kspree_award, 0, 0, 1, CFGFLAG_SERVER, "If players with more than \"sv_killingspree_kills\" kills get the killingspree award")
+// MACRO_CONFIG_INT(SvKillingspreeAwardLasers, sv_kspree_award_laser, 3, 1, 10, CFGFLAG_SERVER, "How many lasers will shot when you got the award")
+// MACRO_CONFIG_INT(SvKillingspreeAwardLasersSplit, sv_kspree_award_laser_split, 1, 1, 10, CFGFLAG_SERVER, "Split of the lasers while having the award")
+// MACRO_CONFIG_INT(SvKillingspreeAwardFiredelay, sv_kspree_award_laser_firedelay, 100, 0, 800, CFGFLAG_SERVER, "Firedelay of the weapon when you got the award")
 
 // Ninja and custom silly weapons
 MACRO_CONFIG_INT(SvNinjaConstantSpeed, sv_ninja_constant_speed, 10, -50, 50, CFGFLAG_SERVER, "What speed the ninja should have after slashing")
@@ -108,6 +108,7 @@ MACRO_CONFIG_INT(SvNinjaInvincible, sv_ninja_invincible, 0, 0, 1, CFGFLAG_SERVER
 MACRO_CONFIG_INT(SvNinjaAllWeapons, sv_ninja_weapon_fight, 0, 0, 1, CFGFLAG_SERVER, "Whether or not to have the ninja use all other weapons while slashing")
 MACRO_CONFIG_INT(SvNinjaHeartBonus, sv_ninja_bonus_heart, 0, 0, 10, CFGFLAG_SERVER, "Amount of hearts to give when ninja is picked up")
 MACRO_CONFIG_INT(SvNinjaArmorBonus, sv_ninja_bonus_armor, 0, 0, 10, CFGFLAG_SERVER, "Amount of armor/shields to give when ninja is picked up")
+MACRO_CONFIG_INT(SvMuteOnJoin, sv_automute, 15, 0, 3600, CFGFLAG_SERVER, "Secounds to mute players that just joined")
 
 MACRO_CONFIG_INT(SvPlasmaGun, sv_plasmagun, 0, 0, 1, CFGFLAG_SERVER, "Whether to enable the plasmagun replacing the laser rifle")
 MACRO_CONFIG_INT(SvPlasmaGunReach, sv_plasmagun_reach, 500, 100, 9000, CFGFLAG_SERVER, "How far the plasmagun should reach")
@@ -162,7 +163,7 @@ MACRO_CONFIG_STR(SvBotSkin, sv_bot_skin, 24, "Computer WindowsXP_KZ", CFGFLAG_SE
 
 MACRO_CONFIG_INT(SvInmenuPause, sv_inmenu_pause, 0, 0, 1, CFGFLAG_SERVER, "(For singleplayer) pause while the client's menu is open")
 
-MACRO_CONFIG_INT(SvKillingspreeParticles, sv_killingspree_particles, 1, 0, 1, CFGFLAG_SERVER, "Whether players with a killingspree get a particle trail")
+// MACRO_CONFIG_INT(SvKillingspreeParticles, sv_killingspree_particles, 1, 0, 1, CFGFLAG_SERVER, "Whether players with a killingspree get a particle trail")
 
 MACRO_CONFIG_INT(SvBotsPreferredAmount, sv_bots_preferred_amount, 0, 0, MAX_CLIENTS-1, CFGFLAG_SERVER, "Preferred amount of bots (takes effect on reload)")
 MACRO_CONFIG_INT(SvBotsPreferredLevel, sv_bots_preferred_level, 4, 1, 6, CFGFLAG_SERVER, "Preferred level of bots (max:6) (takes effect on reload)")

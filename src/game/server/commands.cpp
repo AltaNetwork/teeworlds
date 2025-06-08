@@ -29,11 +29,9 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "TW+ Mod v.%s created by Teetime, Modified v%s by Pointer.", MOD_VERSION_TEETIME, MOD_VERSION);
 		SendChatTarget(ClientID, aBuf);
-
 		SendChatTarget(ClientID, "For a list of available commands type \"/cmdlist\"");
-
-		str_format(aBuf, sizeof(aBuf), "Gametype: %s", GameType());
-		SendChatTarget(ClientID, aBuf);
+		// str_format(aBuf, sizeof(aBuf), "Gametype: %s", GameType());
+		// SendChatTarget(ClientID, aBuf);
 
 		// if(m_pController->IsIFreeze())
 		// 		SendChatTarget(ClientID, "iFreeze is originally created by Tom94. Big thanks to him");
@@ -49,24 +47,10 @@ bool CGameContext::ShowCommand(int ClientID, CPlayer* pPlayer, const char* pMess
 	else if(StrLeftComp(pMessage, "s")) {
 	    	pPlayer->m_Anonymous = false;
 	}
-	// else if(StrLeftComp(pMessage, "inv")) {
-	//     	pPlayer->m_Invincible = true;
-	// }
-	// else if(StrLeftComp(pMessage, "invs")) {
-	//     	pPlayer->m_Invincible = false;
-	// }
-	else if(StrLeftComp(pMessage, "pause")) {
-	    if(pPlayer->GetTeam() == -1)
-			pPlayer->SetTeam(0,false);
-		else pPlayer->SetTeam(-1,false);
-	}
-	else if(StrLeftComp(pMessage, "spec")) {
-	    if(pPlayer->GetTeam() == -1)
-			pPlayer->SetTeam(0,false);
-		else pPlayer->SetTeam(-1,false);
+	else if(m_pController->m_pPausable && (StrLeftComp(pMessage, "pause") || StrLeftComp(pMessage, "spec"))) {
+		pPlayer->SetTeam(abs(pPlayer->GetTeam())-1,false,false);
 	}
 	else if(StrLeftComp(pMessage, "credits"))
-
 	{
 		SendChatTarget(ClientID, "Credits goes to the whole Teeworlds-community and especially");
 		SendChatTarget(ClientID, "to BotoX, Tom and Greyfox. This mod has some of their ideas included.");

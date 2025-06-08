@@ -66,6 +66,8 @@ protected:
 
 public:
 	const char *m_pGameType;
+	bool m_pNoAmmo;
+	bool m_pPausable;
 	bool m_pTimeScore;
 	bool m_pTakeDamage;
 
@@ -75,7 +77,7 @@ public:
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
 
-	// virtual void DoWincheck();
+	virtual void DoWincheck();
 
 	void DoWarmup(int Seconds);
 
@@ -90,7 +92,7 @@ public:
 	/*
 
 	*/
-	virtual bool CanBeMovedOnBalance(int ClientID);
+	// virtual bool CanBeMovedOnBalance(int ClientID);
 
 	virtual void Tick();
 

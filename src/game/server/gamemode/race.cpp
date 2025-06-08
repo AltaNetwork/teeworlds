@@ -7,6 +7,8 @@ CGameControllerRACE::CGameControllerRACE(class CGameContext *pGameServer) : IGam
     m_pGameType = "Race";
     m_pTimeScore = true;
     m_pTakeDamage = false;
+    m_pNoAmmo = true;
+    m_pPausable = true;
     GameServer()->Tuning()->m_PlayerHit = false;
     GameServer()->Tuning()->m_PlayerHooking = false;
     GameServer()->Tuning()->m_PlayerCollision = false;

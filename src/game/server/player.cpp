@@ -428,11 +428,12 @@ void CPlayer::KillCharacter(int Weapon) {
 // 		m_Spawning = true;
 // }
 
-void CPlayer::SetTeam(int Team, bool DoChatMsg)
+void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 {
 	// clamp the team
 	Team = GameServer()->m_pController->ClampTeam(Team);
-	if(m_Team == Team)		return;
+	if(m_Team == Team)
+	    return;
 
 	char aBuf[512];
 	if(DoChatMsg)   {
@@ -440,7 +441,8 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
 
-	KillCharacter();
+	if(KillChr)
+	    KillCharacter();
 
 	m_Team = Team;
 	m_LastActionTick = Server()->Tick();

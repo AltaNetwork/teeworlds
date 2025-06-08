@@ -42,30 +42,29 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	m_Energy = -1;
 	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE);
 	pHit->Melt();
-	/////////////////////////////////////////////////////////////////////////////////////// UGH TO FINISH LATER...
-		//if(m_Type == WEAPON_SHOTGUN)    {
-			float Strength = 10;//Tuning()->m_ShotgunStrength;
-
-			const vec2 &HitPos = pHit->GetCore()->m_Pos;
-			// if(!g_Config.m_SvOldLaser)
-			// {
-				// if(m_PrevPos != HitPos)
-				// {
-				    vec2 newvel = vec2(normalize(pOwnerChar->GetCore()->m_Pos - HitPos) * Strength);
-					//pHit->TakeDamage(vec2(100.f, 100.f), 0, m_Owner, WEAPON_RIFLE);
-					pHit->GetCore()->m_Vel += newvel;
-			// 	if(pOwnerChar->Core()->m_Pos != HitPos)
-			// 	{
-			// 		pHit->AddVelocity(normalize(pOwnerChar->Core()->m_Pos - HitPos) * Strength);
-			// 	}
-			// 	else
-			// 	{
-			// 		pHit->SetRawVelocity(StackedLaserShotgunBugSpeed);
-			// 	}
-			// }
-			//}
-		// else if(m_Type == WEAPON_RIFLE) //
 	return true;
+	/////////////////////////////////////////////////////////////////////////////////////// UGH TO FINISH LATER...
+	//if(m_Type == WEAPON_SHOTGUN)    {
+		float Strength = 10;//Tuning()->m_ShotgunStrength;
+		const vec2 &HitPos = pHit->GetCore()->m_Pos;
+		// if(!g_Config.m_SvOldLaser)
+		// {
+			// if(m_PrevPos != HitPos)
+			// {
+			    vec2 newvel = vec2(normalize(pOwnerChar->GetCore()->m_Pos - HitPos) * Strength);
+				//pHit->TakeDamage(vec2(100.f, 100.f), 0, m_Owner, WEAPON_RIFLE);
+				pHit->GetCore()->m_Vel += newvel;
+		// 	if(pOwnerChar->Core()->m_Pos != HitPos)
+		// 	{
+		// 		pHit->AddVelocity(normalize(pOwnerChar->Core()->m_Pos - HitPos) * Strength);
+		// 	}
+		// 	else
+		// 	{
+		// 		pHit->SetRawVelocity(StackedLaserShotgunBugSpeed);
+		// 	}
+		// }
+		//}
+	// else if(m_Type == WEAPON_RIFLE) //
 	/////////////////////////////////////////////////////////////////////////////////////////////
 }
 

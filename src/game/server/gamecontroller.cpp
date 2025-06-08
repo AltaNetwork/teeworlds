@@ -21,6 +21,8 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_pServer = m_pGameServer->Server();
 	m_pGameType = "unknown";
 
+	m_pNoAmmo = false;
+	m_pPausable = false;
 	m_pTimeScore = false;
 	m_pTakeDamage = true;
 
@@ -500,26 +502,26 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
 	if(pKiller == pVictim->GetPlayer())
-	{
-		pVictim->GetPlayer()->m_Score--; // suicide
-		if(g_Config.m_SvLoltextShow)
-			GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
-	}
-	else
-	{
-		if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
-		{
-			pKiller->m_Score--; // teamkill
-			if(g_Config.m_SvLoltextShow)
-				GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
-		}
-		else
-		{
-			pKiller->m_Score++; // normal kill
-			if(g_Config.m_SvLoltextShow)
-				GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
-		}
-	}
+	// {
+	// 	pVictim->GetPlayer()->m_Score--; // suicide
+	// 	if(g_Config.m_SvLoltextShow)
+	// 		GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
+	// }
+	// else
+	// {
+	// 	if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
+	// 	{
+	// 		pKiller->m_Score--; // teamkill
+	// 		if(g_Config.m_SvLoltextShow)
+	// 			GameServer()->CreateLolText(pKiller->GetCharacter(), "-1");
+	// 	}
+	// 	else
+	// 	{
+	// 		pKiller->m_Score++; // normal kill
+	// 		if(g_Config.m_SvLoltextShow)
+	// 			GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
+	// 	}
+	// }
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = 0;//Server()->Tick()+Server()->TickSpeed()*3.0f;
 	return 0;
@@ -567,10 +569,10 @@ bool IGameController::IsForceBalanced()
 		return false;
 }
 
-bool IGameController::CanBeMovedOnBalance(int ClientID)
-{
-	return true;
-}
+// bool IGameController::CanBeMovedOnBalance(int ClientID)
+// {
+// 	return true;
+// }
 
 void IGameController::Tick()
 {
@@ -665,6 +667,7 @@ void IGameController::Tick()
 	// 	}
 	// 	m_UnbalancedTick = -1;
 	// }
+	DoWincheck();
 
 	// check for inactive players
 	if(g_Config.m_SvInactiveKickTime > 0)
@@ -716,19 +719,16 @@ void IGameController::Tick()
 }
 
 
-bool IGameController::IsTeamplay() const
-{
-	return m_GameFlags&GAMEFLAG_TEAMS;
-}
+bool IGameController::IsTeamplay() const    {   return m_GameFlags&GAMEFLAG_TEAMS;  }
 
-void IGameController::Snap(int SnappingClient)
-{
+void IGameController::Snap(int SnappingClient)  {
 	CNetObj_GameInfo *pGameInfoObj = (CNetObj_GameInfo *)Server()->SnapNewItem(NETOBJTYPE_GAMEINFO, 0, sizeof(CNetObj_GameInfo));
 	if(!pGameInfoObj)
 		return;
 
 	pGameInfoObj->m_GameFlags = m_GameFlags;
-	// pGameInfoObj->m_GameFlags |= GAMEFLAG_TEAMS;
+	if(IsTeamplay())
+	    pGameInfoObj->m_GameFlags |= GAMEFLAG_TEAMS;
 	pGameInfoObj->m_GameStateFlags = 0;
 	if(m_GameOverTick != -1)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_GAMEOVER;
@@ -766,10 +766,10 @@ void IGameController::Snap(int SnappingClient)
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_ALLOW_ZOOM;
 	// if (SnappingClient==0) // try make this exclusive or smth i dont like it anyway
  //        pGameInfoEx->m_Flags |= GAMEINFOFLAG_ALLOW_EYE_WHEEL;
-	if (g_Config.m_SvGrenadeAmmo == -1 && IsGrenade())
+	if (m_pNoAmmo)//g_Config.m_SvGrenadeAmmo == -1 && IsGrenade())
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_UNLIMITED_AMMO;
-	pGameInfoEx->m_Flags2 =
-		GAMEINFOFLAG2_HUD_AMMO;
+	else
+	    pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_AMMO;
 	if (m_pTakeDamage)//!(g_Config.m_SvDDInstagibHideHealth && IsInstagib()))
 		pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
 	if (g_Config.m_SvDDShowHud)
@@ -894,53 +894,53 @@ bool IGameController::CanChangeTeam(CPlayer *pPlayer, int JoinTeam)
 		return true;
 }
 
-// void IGameController::DoWincheck()
-// {
-// 	if(m_GameOverTick == -1 && !m_Warmup && !GameServer()->m_World.m_ResetRequested)
-// 	{
-// 		if(IsTeamplay())
-// 		{
-// 			// check score win condition
-// 			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
-// 				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
-// 			{
-// 				if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
-// 					EndRound();
-// 				else
-// 					m_SuddenDeath = 1;
-// 			}
-// 		}
-// 		else
-// 		{
-// 			// gather some stats
-// 			int Topscore = -9999;
-// 			int TopscoreCount = 0;
-// 			for(int i = 0; i < MAX_CLIENTS; i++)
-// 			{
-// 				if(GameServer()->m_apPlayers[i])
-// 				{
-// 					if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
-// 					{
-// 						Topscore = GameServer()->m_apPlayers[i]->m_Score;
-// 						TopscoreCount = 1;
-// 					}
-// 					else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
-// 						TopscoreCount++;
-// 				}
-// 			}
+void IGameController::DoWincheck()
+{
+	if(m_GameOverTick == -1 && !m_Warmup && !GameServer()->m_World.m_ResetRequested)
+	{
+		if(IsTeamplay())
+		{
+			// check score win condition
+			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			{
+				if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
+					EndRound();
+				else
+					m_SuddenDeath = 1;
+			}
+		}
+		else
+		{
+			// gather some stats
+			int Topscore = -9999;
+			int TopscoreCount = 0;
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i])
+				{
+					if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
+					{
+						Topscore = GameServer()->m_apPlayers[i]->m_Score;
+						TopscoreCount = 1;
+					}
+					else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
+						TopscoreCount++;
+				}
+			}
 
-// 			// check score win condition
-// 			if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
-// 				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
-// 			{
-// 				if(TopscoreCount == 1)
-// 					EndRound();
-// 				else
-// 					m_SuddenDeath = 1;
-// 			}
-// 		}
-// 	}
-// }
+			// check score win condition
+			if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			{
+				if(TopscoreCount == 1)
+					EndRound();
+				else
+					m_SuddenDeath = 1;
+			}
+		}
+	}
+}
 
 int IGameController::ClampTeam(int Team)
 {
