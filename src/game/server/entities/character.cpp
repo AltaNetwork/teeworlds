@@ -298,14 +298,14 @@ void CCharacter::FireWeapon()
 														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 			for (int i = 0; i < Num; ++i)    {
 			    CCharacter *pTarget = apEnts[i];
-				if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL))
+				if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL) || (pTarget->GetCore().m_VTeam != m_Core.m_VTeam || m_Core.m_VTeam == -1))
 					continue;
+
 				// set his velocity to fast upward (for now)
 				if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
 					GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*m_ProximityRadius*0.5f);
 				else
 					GameServer()->CreateHammerHit(ProjStartPos);
-
 				vec2 Dir;
 				if (length(pTarget->m_Pos - m_Pos) > 0.0f)
 					Dir = normalize(pTarget->m_Pos - m_Pos);
@@ -564,31 +564,6 @@ void CCharacter::Tick()
 	{
 	    m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
 	}
-	// if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 9 ||
-	// 	GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 9 ||
-	// 	GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 9 ||
-	// 	GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)  == 9 ||
-	// 	GameLayerClipped(m_Pos))
-	// {
- //        m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
-	// }
-	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/50.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
-		GameLayerClipped(m_Pos))
-	{
-		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
-	}
-	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) != 0 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) != 0 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) != 0 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) != 0 ||
-		GameLayerClipped(m_Pos))
-	{
-	    m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
-	}
-
 	HandleZones();
 	// handle Weapons
 	HandleWeapons();
@@ -746,7 +721,10 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
-	m_Core.m_Vel += Force;
+    if((GameServer()->m_apPlayers[From]->GetCharacter()->GetCore().m_VTeam != m_Core.m_VTeam || m_Core.m_VTeam == -1))
+        return false;
+
+    m_Core.m_Vel += Force;
 
 	if(Weapon == WEAPON_HAMMER)
 	    m_Core.m_FreezeTicks = 0;
@@ -836,7 +814,42 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 
 void CCharacter::HandleZones()
 {
-    return;
+    if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
+		GameLayerClipped(m_Pos)) // DEATH BUT FOR QUADS USE REGULAR GAMELAYER DEATH FOR TILE STUFF
+	{
+		Die(m_pPlayer->GetCID(), WEAPON_WORLD);
+	}
+	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
+		GameLayerClipped(m_Pos)) // FREEZE BUT FOR QUADS USE REGULAR GAMELAYER FREEZE FOR TILE STUFF
+	{
+	    m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
+	}
+	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
+		GameLayerClipped(m_Pos))	{   m_Core.m_VTeam = -1;  } // PASSIVE ON
+	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
+		GameLayerClipped(m_Pos))	{   m_Core.m_VTeam = 0;  } // PASSIVE OFF
+	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
+		GameLayerClipped(m_Pos)) // DOWN STOPPER
+	    {
+		    if(m_Core.m_Vel.y < 0)
+		        m_Core.m_Vel.y = 0;
+		}
+
 }
 
 void CCharacter::Snap(int SnappingClient)
@@ -849,7 +862,7 @@ void CCharacter::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	if(!m_TakeDamage) {
+	if(/*!m_TakeDamage*/m_Core.m_VTeam == -1 ) {
 	   CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
 				if(!pP)
     		return;
@@ -883,10 +896,7 @@ void CCharacter::Snap(int SnappingClient)
 			pCharacter->m_HookedPlayer = -1;
 	}
 
-	if(m_Core.m_FreezeTicks == 0) // CRAZY INNEFICCENT BUT WORKS :P
-	    GameServer()->SendTuningParams(m_pPlayer->GetCID(), false);
-	else
-	    GameServer()->SendTuningParams(m_pPlayer->GetCID(), true);
+    GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
 
 	pCharacter->m_Emote = m_EmoteType;
 	pCharacter->m_Emote = (pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) ? EMOTE_BLINK:pCharacter->m_Emote;

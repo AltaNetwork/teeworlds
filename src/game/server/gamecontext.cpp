@@ -11,6 +11,7 @@
 #include <game/gamecore.h>
 #include "entities/character.h"
 #include "gamemodes/mod.h"
+#include "gameworld.h"
 
 #include <engine/server/localization.h>
 
@@ -310,6 +311,47 @@ void CGameContext::SendEmoticon(int ClientID, int Emoticon)
 	Msg.m_ClientID = ClientID;
 	Msg.m_Emoticon = Emoticon;
 	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+	CCharacter *pChr = pPlayer->GetCharacter();
+
+	// player needs a character to send emotes
+	if(!pChr)
+		return;
+
+	int EmoteType = EMOTE_NORMAL;
+	switch(Emoticon)
+	{
+	case EMOTICON_EXCLAMATION:
+	case EMOTICON_GHOST:
+	case EMOTICON_QUESTION:
+	case EMOTICON_WTF:
+		EmoteType = EMOTE_SURPRISE;
+		break;
+	case EMOTICON_DOTDOT:
+	case EMOTICON_DROP:
+	case EMOTICON_ZZZ:
+		EmoteType = EMOTE_BLINK;
+		break;
+	case EMOTICON_EYES:
+	case EMOTICON_HEARTS:
+	case EMOTICON_MUSIC:
+		EmoteType = EMOTE_HAPPY;
+		break;
+	case EMOTICON_OOP:
+	case EMOTICON_SORRY:
+	case EMOTICON_SUSHI:
+		EmoteType = EMOTE_PAIN;
+		break;
+	case EMOTICON_DEVILTEE:
+	case EMOTICON_SPLATTEE:
+	case EMOTICON_ZOMG:
+		EmoteType = EMOTE_ANGRY;
+		break;
+	default:
+		break;
+	}
+	pChr->SetEmote(EmoteType, Server()->Tick() + 2 * Server()->TickSpeed());
 }
 
 void CGameContext::SendWeaponPickup(int ClientID, int Weapon)
@@ -441,25 +483,34 @@ void CGameContext::CheckPureTuning()
 		return;
 }
 
-void CGameContext::SendTuningParams(int ClientID, bool Frozen)
+void CGameContext::SendTuningParams(int ClientID, bool firsttime)
 {
 	CheckPureTuning();
 
 	CTuningParams FakeTuning;
 	mem_comp(&FakeTuning, &m_Tuning, sizeof(CTuningParams));
 
-	if(Frozen)
-	{
-        FakeTuning.m_GroundControlAccel = 0;
-        FakeTuning.m_GroundControlSpeed = 0;
-        FakeTuning.m_AirControlSpeed = 0;
-        FakeTuning.m_AirControlAccel = 0;
-        FakeTuning.m_GroundJumpImpulse = 0;
-        FakeTuning.m_AirJumpImpulse = 0;
-        FakeTuning.m_HookLength = 0;
-        FakeTuning.m_HookFireSpeed = 0;
-        FakeTuning.m_HookDragAccel = 0;
-        FakeTuning.m_HookDragSpeed = 0;
+	CPlayer *pPlayer = m_apPlayers[ClientID];
+
+	if(pPlayer && !firsttime) {
+	    if(pPlayer->GetCharacter()->GetCore().m_VTeam == -1)
+		{
+			FakeTuning.m_PlayerCollision = 0;
+			FakeTuning.m_PlayerHooking = 0;
+        }
+		if(pPlayer->GetCharacter()->GetCore().m_FreezeTicks)
+		{
+            FakeTuning.m_GroundControlAccel = 0;
+            FakeTuning.m_GroundControlSpeed = 0;
+            FakeTuning.m_AirControlSpeed = 0;
+            FakeTuning.m_AirControlAccel = 0;
+            FakeTuning.m_GroundJumpImpulse = 0;
+            FakeTuning.m_AirJumpImpulse = 0;
+            FakeTuning.m_HookLength = 0;
+            FakeTuning.m_HookFireSpeed = 0;
+            FakeTuning.m_HookDragAccel = 0;
+            FakeTuning.m_HookDragSpeed = 0;
+		}
 	}
 
 	CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
@@ -1125,7 +1176,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			}
 
 			// send tuning parameters to client
-			SendTuningParams(ClientID);
+			SendTuningParams(ClientID, true);
 
 			// client is ready to enter
 			pPlayer->m_IsReady = true;
@@ -1596,8 +1647,19 @@ void CGameContext::ConSpec(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
     int ClientID = pResult->GetClientID();
-    pSelf->m_apPlayers[ClientID]->SetTeam(
-        abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+    pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+}
+void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    int WantedTeam = pResult->GetInteger(0);
+    char aBuf[128];
+    pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_VTeam = WantedTeam;
+    	str_format(aBuf, sizeof(aBuf), "'%s' joined team %d", pSelf->Server()->ClientName(ClientID), WantedTeam);
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+
 }
 
 void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
@@ -1724,8 +1786,9 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
-	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "change language");
-	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "change language");
+	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
+	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
+	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }

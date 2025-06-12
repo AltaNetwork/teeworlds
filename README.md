@@ -1,7 +1,9 @@
 TeeCore
 =========
 This is a foundation\frame for single gametype teeworlds mod
+
 *Teecore is based on a [teeworlds](https://github.com/teeworlds) 0.6.4*
+
 **Building & Installing dependencies**
 
 -----------------------
@@ -10,12 +12,14 @@ This is a foundation\frame for single gametype teeworlds mod
     sudo apt install build-essential bam git python3
     bam
 
-Changelog by veqi
+Changelog *by veqi*
 ---------------------------
 
 - Experimental 128 player support (veqi)
 - Spectator support
 - Freeze support
+- Stoppers support
+- Teams & Passive support
 
 Changelog
 ---------------------------
@@ -31,6 +35,6 @@ Changelog
 - Content related to vanilla gametypes removed (necropotame)
 - Compatibility with bam 0.5.0 (heinrich5991)
 - Antispoof system (east, heinrich5991, def-)
-- Allow 64 players to join on the server (DDNet team, Neox)
+- Allow 64 players to **join** ( veqi added listing ) on the server (DDNet team, Neox)
 - Add TeeUniverse Portable Maps compatibility (necropotame)
 - Add per-player tune system (necropotame)

@@ -206,6 +206,7 @@ public:
 
 	bool m_Hooking;
 	bool m_Collide;
+	int m_VTeam; // Virtual teams or veqi teams call it however
 
 	void Init(CWorldCore *pWorld, CCollision *pCollision);
 	void Reset();

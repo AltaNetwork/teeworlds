@@ -61,6 +61,7 @@ class CGameContext : public IGameServer
 
 	static void ConLanguage(IConsole::IResult *pResult, void *pUserData);
 	static void ConSpec(IConsole::IResult *pResult, void *pUserData);
+	static void ConVTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConAbout(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneReset(IConsole::IResult *pResult, void *pUserData);
@@ -177,7 +178,7 @@ public:
 
 	//
 	void CheckPureTuning();
-	void SendTuningParams(int ClientID, bool Frozen = false);
+	void SendTuningParams(int ClientID, bool firsttime = false);
 
 	//
 	void SwapTeams();
