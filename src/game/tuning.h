@@ -23,14 +23,6 @@ MACRO_TUNING_PARAM(VelrampStart, velramp_start, 550)
 MACRO_TUNING_PARAM(VelrampRange, velramp_range, 2000)
 MACRO_TUNING_PARAM(VelrampCurvature, velramp_curvature, 1.4f)
 
-// To fake tune it... ( for freeze )
-// tune air_control_accel 0; tune air_jump_impulse 0;
-// tune hook_length -1;
-// tune hook_fire_speed 0;
-// tune hook_drag_speed 0;
-// tune hook_drag_accel 0;
-// tune ground_jump_impulse 0;
-
 // weapon tuning
 MACRO_TUNING_PARAM(GunCurvature, gun_curvature, 1.25f)
 MACRO_TUNING_PARAM(GunSpeed, gun_speed, 2200.0f)
@@ -53,4 +45,7 @@ MACRO_TUNING_PARAM(LaserDamage, laser_damage, 5)
 
 MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1)
 MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1)
+
+MACRO_TUNING_PARAM(Freeze, freeze_length, 3.0f * SERVER_TICK_SPEED)
+
 #endif

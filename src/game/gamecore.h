@@ -195,6 +195,8 @@ public:
 	int m_HookedPlayer;
 
 	int m_Jumped;
+	int m_AirJumped;
+	int m_AirJumps;
 
 	int m_FreezeTicks;
 

@@ -51,6 +51,7 @@ void CPickup::Tick()
 		switch (m_Type)
 		{
 			case POWERUP_HEALTH:
+			    pChr->GetCore().m_FreezeTicks = GameServer()->Tuning()->m_Freeze;
 				if(pChr->IncreaseHealth(1))
 				{
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
@@ -59,6 +60,9 @@ void CPickup::Tick()
 				break;
 
 			case POWERUP_ARMOR:
+                pChr->TakeWeapon(WEAPON_SHOTGUN);
+                pChr->TakeWeapon(WEAPON_GRENADE);
+                pChr->TakeWeapon(WEAPON_RIFLE);
 				if(pChr->IncreaseArmor(1))
 				{
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);

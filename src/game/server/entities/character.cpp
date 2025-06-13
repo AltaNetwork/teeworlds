@@ -452,6 +452,16 @@ bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 	return false;
 }
 
+bool CCharacter::TakeWeapon(int Weapon)
+{
+    if(m_aWeapons[Weapon].m_Got == false)
+        return false;
+    SetWeapon(WEAPON_GUN);
+    m_aWeapons[Weapon].m_Got = false;
+    m_aWeapons[Weapon].m_Ammo = 0;
+    return true;
+}
+
 void CCharacter::GiveNinja()
 {
 	m_Ninja.m_ActivationTick = Server()->Tick();
@@ -562,7 +572,7 @@ void CCharacter::Tick()
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
 		GameLayerClipped(m_Pos))
 	{
-	    m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
+	    m_Core.m_FreezeTicks = GameServer()->Tuning()->m_Freeze;
 	}
 	HandleZones();
 	// handle Weapons
@@ -625,7 +635,6 @@ void CCharacter::TickDefered()
 	int Mask = CmaskAllExceptOne(m_pPlayer->GetCID());
 
 	if(Events&COREEVENT_GROUND_JUMP) GameServer()->CreateSound(m_Pos, SOUND_PLAYER_JUMP, Mask);
-
 	if(Events&COREEVENT_HOOK_ATTACH_PLAYER) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, CmaskAll());
 	if(Events&COREEVENT_HOOK_ATTACH_GROUND) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, Mask);
 	if(Events&COREEVENT_HOOK_HIT_NOHOOK) GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
@@ -683,7 +692,6 @@ bool CCharacter::IncreaseArmor(int Amount)
 	if(m_Armor >= 10)
 		return false;
 	m_Armor = clamp(m_Armor+Amount, 0, 10);
-	m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
 	return true;
 }
 
@@ -828,7 +836,7 @@ void CCharacter::HandleZones()
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
 		GameLayerClipped(m_Pos)) // FREEZE BUT FOR QUADS USE REGULAR GAMELAYER FREEZE FOR TILE STUFF
 	{
-	    m_Core.m_FreezeTicks = SERVER_TICK_SPEED * 3;
+	    m_Core.m_FreezeTicks = GameServer()->Tuning()->m_Freeze;
 	}
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
@@ -898,7 +906,7 @@ void CCharacter::Snap(int SnappingClient)
 
     GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
 
-	pCharacter->m_Emote = m_EmoteType;
+	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
 	pCharacter->m_Emote = (pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) ? EMOTE_BLINK:pCharacter->m_Emote;
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
@@ -910,7 +918,7 @@ void CCharacter::Snap(int SnappingClient)
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
 	{
     	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
-    	pCharacter->m_Armor = m_Core.m_FreezeTicks ? (m_Core.m_FreezeTicks / SERVER_TICK_SPEED + 1)%10 : m_Armor;
+    	pCharacter->m_Armor = m_Core.m_FreezeTicks ? 10-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*10 : m_Armor;
 		pCharacter->m_AmmoCount = clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
 	}
 }

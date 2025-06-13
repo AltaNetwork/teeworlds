@@ -1022,7 +1022,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		{
 			CNetMsg_Cl_SetSpectatorMode *pMsg = (CNetMsg_Cl_SetSpectatorMode *)pRawMsg;
 
-			if(g_Config.m_SvSpamprotection && pPlayer->m_LastSetSpectatorMode && pPlayer->m_LastSetSpectatorMode+Server()->TickSpeed()*3 > Server()->Tick())
+			if(g_Config.m_SvSpamprotection && pPlayer->m_LastSetSpectatorMode && pPlayer->m_LastSetSpectatorMode+Server()->TickSpeed()*0.3 > Server()->Tick())
 				return;
 
 			if(pMsg->m_SpectatorID != SPEC_FREEVIEW)
@@ -1661,6 +1661,17 @@ void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
         pSelf->SendChatTarget(ClientID, _(aBuf));
 
 }
+void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    int Jumps = abs(pResult->GetInteger(0));
+    char aBuf[128];
+    pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_AirJumps = Jumps;
+    	str_format(aBuf, sizeof(aBuf), "Air jumps set to %d", Jumps);
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+}
 
 void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
 {
@@ -1786,6 +1797,7 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
+	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "change language");
 	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");

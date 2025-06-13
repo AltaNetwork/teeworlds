@@ -15,11 +15,14 @@ This is a foundation\frame for single gametype teeworlds mod
 Changelog *by veqi*
 ---------------------------
 
-- Experimental 128 player support (veqi)
+- Better freeze display in shields
+- Air Jumps
+- DDRace Pickups
+- Teams & Passive support
+- Stoppers support
 - Spectator support
 - Freeze support
-- Stoppers support
-- Teams & Passive support
+- Experimental 128 player support (veqi)
 
 Changelog
 ---------------------------
