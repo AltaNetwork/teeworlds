@@ -88,7 +88,8 @@ public:
 	void EndRound();
 	void ChangeMap(const char *pToMap);
 
-	bool IsFriendlyFire(int ClientID1, int ClientID2);
+    bool IsFriendlyFire(int ClientID1, int ClientID2);
+    int VTeam1vs1(int ClientID1, int ClientID2);
 
 	bool IsForceBalanced();
 

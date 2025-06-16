@@ -5,7 +5,7 @@
 #include "projectile.h"
 
 CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon)
+		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int VTeam)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
@@ -19,6 +19,8 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, 
 	m_Weapon = Weapon;
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
+
+	m_VTeam = VTeam;
 
 	GameWorld()->InsertEntity(this);
 }
@@ -66,7 +68,7 @@ void CProjectile::Tick()
 	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 	m_LifeSpan--;
 
-	if(TargetChr || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
+	if((TargetChr && TargetChr->GetCore().m_VTeam == m_VTeam) || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
 			GameServer()->CreateSound(CurPos, m_SoundImpact);
@@ -77,7 +79,10 @@ void CProjectile::Tick()
 		else if(TargetChr)
 			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Damage, m_Owner, m_Weapon);
 
-		GameServer()->m_World.DestroyEntity(this);
+		if(m_Type == WEAPON_GUN)
+    		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6);
+
+        GameServer()->m_World.DestroyEntity(this);
 	}
 }
 

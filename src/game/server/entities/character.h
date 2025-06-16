@@ -47,7 +47,7 @@ public:
 	void ResetInput();
 	void FireWeapon();
 
-	void Die(int Killer, int Weapon);
+	void Die(int Killer, int Weapon, bool SendKillMsg = true);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
@@ -65,6 +65,9 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	class CCharacterCore& GetCore() { return m_Core; }
+
+
+	int m_PassiveTicks;
 
 private:
 	// player controlling this character
@@ -89,7 +92,7 @@ private:
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 	bool m_TakeDamage;
-	int m_Zone;
+	// int m_Zone;
 
 	int m_ReloadTimer;
 	int m_AttackTick;

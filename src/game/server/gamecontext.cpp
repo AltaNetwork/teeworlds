@@ -1077,7 +1077,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if (MsgID == NETMSGTYPE_CL_KILL && !m_World.m_Paused)
 		{
-			if(pPlayer->m_LastKill && pPlayer->m_LastKill+Server()->TickSpeed()*3 > Server()->Tick())
+			if((pPlayer->m_LastKill && pPlayer->m_LastKill+Server()->TickSpeed() > Server()->Tick()) || pPlayer->GetTeam() == TEAM_SPECTATORS)
 				return;
 
 			pPlayer->m_LastKill = Server()->Tick();
@@ -1661,6 +1661,17 @@ void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
         pSelf->SendChatTarget(ClientID, _(aBuf));
 
 }
+void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    int Value = pResult->GetInteger(0);
+    char aBuf[128];
+    pSelf->m_apPlayers[ClientID]->m_1vs1Player = Value;//GetCharacter()->GetCore().m_LastContact = Value;
+    str_format(aBuf, sizeof(aBuf), "Value set to %d", Value);
+    pSelf->SendChatTarget(ClientID, _(aBuf));
+}
 void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -1798,6 +1809,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "change language");
+	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "change language");
 	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
@@ -1826,15 +1838,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_ZoneHandle_Death = m_Collision.GetZoneHandle("death");
 	m_ZoneHandle_Zones = m_Collision.GetZoneHandle("zones");
 
-	// reset everything here
-	//world = new GAMEWORLD;
-	//players = new CPlayer[MAX_CLIENTS];
-
 	m_pController = new CGameControllerMOD(this);
-
-	// setup core world
-	//for(int i = 0; i < MAX_CLIENTS; i++)
-	//	game.players[i].core.world = &game.world.core;
 
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
@@ -1961,7 +1965,7 @@ bool CGameContext::IsClientReady(int ClientID)
 
 bool CGameContext::IsClientPlayer(int ClientID)
 {
-	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS ? false : true;
+	return m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetTeam() == !m_apPlayers[ClientID]->GetCharacter() ? false : true;
 }
 
 const char *CGameContext::GameType() { return m_pController && m_pController->m_pGameType ? m_pController->m_pGameType : ""; }

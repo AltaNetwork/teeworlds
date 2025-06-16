@@ -5,10 +5,12 @@
 
 #include <base/vmath.h>
 #include <base/tl/array.h>
+#include <base/math.h>
 
 class CCollision
 {
 	class CTile *m_pTiles;
+	class CTile *m_pTiles2;
 	int m_Width;
 	int m_Height;
 	class CLayers *m_pLayers;

@@ -17,6 +17,7 @@ class CLayers
 	CMapItemGroup *m_pZoneGroup;
 	CMapItemGroup *m_pEntityGroup;
 	CMapItemLayerTilemap *m_pGameLayer;
+	CMapItemLayerTilemap *m_pFrontLayer; // Testing hook trough not working :P
 	class IMap *m_pMap;
 
 public:
@@ -28,6 +29,7 @@ public:
 	CMapItemGroup *ZoneGroup() const { return m_pZoneGroup; };
 	CMapItemGroup *EntityGroup() const { return m_pEntityGroup; };
 	CMapItemLayerTilemap *GameLayer() const { return m_pGameLayer; };
+	CMapItemLayerTilemap *FrontLayer() const { return m_pFrontLayer; };
 	CMapItemGroup *GetGroup(int Index) const;
 	CMapItemLayer *GetLayer(int Index) const;
 };

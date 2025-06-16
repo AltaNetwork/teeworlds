@@ -102,25 +102,8 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	if(Team == TEAM_SPECTATORS)
 		return false;
 
-	if(IsTeamplay())
-	{
-		Eval.m_FriendlyTeam = Team;
-
-		// first try own team spawn, then normal spawn and then enemy
-		EvaluateSpawnType(&Eval, 1+(Team&1));
-		if(!Eval.m_Got)
-		{
-			EvaluateSpawnType(&Eval, 0);
-			if(!Eval.m_Got)
-				EvaluateSpawnType(&Eval, 1+((Team+1)&1));
-		}
-	}
-	else
-	{
-		EvaluateSpawnType(&Eval, 0);
-		EvaluateSpawnType(&Eval, 1);
-		EvaluateSpawnType(&Eval, 2);
-	}
+	EvaluateSpawnType(&Eval, Team);
+	// EvaluateSpawnType(&Eval, 0);
 
 	*pOutPos = Eval.m_Pos;
 	return Eval.m_Got;
@@ -316,7 +299,7 @@ void IGameController::PostReset()
 			GameServer()->m_apPlayers[i]->Respawn();
 			GameServer()->m_apPlayers[i]->m_Score = 0;
 			GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
-			GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+			// GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 		}
 	}
 }
@@ -346,17 +329,8 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	// do scoreing
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
-	if(pKiller == pVictim->GetPlayer())
-		pVictim->GetPlayer()->m_Score--; // suicide
-	else
-	{
-		if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
-			pKiller->m_Score--; // teamkill
-		else
-			pKiller->m_Score++; // normal kill
-	}
-	if(Weapon == WEAPON_SELF)
-		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;
+
+	pKiller->m_Score++;
 	return 0;
 }
 
@@ -403,22 +377,32 @@ void IGameController::TogglePause()
 	}
 }
 
+int IGameController::VTeam1vs1(int ClientID1, int ClientID2)
+{
+    int B = ClientID2>ClientID1 ? ClientID2 : ClientID1;
+    int A = ClientID2>ClientID1 ? ClientID1 : ClientID2; // A is always less than B
+    int R = ((A+B)*(A+B+A))/2+B;
+    return R;
+}
+
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
 {
-	if(ClientID1 == ClientID2)
-		return false;
+  if (ClientID1 == ClientID2)
+    return false;
 
-	if(IsTeamplay())
-	{
-		if(!GameServer()->m_apPlayers[ClientID1] || !GameServer()->m_apPlayers[ClientID2])
-			return false;
+  if (IsTeamplay()) {
+    if (!GameServer()->m_apPlayers[ClientID1] ||
+        !GameServer()->m_apPlayers[ClientID2])
+      return false;
 
-		if(GameServer()->m_apPlayers[ClientID1]->GetTeam() == GameServer()->m_apPlayers[ClientID2]->GetTeam())
-			return true;
-	}
+    if (GameServer()->m_apPlayers[ClientID1]->GetTeam() ==
+        GameServer()->m_apPlayers[ClientID2]->GetTeam())
+      return true;
+  }
 
-	return false;
+  return false;
 }
+
 
 bool IGameController::IsForceBalanced()
 {
@@ -587,13 +571,34 @@ void IGameController::Snap(int SnappingClient)
 	if(GameServer()->m_World.m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
 	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
-	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : m_Warmup;
+	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : GameServer()->m_apPlayers[SnappingClient]->GetCharacter() ? GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_PassiveTicks : m_Warmup;
 
 	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
 	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
 
 	pGameInfoObj->m_RoundNum = (str_length(g_Config.m_SvMaprotation) && g_Config.m_SvRoundsPerMap) ? g_Config.m_SvRoundsPerMap : 0;
 	pGameInfoObj->m_RoundCurrent = m_RoundCount+1;
+
+	CNetObj_GameInfoEx *pGameInfoEx = (CNetObj_GameInfoEx *)Server()->SnapNewItem(32767, 0, 12);
+	if(!pGameInfoEx)
+		return;
+
+	pGameInfoEx->m_Flags =
+		GAMEINFOFLAG_ALLOW_HOOK_COLL |
+		GAMEINFOFLAG_ALLOW_ZOOM;
+	pGameInfoEx->m_Flags2 =
+	    GAMEINFOFLAG2_HUD_AMMO |
+		GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
+	pGameInfoEx->m_Version = 8;
+
+	// This object needs to be snapped alongside pGameInfoObj for that object to work properly
+	int *pUuidItem = (int *)Server()->SnapNewItem(0, 32767, 16); // NETOBJTYPE_EX
+	if(pUuidItem)	{
+		pUuidItem[0] = -1824658838;
+		pUuidItem[1] = -629591830;
+		pUuidItem[2] = -1450210576;
+		pUuidItem[3] = 914991429;
+	}
 }
 
 int IGameController::GetAutoTeam(int NotThisID)

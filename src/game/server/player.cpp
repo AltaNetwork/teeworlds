@@ -10,7 +10,6 @@ IServer *CPlayer::Server() const { return m_pGameServer->Server(); }
 CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 {
 	m_pGameServer = pGameServer;
-	m_RespawnTick = Server()->Tick();
 	m_DieTick = Server()->Tick();
 	m_ScoreStartTick = Server()->Tick();
 	m_pCharacter = 0;
@@ -19,6 +18,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_SpectatorID = SPEC_FREEVIEW;
 	m_LastActionTick = Server()->Tick();
 	m_TeamChangeTick = Server()->Tick();
+
+	m_SpawnTeam = 0;
+	m_1vs1Player = -1;
+
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
 	m_Authed = IServer::AUTHED_NO;
@@ -88,12 +91,13 @@ void CPlayer::Tick()
 		}
 	}
 
+
 	if(!GameServer()->m_World.m_Paused)
 	{
 		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
 			m_ViewPos -= vec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, -400.0f, 400.0f));
 
-		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
+		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || PlayerEvent() != EVENT_NONE))
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -108,12 +112,26 @@ void CPlayer::Tick()
 				m_pCharacter = 0;
 			}
 		}
-		else if(m_Spawning && m_RespawnTick <= Server()->Tick())
+		else if(m_Spawning)
+		{
+		    if(PlayerEvent() == EVENT_DUEL)
+			    m_SpawnTeam = 1;
+			else
+                m_SpawnTeam = 0;
 			TryRespawn();
+		}
+		if(PlayerEvent() == EVENT_DUEL && Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
+		{
+    		char Buf[256];
+    		str_format(Buf, sizeof(Buf), "                                                     \n%s: %d\n%s: %d",
+                Server()->ClientName(m_ClientID), m_Score,
+                Server()->ClientName(m_1vs1Player), GameServer()->m_apPlayers[m_1vs1Player]->m_Score);
+    		GameServer()->SendBroadcast(Buf, m_ClientID);
+		}
 	}
 	else
 	{
-		++m_RespawnTick;
+		// ++m_RespawnTick;
 		++m_DieTick;
 		++m_ScoreStartTick;
 		++m_LastActionTick;
@@ -152,13 +170,54 @@ void CPlayer::Snap(int SnappingClient)
 	if(!pClientInfo)
 		return;
 
-	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
-	StrToInts(&pClientInfo->m_Clan0, 3, Server()->ClientClan(m_ClientID));
-	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
+	char aBuf[128];
+	str_format(aBuf, sizeof(aBuf), "");
+	if(m_PlayerFlags&PLAYERFLAG_IN_MENU)	{
+        switch ((Server()->Tick()/(SERVER_TICK_SPEED/2)+m_ClientID)%4) {
+            case 3:
+                str_format(aBuf, sizeof(aBuf), "oᵒ˚");
+                break;
+            case 2:
+                str_format(aBuf, sizeof(aBuf), "oᵒ");
+                break;
+            case 1:
+                str_format(aBuf, sizeof(aBuf), "o");
+                break;
+            case 0:
+                str_format(aBuf, sizeof(aBuf), "");
+                break;
+        }
+    }
+    char aBufName[128];
+	str_format(aBufName, sizeof(aBufName), "%s %s", Server()->ClientName(m_ClientID), aBuf);
+	StrToInts(&pClientInfo->m_Name0, 4, aBufName);
+
+	str_format(aBuf, sizeof(aBuf), "");
+	char aBufClan[128];
+	str_format(aBufClan, sizeof(aBufClan), "%s",Server()->ClientClan(m_ClientID));
+	if(m_PlayerFlags&PLAYERFLAG_CHATTING)	{
+        switch ((Server()->Tick()/(SERVER_TICK_SPEED/3)+m_ClientID)%4) {
+            case 3:
+                str_format(aBuf, sizeof(aBuf), "...✍");
+                break;
+            case 2:
+                str_format(aBuf, sizeof(aBuf), "..✍");
+                break;
+            case 1:
+                str_format(aBuf, sizeof(aBuf), ".✍");
+                break;
+            case 0:
+                str_format(aBuf, sizeof(aBuf), "✍");
+                break;
+        }
+    }
+
+	StrToInts(&pClientInfo->m_Clan0, 3, aBuf);
 	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
 	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
@@ -230,7 +289,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 {
 	// skip the input if chat is active
-	if((m_PlayerFlags&PLAYERFLAG_CHATTING) && (NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING))
+	if(m_Team == TEAM_SPECTATORS || ((m_PlayerFlags&PLAYERFLAG_CHATTING && (NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING))))
 		return;
 
 	if(m_pCharacter)
@@ -242,12 +301,12 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 	if(NewInput->m_PlayerFlags&PLAYERFLAG_CHATTING)
 	{
 		// skip the input if chat is active
-		if(m_PlayerFlags&PLAYERFLAG_CHATTING)
+		if(m_PlayerFlags&PLAYERFLAG_CHATTING || m_Team == TEAM_SPECTATORS)
 			return;
 
 		// reset input
-		if(m_pCharacter)
-			m_pCharacter->ResetInput();
+		// if(m_pCharacter)
+		// 	m_pCharacter->ResetInput();
 
 		m_PlayerFlags = NewInput->m_PlayerFlags;
  		return;
@@ -327,7 +386,7 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 	m_LastActionTick = Server()->Tick();
 	m_SpectatorID = SPEC_FREEVIEW;
 	// we got to wait 0.5 secs before respawning
-	m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
+	// m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
@@ -348,7 +407,7 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos))
+	if(!GameServer()->m_pController->CanSpawn(m_SpawnTeam, &SpawnPos))
 		return;
 
 	m_Spawning = false;
@@ -365,4 +424,15 @@ const char* CPlayer::GetLanguage()
 void CPlayer::SetLanguage(const char* pLanguage)
 {
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
+}
+int CPlayer::PlayerEvent()
+{
+    if(m_1vs1Player != -1 && GameServer()->m_apPlayers[m_1vs1Player])
+    {
+        if(m_ClientID != m_1vs1Player)
+            return EVENT_DUEL;
+        else
+            m_1vs1Player = -1;
+    }
+    return EVENT_NONE;
 }

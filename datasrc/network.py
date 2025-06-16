@@ -4,21 +4,18 @@ Emotes = ["NORMAL", "PAIN", "HAPPY", "SURPRISE", "ANGRY", "BLINK"]
 PlayerFlags = ["PLAYING", "IN_MENU", "CHATTING", "SCOREBOARD", "AIM", "SPEC_CAM"]
 GameFlags = ["TEAMS", "FLAGS"]
 GameStateFlags = ["GAMEOVER", "SUDDENDEATH", "PAUSED", "RACETIME"]
-CharacterFlags = ["SOLO", "JETPACK", "COLLISION_DISABLED", "ENDLESS_HOOK", "ENDLESS_JUMP", "SUPER",
-                  "HAMMER_HIT_DISABLED", "SHOTGUN_HIT_DISABLED", "GRENADE_HIT_DISABLED", "LASER_HIT_DISABLED", "HOOK_HIT_DISABLED",
-                  "TELEGUN_GUN", "TELEGUN_GRENADE", "TELEGUN_LASER",
-                  "WEAPON_HAMMER", "WEAPON_GUN", "WEAPON_SHOTGUN", "WEAPON_GRENADE", "WEAPON_LASER", "WEAPON_NINJA",
-				  "MOVEMENTS_DISABLED", "IN_FREEZE", "PRACTICE_MODE", "LOCK_MODE", "TEAM0_MODE", "INVINCIBLE"]
+
 GameInfoFlags = [
-	"TIMESCORE", "GAMETYPE_RACE", "GAMETYPE_FASTCAP", "GAMETYPE_FNG",
-	"GAMETYPE_DDRACE", "GAMETYPE_DDNET", "GAMETYPE_BLOCK_WORLDS",
-	"GAMETYPE_VANILLA", "GAMETYPE_PLUS", "FLAG_STARTS_RACE", "RACE",
-	"UNLIMITED_AMMO", "DDRACE_RECORD_MESSAGE", "RACE_RECORD_MESSAGE",
-	"ALLOW_EYE_WHEEL", "ALLOW_HOOK_COLL", "ALLOW_ZOOM", "BUG_DDRACE_GHOST",
-	"BUG_DDRACE_INPUT", "BUG_FNG_LASER_RANGE", "BUG_VANILLA_BOUNCE",
-	"PREDICT_FNG", "PREDICT_DDRACE", "PREDICT_DDRACE_TILES", "PREDICT_VANILLA",
-	"ENTITIES_DDNET", "ENTITIES_DDRACE", "ENTITIES_RACE", "ENTITIES_FNG",
-	"ENTITIES_VANILLA", "DONT_MASK_ENTITIES", "ENTITIES_BW"
+	"TIMESCORE", # Ill think about it ( unused )
+	"UNN1", "UNN2", "UNN3", "UNN4", "UNN5", "UNN6", "UNN7", "UNN8", "UNN9", "UNN10",
+	"UNLIMITED_AMMO", # Ill think about it ( unused )
+	"UNN11", "UNN12",
+	"ALLOW_EYE_WHEEL", "ALLOW_HOOK_COLL", "ALLOW_ZOOM" # Used
+]
+
+GameInfoFlags2 = [
+	"UNN13", "UNN14", "UNN15", "UNN16", # Completely unused
+	"HUD_HEALTH_ARMOR", "HUD_AMMO", "HUD_DDRACE", "NO_WEAK_HOOK" # DDrace Hud and No weak hook currently unused
 ]
 
 Emoticons = ["OOP", "EXCLAMATION", "HEARTS", "DROP", "DOTDOT", "MUSIC", "SORRY", "GHOST", "SUSHI", "SPLATTEE", "DEVILTEE", "ZOMG", "ZZZ", "WTF", "EYES", "QUESTION"]
@@ -68,10 +65,11 @@ Flags = [
 	Flags("PLAYERFLAG", PlayerFlags),
 	Flags("GAMEFLAG", GameFlags),
 	Flags("GAMESTATEFLAG", GameStateFlags),
-	Flags("CHARACTERFLAG", CharacterFlags),
+	# Flags("CHARACTERFLAG", CharacterFlags),
 	Flags("GAMEINFOFLAG", GameInfoFlags),
+	Flags("GAMEINFOFLAG2", GameInfoFlags2),
+	# Flags("EXPLAYERFLAG", ExPlayerFlags),
 ]
-
 Objects = [
 
 	NetObject("PlayerInput", [
@@ -237,6 +235,12 @@ Objects = [
 
 	NetEvent("DamageInd:Common", [
 		NetIntAny("m_Angle"),
+	]),
+
+	NetObject("GameInfoEx", [
+		NetIntAny("m_Flags"),
+		NetIntAny("m_Version"),
+		NetIntAny("m_Flags2"),
 	]),
 ]
 

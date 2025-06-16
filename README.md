@@ -15,6 +15,11 @@ This is a foundation\frame for single gametype teeworlds mod
 Changelog *by veqi*
 ---------------------------
 
+- 1vs1
+- DDNet Gun
+- Allow unzoom
+- Afk tiles
+- Indirect kills
 - Better freeze display in shields
 - Air Jumps
 - DDRace Pickups
@@ -38,6 +43,6 @@ Changelog
 - Content related to vanilla gametypes removed (necropotame)
 - Compatibility with bam 0.5.0 (heinrich5991)
 - Antispoof system (east, heinrich5991, def-)
-- Allow 64 players to **join** ( veqi added listing ) on the server (DDNet team, Neox)
+- Allow 64 players to **join** *( veqi added listing )* on the server (DDNet team, Neox)
 - Add TeeUniverse Portable Maps compatibility (necropotame)
 - Add per-player tune system (necropotame)

@@ -63,6 +63,7 @@ class CGameContext : public IGameServer
 	static void ConSpec(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConAirJumps(IConsole::IResult *pResult, void *pUserData);
+	static void ConValDebug(IConsole::IResult *pResult, void *pUserData);
 	static void ConVTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConAbout(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);

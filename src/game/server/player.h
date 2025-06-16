@@ -6,6 +6,7 @@
 // this include should perhaps be removed
 #include "entities/character.h"
 #include "gamecontext.h"
+#include <algorithm>
 
 // player object
 class CPlayer
@@ -39,6 +40,14 @@ public:
 
 	const char* GetLanguage();
 	void SetLanguage(const char* pLanguage);
+
+	int PlayerEvent(); // Returns
+	enum
+	{
+		EVENT_NONE=0,
+		EVENT_DUEL,
+		EVENT_TOURNAMENT,
+	};
 
 	//---------------------------------------------------------
 	// this is used for snapping so we know how we can clip the view for the player
@@ -78,7 +87,10 @@ public:
 		int m_ColorFeet;
 	} m_TeeInfos;
 
-	int m_RespawnTick;
+	// int m_RespawnTick;
+	int	m_SpawnTeam;
+	int m_1vs1Player;
+
 	int m_DieTick;
 	int m_Score;
 	int m_ScoreStartTick;

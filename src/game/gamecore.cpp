@@ -1,6 +1,7 @@
 
 
 #include "gamecore.h"
+#include "collision.h"
 #include <game/server/gamecontext.h>
 
 
@@ -72,6 +73,8 @@ void CCharacterCore::Reset()
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	m_HookedPlayer = -1;
+	m_LastContact = -1;
+	m_LastContactTicks = 0;
 	m_Jumped = 0;
 	m_AirJumped = 1;
 	m_AirJumps = 1;
@@ -111,6 +114,9 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 		a = a+pi;
 
 	m_Angle = (int)(a*256.0f);
+
+	if(m_LastContactTicks>0 && m_FreezeTicks==0)
+        m_LastContactTicks--;
 
 	// handle input
 	if(m_FreezeTicks != 0)
@@ -219,12 +225,11 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 		int Hit = m_pCollision->IntersectLine(m_HookPos, NewPos, &NewPos, 0);
 		if(Hit)
 		{
-			if(Hit&CCollision::COLFLAG_NOHOOK)
+            if(Hit&CCollision::COLFLAG_NOHOOK)
 				GoingToRetract = true;
 			else
 				GoingToHitGround = true;
 		}
-
 		// Check against other players first
 		if(m_pWorld && pTuningParams->m_PlayerHooking && m_VTeam!=-1)
 		{
@@ -232,9 +237,13 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
 				CCharacterCore *pCharCore = m_pWorld->m_apCharacters[i];
-				if(!pCharCore || pCharCore == this || pCharCore->m_VTeam!=m_VTeam)
+				if(!pCharCore || pCharCore->m_VTeam!=m_VTeam)
 					continue;
-
+				if(pCharCore == this)
+				{
+				    // myId = i;
+					continue;
+				}
 				vec2 ClosestPoint = closest_point_on_line(m_HookPos, NewPos, pCharCore->m_Pos);
 				if(distance(pCharCore->m_Pos, ClosestPoint) < PhysSize+2.0f)
 				{
@@ -243,6 +252,7 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 						m_TriggeredEvents |= COREEVENT_HOOK_ATTACH_PLAYER;
 						m_HookState = HOOK_GRABBED;
 						m_HookedPlayer = i;
+
 						Distance = distance(m_HookPos, pCharCore->m_Pos);
 					}
 				}

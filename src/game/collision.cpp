@@ -1,5 +1,7 @@
 
 
+#include "collision.h"
+#include "mapitems.h"
 #include <base/system.h>
 #include <base/math.h>
 #include <base/vmath.h>
@@ -197,7 +199,6 @@ void CCollision::Init(class CLayers *pLayers)
 	for(int i = 0; i < m_Width*m_Height; i++)
 	{
 		int Index = m_pTiles[i].m_Index;
-
 		if(Index > 128)
 			continue;
 
