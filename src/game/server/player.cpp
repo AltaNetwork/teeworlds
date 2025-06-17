@@ -21,6 +21,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 
 	m_SpawnTeam = 0;
 	m_1vs1Player = -1;
+	m_1vs1Score = 0;
+	m_InvitedBy = 0;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -124,8 +126,8 @@ void CPlayer::Tick()
 		{
     		char Buf[256];
     		str_format(Buf, sizeof(Buf), "                                                     \n%s: %d\n%s: %d",
-                Server()->ClientName(m_ClientID), m_Score,
-                Server()->ClientName(m_1vs1Player), GameServer()->m_apPlayers[m_1vs1Player]->m_Score);
+                Server()->ClientName(m_ClientID), m_1vs1Score,
+                Server()->ClientName(m_1vs1Player), GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Score);
     		GameServer()->SendBroadcast(Buf, m_ClientID);
 		}
 	}
@@ -175,21 +177,21 @@ void CPlayer::Snap(int SnappingClient)
 	if(m_PlayerFlags&PLAYERFLAG_IN_MENU)	{
         switch ((Server()->Tick()/(SERVER_TICK_SPEED/2)+m_ClientID)%4) {
             case 3:
-                str_format(aBuf, sizeof(aBuf), "oᵒ˚");
+                str_format(aBuf, sizeof(aBuf), " oᵒ˚");
                 break;
             case 2:
-                str_format(aBuf, sizeof(aBuf), "oᵒ");
+                str_format(aBuf, sizeof(aBuf), " oᵒ");
                 break;
             case 1:
-                str_format(aBuf, sizeof(aBuf), "o");
+                str_format(aBuf, sizeof(aBuf), " o");
                 break;
             case 0:
-                str_format(aBuf, sizeof(aBuf), "");
+                str_format(aBuf, sizeof(aBuf), " ");
                 break;
         }
     }
     char aBufName[128];
-	str_format(aBufName, sizeof(aBufName), "%s %s", Server()->ClientName(m_ClientID), aBuf);
+	str_format(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), aBuf);
 	StrToInts(&pClientInfo->m_Name0, 4, aBufName);
 
 	str_format(aBuf, sizeof(aBuf), "");

@@ -63,8 +63,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_QueuedWeapon = -1;
 	m_TakeDamage = false;
 	if(pPlayer->PlayerEvent() == CPlayer::EVENT_NONE)
-	    m_PassiveTicks = SERVER_TICK_SPEED * 2.5;
-	// m_Zone = ZONE_NORMAL;
+	    m_PassiveTicks = SERVER_TICK_SPEED * g_Config.m_SvSpawnPassive;
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
@@ -545,9 +544,9 @@ void CCharacter::Tick()
 	// 	m_pPlayer->m_ForceBalanced = false;
 	// }
 
-	if(m_PassiveTicks > 0)
+	if(m_PassiveTicks != 0)
 	{
-	    m_PassiveTicks--;
+    	if(m_PassiveTicks > 0) { m_PassiveTicks--; }
 		if(m_PassiveTicks == 0)
 		    m_Core.m_VTeam = 0;
         else
@@ -591,7 +590,7 @@ void CCharacter::TickDefered()
 		m_ReckoningCore.Quantize();
 	}
 
-//	lastsentcore
+    //	lastsentcore
 	vec2 StartPos = m_Core.m_Pos;
 	vec2 StartVel = m_Core.m_Vel;
 	bool StuckBefore = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
@@ -637,7 +636,7 @@ void CCharacter::TickDefered()
 	if(Events&COREEVENT_HOOK_HIT_NOHOOK) GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
 
 
-	// if(m_pPlayer->GetTeam() == TEAM_SPECTATORS)
+	// if(m_pPlayer->GetTeam() == TEAM_SPECTATORS) THIS SUCKS ASS AND I NEED TO SAVE BANDWIDTH
 	// {
 	// 	m_Pos.x = m_Input.m_TargetX;
 	// 	m_Pos.y = m_Input.m_TargetY;
@@ -697,7 +696,7 @@ void CCharacter::Die(int Killer, int Weapon, bool SendKillMsg)
 	// we got to wait 0.5 secs before respawning
 	// m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 
-    if(m_pPlayer->PlayerEvent() == m_pPlayer->EVENT_DUEL && Weapon != WEAPON_GAME)
+    if(m_pPlayer->PlayerEvent() == m_pPlayer->EVENT_DUEL && Weapon != WEAPON_GAME)// && Weapon != WEAPON_WORLD)
 	{
 	    Killer = m_pPlayer->m_1vs1Player;
         GameServer()->m_apPlayers[Killer]->GetCharacter()->Die(m_pPlayer->m_1vs1Player, WEAPON_GAME , false);
@@ -870,12 +869,12 @@ void CCharacter::HandleZones()
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
-		GameLayerClipped(m_Pos))	{   m_Core.m_VTeam = -1;  } // PASSIVE ON ( "teeworlds" layer under "#Zones" group )
+		GameLayerClipped(m_Pos))	{   m_PassiveTicks = -1;  } // PASSIVE ON ( "teeworlds" layer under "#Zones" group )
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
-		GameLayerClipped(m_Pos))	{   m_Core.m_VTeam = 0;  } // PASSIVE OFF ( "teeworlds" layer under "#Zones" group )
+		GameLayerClipped(m_Pos))	{   m_PassiveTicks = 1;  } // PASSIVE OFF ( "teeworlds" layer under "#Zones" group )
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
@@ -891,7 +890,7 @@ void CCharacter::HandleZones()
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 6 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
-    GameLayerClipped(m_Pos)) // DEATH ( "teeworlds" layer under "#Zones" group )
+    GameLayerClipped(m_Pos)) // DEATH IN DUEL ( "teeworlds" layer under "#Zones" group )
     {        if(m_Core.m_VTeam > 0) Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
 
 }

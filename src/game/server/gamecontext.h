@@ -66,6 +66,8 @@ class CGameContext : public IGameServer
 	static void ConValDebug(IConsole::IResult *pResult, void *pUserData);
 	static void ConVTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConAbout(IConsole::IResult *pResult, void *pUserData);
+	static void ConDuel(IConsole::IResult *pResult, void *pUserData);
+	static void ConAcceptDuel(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneReset(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneDump(IConsole::IResult *pResult, void *pUserData);

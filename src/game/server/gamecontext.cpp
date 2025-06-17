@@ -12,6 +12,7 @@
 #include "entities/character.h"
 #include "gamemodes/mod.h"
 #include "gameworld.h"
+#include "player.h"
 
 #include <engine/server/localization.h>
 
@@ -493,7 +494,7 @@ void CGameContext::SendTuningParams(int ClientID, bool firsttime)
 	CPlayer *pPlayer = m_apPlayers[ClientID];
 
 	if(pPlayer && !firsttime) {
-	    if(pPlayer->GetCharacter()->GetCore().m_VTeam == -1)
+	    if(pPlayer->GetCharacter()->GetCore().m_VTeam < 0)
 		{
 			FakeTuning.m_PlayerCollision = 0;
 			FakeTuning.m_PlayerHooking = 0;
@@ -1619,6 +1620,79 @@ void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *p
 	}
 }
 
+void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    // auto *pController = pSelf->m_pController;
+
+    const char *pName = pResult->GetString(0);
+    int Inviter = pResult->GetClientID();
+    int Invited = -1;
+    char aBuf[128];
+    // pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_VTeam = WantedTeam;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!str_comp(pName, pSelf->Server()->ClientName(i)))
+		{
+			Invited = i;
+			break;
+		}
+	}
+
+	if(Invited < 0)
+	{
+	    str_format(aBuf, sizeof(aBuf), "Couldnt find player '%s'", pName);
+        pSelf->SendChatTarget(Inviter, _(aBuf));
+		return;
+	}
+    str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s ( Wager: %d )", pSelf->Server()->ClientName(Invited), 0);
+    pSelf->SendChatTarget(Inviter, _(aBuf));
+    pSelf->m_apPlayers[Invited]->m_InvitedBy = Inviter;
+    str_format(aBuf, sizeof(aBuf), "%s invited you to a duel ( Wager: %d ). Type /accept to fight", pSelf->Server()->ClientName(Inviter), 0);
+    pSelf->SendChatTarget(Invited, _(aBuf));
+}
+
+void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    char aBuf[128];
+    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() != CPlayer::EVENT_NONE)
+    {
+        str_format(aBuf, sizeof(aBuf), "You cant accept duels right now");
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+        return;
+    }
+    int Inviter = -1;
+    Inviter = pSelf->m_apPlayers[ClientID]->m_InvitedBy;
+    pSelf->m_apPlayers[ClientID]->m_InvitedBy = -1;
+    if(Inviter == -1)
+    {
+        str_format(aBuf, sizeof(aBuf), "No duel invites found");
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+        return;
+    }
+    if(pSelf->m_apPlayers[Inviter]->PlayerEvent() != CPlayer::EVENT_NONE)
+    {
+        str_format(aBuf, sizeof(aBuf), "The Player cannot accept the duel right now");
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+        return;
+    }
+    str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
+    pSelf->SendChatTarget(ClientID, _(aBuf));
+
+    pSelf->m_apPlayers[Inviter]->m_1vs1Player = ClientID;
+    pSelf->m_apPlayers[ClientID]->m_1vs1Player = Inviter;
+    pSelf->m_apPlayers[ClientID]->m_1vs1Score = 0;
+    pSelf->m_apPlayers[ClientID]->m_1vs1Score = 0;
+
+    if(pSelf->m_apPlayers[Inviter]->GetCharacter())
+        pSelf->m_apPlayers[Inviter]->GetCharacter()->Die(Inviter, WEAPON_GAME);
+    if(pSelf->m_apPlayers[ClientID]->GetCharacter())
+        pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_GAME);
+}
+
 void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext* pThis = (CGameContext*) pUserData;
@@ -1647,7 +1721,8 @@ void CGameContext::ConSpec(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
     int ClientID = pResult->GetClientID();
-    pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_NONE)
+        pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
 }
 void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
 {
@@ -1658,7 +1733,7 @@ void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
     char aBuf[128];
     pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_VTeam = WantedTeam;
     	str_format(aBuf, sizeof(aBuf), "'%s' joined team %d", pSelf->Server()->ClientName(ClientID), WantedTeam);
-        pSelf->SendChatTarget(ClientID, _(aBuf));
+    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
 
 }
 void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
@@ -1808,8 +1883,10 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
-	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "change language");
-	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "change language");
+	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
+	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
+	Console()->Register("duel", "?s", CFGFLAG_CHAT, ConDuel, this, "send duel");
+	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");
 	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");

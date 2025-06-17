@@ -90,6 +90,8 @@ public:
 	// int m_RespawnTick;
 	int	m_SpawnTeam;
 	int m_1vs1Player;
+	int m_1vs1Score;
+	int m_InvitedBy;
 
 	int m_DieTick;
 	int m_Score;

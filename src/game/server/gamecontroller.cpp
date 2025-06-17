@@ -9,6 +9,7 @@
 #include "entities/pickup.h"
 #include "gamecontroller.h"
 #include "gamecontext.h"
+#include "player.h"
 
 
 IGameController::IGameController(class CGameContext *pGameServer)
@@ -326,11 +327,25 @@ void IGameController::OnPlayerInfoChange(class CPlayer *pP)
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
 {
-	// do scoreing
-	if(!pKiller || Weapon == WEAPON_GAME)
+    // do scoreing
+	if(!pKiller || pKiller == pVictim->GetPlayer() || Weapon == WEAPON_GAME)
 		return 0;
 
-	pKiller->m_Score++;
+	if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
+	{
+        pKiller->m_1vs1Score++;
+        if(pKiller->m_1vs1Score > 3)
+        {
+            pKiller->m_1vs1Player = -1;
+            pVictim->GetPlayer()->m_1vs1Player = -1;
+            char aBuf[256];
+            str_format(aBuf, sizeof(aBuf), "%s, %s duel ended with a result of ( %d : %d )",
+                Server()->ClientName(pKiller->GetCID()), Server()->ClientName(pVictim->GetPlayer()->GetCID()),
+                pKiller->m_1vs1Score, pVictim->GetPlayer()->m_1vs1Score);
+            GameServer()->SendChatTarget(-1, _(aBuf));
+        }
+	}
+    pKiller->m_Score++;
 	return 0;
 }
 
@@ -571,7 +586,7 @@ void IGameController::Snap(int SnappingClient)
 	if(GameServer()->m_World.m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
 	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
-	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : GameServer()->m_apPlayers[SnappingClient]->GetCharacter() ? GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_PassiveTicks : m_Warmup;
+	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : GameServer()->m_apPlayers[SnappingClient]->GetCharacter() ? GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_PassiveTicks-1 : m_Warmup;
 
 	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
 	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;

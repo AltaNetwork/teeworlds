@@ -12,9 +12,26 @@ This is a foundation\frame for single gametype teeworlds mod
     sudo apt install build-essential bam git python3
     bam
 
+PLANS:
+  Tournament
+  Cusomization
+  Database
+  Muting
+  Whispers
+  @everyone
+
+BUGS:
+  spectators respawn
+
+TO FIX:
+  Teams
+  1vs1
+  Passive
+
 Changelog *by veqi*
 ---------------------------
 
+- Spawn Passive
 - 1vs1
 - DDNet Gun
 - Allow unzoom
