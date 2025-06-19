@@ -213,6 +213,9 @@ void CCollision::Init(class CLayers *pLayers)
 		case TILE_NOHOOK:
 			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
 			break;
+		case TILE_THROUGH:
+		    m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_THROUGH;
+			break;
 		case TILE_FREEZE:
 			m_pTiles[i].m_Index = COLFLAG_FREEZE;
 			break;
@@ -238,25 +241,35 @@ bool CCollision::IsTileSolid(int x, int y)
 	return GetTile(x, y)&COLFLAG_SOLID;
 }
 
-// TODO: rewrite this smarter!
-int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision)
+int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, bool TroughCheck)
 {
 	float Distance = distance(Pos0, Pos1);
-	int End(Distance+1);
+	int End(Distance + 1);
 	vec2 Last = Pos0;
-
-	for(int i = 0; i < End; i++)
+	for(int i = 0; i <= End; i++)
 	{
-		float a = i/Distance;
+		float a = i / (float)End;
 		vec2 Pos = mix(Pos0, Pos1, a);
-		if(CheckPoint(Pos.x, Pos.y))
+		// Temporary position for checking collision
+		int ix = round_to_int(Pos.x);
+		int iy = round_to_int(Pos.y);
+
+		int hit = 0;
+		if(CheckPoint(ix, iy))
+		{
+		    hit = GetCollisionAt(ix, iy);
+			if(TroughCheck && hit&COLFLAG_THROUGH)
+				hit = 0;
+		}
+		if(hit)
 		{
 			if(pOutCollision)
 				*pOutCollision = Pos;
 			if(pOutBeforeCollision)
 				*pOutBeforeCollision = Last;
-			return GetCollisionAt(Pos.x, Pos.y);
+			return hit;
 		}
+
 		Last = Pos;
 	}
 	if(pOutCollision)
@@ -265,6 +278,7 @@ int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *p
 		*pOutBeforeCollision = Pos1;
 	return 0;
 }
+
 
 // TODO: OPT: rewrite this smarter!
 void CCollision::MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces)
@@ -376,3 +390,10 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 	*pInoutPos = Pos;
 	*pInoutVel = Vel;
 }
+
+// int CCollision::GetPureMapIndex(float x, float y) const
+// {
+// 	int Nx = clamp(round_to_int(x) / 32, 0, m_Width - 1);
+// 	int Ny = clamp(round_to_int(y) / 32, 0, m_Height - 1);
+// 	return Ny * m_Width + Nx;
+// }

@@ -20,7 +20,11 @@ class CCollision
 	array< array<int> > m_Zones;
 
 	bool IsTileSolid(int x, int y);
+	// bool IsThrough(int x, int y, int OffsetX, int OffsetY, vec2 Pos0, vec2 Pos1) const;
 	int GetTile(int x, int y);
+	int GetPureMapIndex(float x, float y) const;
+	int GetPureMapIndex(vec2 Pos) const { return GetPureMapIndex(Pos.x, Pos.y); }
+
 
 public:
 	enum
@@ -28,8 +32,9 @@ public:
 		COLFLAG_SOLID=1,
 		COLFLAG_DEATH=2,
 		COLFLAG_NOHOOK=4,
-		COLFLAG_FREEZE=8,
-		COLFLAG_UNFREEZE=16,
+		COLFLAG_THROUGH=8,
+		COLFLAG_FREEZE=16,
+		COLFLAG_UNFREEZE=32,
 	};
 
 	CCollision();
@@ -39,7 +44,7 @@ public:
 	int GetCollisionAt(float x, float y) { return GetTile(round_to_int(x), round_to_int(y)); }
 	int GetWidth() { return m_Width; };
 	int GetHeight() { return m_Height; };
-	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision);
+	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, bool TroughCheck = false);
 	void MovePoint(vec2 *pInoutPos, vec2 *pInoutVel, float Elasticity, int *pBounces);
 	void MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elasticity);
 	bool TestBox(vec2 Pos, vec2 Size);

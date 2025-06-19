@@ -2,6 +2,7 @@
 
 #include "gamecore.h"
 #include "collision.h"
+#include <cstdlib>
 #include <game/server/gamecontext.h>
 
 
@@ -222,12 +223,12 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 		// make sure that the hook doesn't go though the ground
 		bool GoingToHitGround = false;
 		bool GoingToRetract = false;
-		int Hit = m_pCollision->IntersectLine(m_HookPos, NewPos, &NewPos, 0);
-		if(Hit)
+		int Hit = m_pCollision->IntersectLine(m_HookPos, NewPos, &NewPos, 0, true);
+		if(Hit&CCollision::COLFLAG_SOLID)
 		{
             if(Hit&CCollision::COLFLAG_NOHOOK)
-				GoingToRetract = true;
-			else
+                GoingToRetract = true;
+            else
 				GoingToHitGround = true;
 		}
 		// Check against other players first
@@ -272,6 +273,7 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 				m_TriggeredEvents |= COREEVENT_HOOK_HIT_NOHOOK;
 				m_HookState = HOOK_RETRACT_START;
 			}
+
 
 			m_HookPos = NewPos;
 		}
