@@ -80,9 +80,13 @@ enum
 	TILEFLAG_OPAQUE=4,
 	TILEFLAG_ROTATE=8,
 
-	LAYERFLAG_DETAIL=1,
-	TILESLAYERFLAG_GAME=1,
+	LAYERFLAG_DETAIL = 1,
+	TILESLAYERFLAG_GAME = 1,
+	TILESLAYERFLAG_TELE = 2,
+	TILESLAYERFLAG_SPEEDUP = 4,
 	TILESLAYERFLAG_FRONT = 8,
+	TILESLAYERFLAG_SWITCH = 16,
+	TILESLAYERFLAG_TUNE = 32,
 
 	ENTITY_OFFSET=255-16*4,
 };
@@ -194,6 +198,9 @@ struct CMapItemLayerTilemap
 	int m_Data;
 
 	int m_aName[3];
+
+	int m_Tele;
+	int m_Speedup;
 } ;
 
 struct CMapItemLayerQuads
@@ -235,6 +242,24 @@ struct CMapItemEnvelope : public CMapItemEnvelope_v1
 {
 	enum { CURRENT_VERSION=2 };
 	int m_Synchronized;
+};
+
+// DDNET
+
+class CTeleTile
+{
+public:
+	unsigned char m_Number;
+	unsigned char m_Type;
+};
+
+class CSpeedupTile
+{
+public:
+	unsigned char m_Force;
+	unsigned char m_MaxSpeed;
+	unsigned char m_Type;
+	short m_Angle;
 };
 
 #endif

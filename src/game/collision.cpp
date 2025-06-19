@@ -195,6 +195,13 @@ void CCollision::Init(class CLayers *pLayers)
 	m_Width = m_pLayers->GameLayer()->m_Width;
 	m_Height = m_pLayers->GameLayer()->m_Height;
 	m_pTiles = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->GameLayer()->m_Data));
+	// m_pTele = 0;
+	m_pSpeedup = 0;
+
+	if(m_pLayers->SpeedupLayer())
+	{
+		m_pSpeedup = static_cast<CSpeedupTile *>(m_pLayers->Map()->GetData(m_pLayers->SpeedupLayer()->m_Speedup));
+	}
 
 	for(int i = 0; i < m_Width*m_Height; i++)
 	{
@@ -240,6 +247,29 @@ bool CCollision::IsTileSolid(int x, int y)
 {
 	return GetTile(x, y)&COLFLAG_SOLID;
 }
+
+int CCollision::IsSpeedup(int Index) const
+{
+	if(Index < 0 || !m_pSpeedup)
+		return 0;
+
+	if(m_pSpeedup[Index].m_Force > 0)
+		return Index;
+
+	return 0;
+}
+
+void CCollision::GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const
+{
+	if(Index < 0 || !m_pSpeedup)
+		return;
+	float Angle = m_pSpeedup[Index].m_Angle * (pi / 180.0f);
+	*Force = m_pSpeedup[Index].m_Force;
+	*Dir = vec2(cos(Angle), sin(Angle));
+	if(MaxSpeed)
+		*MaxSpeed = m_pSpeedup[Index].m_MaxSpeed;
+}
+
 
 int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, bool TroughCheck)
 {
@@ -391,9 +421,21 @@ void CCollision::MoveBox(vec2 *pInoutPos, vec2 *pInoutVel, vec2 Size, float Elas
 	*pInoutVel = Vel;
 }
 
-// int CCollision::GetPureMapIndex(float x, float y) const
-// {
-// 	int Nx = clamp(round_to_int(x) / 32, 0, m_Width - 1);
-// 	int Ny = clamp(round_to_int(y) / 32, 0, m_Height - 1);
-// 	return Ny * m_Width + Nx;
-// }
+int CCollision::GetPureMapIndex(float x, float y) const
+{
+	int Nx = clamp(round_to_int(x) / 32, 0, m_Width - 1);
+	int Ny = clamp(round_to_int(y) / 32, 0, m_Height - 1);
+	return Ny * m_Width + Nx;
+}
+
+int CCollision::GetMapIndex(vec2 Pos) const
+{
+	int Nx = clamp((int)Pos.x / 32, 0, m_Width - 1);
+	int Ny = clamp((int)Pos.y / 32, 0, m_Height - 1);
+	int Index = Ny * m_Width + Nx;
+
+	// if(TileExists(Index))
+		return Index;
+	// else
+		// return -1;
+}

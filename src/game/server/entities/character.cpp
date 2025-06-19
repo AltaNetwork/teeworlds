@@ -892,6 +892,64 @@ void CCharacter::HandleZones()
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
     GameLayerClipped(m_Pos)) // DEATH IN DUEL ( "teeworlds" layer under "#Zones" group )
     {        if(m_Core.m_VTeam > 0) Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
+    int Index = GameServer()->Collision()->GetMapIndex(m_Pos);
+   	if(GameServer()->Collision()->IsSpeedup(Index))
+	{
+		vec2 Direction, TempVel = m_Core.m_Vel;
+		int Force, MaxSpeed = 0;
+		float TeeAngle, SpeederAngle, DiffAngle, SpeedLeft, TeeSpeed;
+		GameServer()->Collision()->GetSpeedup(Index, &Direction, &Force, &MaxSpeed);
+		if(Force == 255 && MaxSpeed)
+		{
+			m_Core.m_Vel = Direction * (MaxSpeed / 5);
+		}
+		else
+		{
+			if(MaxSpeed > 0 && MaxSpeed < 5)
+				MaxSpeed = 5;
+			if(MaxSpeed > 0)
+			{
+				if(Direction.x > 0.0000001f)
+					SpeederAngle = -std::atan(Direction.y / Direction.x);
+				else if(Direction.x < 0.0000001f)
+					SpeederAngle = std::atan(Direction.y / Direction.x) + 2.0f * std::asin(1.0f);
+				else if(Direction.y > 0.0000001f)
+					SpeederAngle = std::asin(1.0f);
+				else
+					SpeederAngle = std::asin(-1.0f);
+
+				if(SpeederAngle < 0)
+					SpeederAngle = 4.0f * std::asin(1.0f) + SpeederAngle;
+
+				if(TempVel.x > 0.0000001f)
+					TeeAngle = -std::atan(TempVel.y / TempVel.x);
+				else if(TempVel.x < 0.0000001f)
+					TeeAngle = std::atan(TempVel.y / TempVel.x) + 2.0f * std::asin(1.0f);
+				else if(TempVel.y > 0.0000001f)
+					TeeAngle = std::asin(1.0f);
+				else
+					TeeAngle = std::asin(-1.0f);
+
+				if(TeeAngle < 0)
+					TeeAngle = 4.0f * std::asin(1.0f) + TeeAngle;
+
+				TeeSpeed = std::sqrt(std::pow(TempVel.x, 2) + std::pow(TempVel.y, 2));
+
+				DiffAngle = SpeederAngle - TeeAngle;
+				SpeedLeft = MaxSpeed / 5.0f - std::cos(DiffAngle) * TeeSpeed;
+				if(absolute((int)SpeedLeft) > Force && SpeedLeft > 0.0000001f)
+					TempVel += Direction * Force;
+				else if(absolute((int)SpeedLeft) > Force)
+					TempVel += Direction * -Force;
+				else
+					TempVel += Direction * SpeedLeft;
+			}
+			else
+				TempVel += Direction * Force;
+
+			m_Core.m_Vel = TempVel;
+		}
+	}
 
 }
 
@@ -906,12 +964,12 @@ void CCharacter::Snap(int SnappingClient)
 		return;
 
 	if(m_Core.m_VTeam < 0 ) {
-	   CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
-				if(!pP)
-    		return;
-      pP->m_X = (int)m_Pos.x;
-      pP->m_Y = (int)m_Pos.y-48;
-      pP->m_Type = POWERUP_ARMOR;
+    	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+    	if(!pP)
+      		return;
+        pP->m_X = (int)m_Pos.x;
+        pP->m_Y = (int)m_Pos.y-48;
+        pP->m_Type = POWERUP_ARMOR;
 	};
 	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, Id, sizeof(CNetObj_Character)));
 	if(!pCharacter)
@@ -939,7 +997,7 @@ void CCharacter::Snap(int SnappingClient)
 			pCharacter->m_HookedPlayer = -1;
 	}
 
-    GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
+    // GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
 
 	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
 	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
@@ -956,4 +1014,5 @@ void CCharacter::Snap(int SnappingClient)
     	pCharacter->m_Armor = m_Core.m_FreezeTicks ? 10-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*10 : m_Armor;
 		pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
 	}
+	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 }

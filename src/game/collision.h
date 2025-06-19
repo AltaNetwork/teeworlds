@@ -7,6 +7,11 @@
 #include <base/tl/array.h>
 #include <base/math.h>
 
+class CTile;
+class CLayers;
+class CTeleTile;
+class CSpeedupTile;
+
 class CCollision
 {
 	class CTile *m_pTiles;
@@ -54,6 +59,13 @@ public:
 	//This function return an Handle to access all zone layers with the name "pName"
 	int GetZoneHandle(const char* pName);
 	int GetZoneValueAt(int ZoneHandle, float x, float y);
+
+	CSpeedupTile *m_pSpeedup;
+
+	int IsSpeedup(int Index) const;
+	int GetMapIndex(vec2 Pos) const;
+	void GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const;
+
 };
 
 #endif

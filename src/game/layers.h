@@ -18,6 +18,8 @@ class CLayers
 	CMapItemGroup *m_pEntityGroup;
 	CMapItemLayerTilemap *m_pGameLayer;
 	CMapItemLayerTilemap *m_pFrontLayer; // Testing hook trough not working :P
+	CMapItemLayerTilemap *m_pTeleLayer;
+	CMapItemLayerTilemap *m_pSpeedupLayer;
 	class IMap *m_pMap;
 
 public:
@@ -30,6 +32,9 @@ public:
 	CMapItemGroup *EntityGroup() const { return m_pEntityGroup; };
 	CMapItemLayerTilemap *GameLayer() const { return m_pGameLayer; };
 	CMapItemLayerTilemap *FrontLayer() const { return m_pFrontLayer; };
+	CMapItemLayerTilemap *TeleLayer() const { return m_pTeleLayer; }
+	CMapItemLayerTilemap *SpeedupLayer() const { return m_pSpeedupLayer; }
+
 	CMapItemGroup *GetGroup(int Index) const;
 	CMapItemLayer *GetLayer(int Index) const;
 };
