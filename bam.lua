@@ -90,6 +90,8 @@ settings.link.libs:Add("pthread")
 -- add ICU
 settings.cc.flags:Add("`pkg-config --cflags icu-uc icu-i18n`")
 settings.link.flags:Add("`pkg-config --libs icu-uc icu-i18n`")
+-- ExFlags
+settings.cc.flags:Add("-std=c++20")
 
 zlib = Compile(settings, Collect("src/engine/external/zlib/*.c"))
 settings.cc.includes:Add("src/engine/external/zlib")

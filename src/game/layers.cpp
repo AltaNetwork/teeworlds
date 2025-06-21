@@ -1,5 +1,6 @@
 #include "layers.h"
 #include "gamecore.h"
+#include "mapitems.h"
 
 CLayers::CLayers()
 {
@@ -70,6 +71,14 @@ void CLayers::Init(class IKernel *pKernel)
 						pTilemap->m_Tele = *((int *)(pTilemap) + 15);
 					}
 					m_pTeleLayer = pTilemap;
+				}
+				if(pTilemap->m_Flags & TILESLAYERFLAG_FRONT)
+				{
+					if(pTilemap->m_Version <= 2)
+					{
+						pTilemap->m_Front = *((int *)(pTilemap) + 17);
+					}
+					m_pFrontLayer = pTilemap;
 				}
 				if(pTilemap->m_Flags & TILESLAYERFLAG_SPEEDUP)
 				{

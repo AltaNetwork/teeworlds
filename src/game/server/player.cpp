@@ -431,7 +431,9 @@ int CPlayer::PlayerEvent()
 {
     if(m_1vs1Player != -1 && GameServer()->m_apPlayers[m_1vs1Player])
     {
-        if(m_ClientID != m_1vs1Player)
+        if(m_ClientID != m_1vs1Player && // cant fight yourself
+            // GameServer()->m_apPlayers[m_1vs1Player] && // exists
+            GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Player == m_ClientID) // cant fight a guy thats already fighting someone else
             return EVENT_DUEL;
         else
             m_1vs1Player = -1;

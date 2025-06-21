@@ -1,6 +1,7 @@
 
 
 #include <new>
+#include <optional>
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
@@ -830,6 +831,71 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	return true;
 }
 
+void CCharacter::Snap(int SnappingClient)
+{
+	int Id = m_pPlayer->GetCID();
+
+	if (!Server()->Translate(Id, SnappingClient))
+		return;
+
+	if(NetworkClipped(SnappingClient))
+		return;
+
+	if(m_Core.m_VTeam < 0 ) {
+    	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+    	if(!pP)
+      		return;
+        pP->m_X = (int)m_Pos.x;
+        pP->m_Y = (int)m_Pos.y-48;
+        pP->m_Type = POWERUP_ARMOR;
+	};
+	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, Id, sizeof(CNetObj_Character)));
+	if(!pCharacter)
+		return;
+
+	// write down the m_Core
+	if(!m_ReckoningTick || GameServer()->m_World.m_Paused)
+	{
+		// no dead reckoning when paused because the client doesn't know
+		// how far to perform the reckoning
+		pCharacter->m_Tick = 0;
+		m_Core.Write(pCharacter);
+	}
+	else
+	{
+		pCharacter->m_Tick = m_ReckoningTick;
+		m_SendCore.Write(pCharacter);
+	}
+
+	// set emote
+	if (m_EmoteStop < Server()->Tick()) {		m_EmoteType = EMOTE_NORMAL;		m_EmoteStop = -1;   }
+
+	if (pCharacter->m_HookedPlayer != -1)	{
+		if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
+			pCharacter->m_HookedPlayer = -1;
+	}
+
+    // GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
+
+	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
+	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
+	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+	pCharacter->m_Weapon = m_Core.m_FreezeTicks ? WEAPON_NINJA : m_ActiveWeapon;
+	pCharacter->m_AttackTick = m_AttackTick;
+	pCharacter->m_Direction = m_Input.m_Direction;
+
+	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 ||
+		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
+	{
+    	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
+    	pCharacter->m_Armor = m_Core.m_FreezeTicks ? 10-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*10 : m_Armor;
+		pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
+	}
+	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+}
+
+
 void CCharacter::HandleZones()
 {
    	// handle death-tiles and leaving gamelayer
@@ -950,69 +1016,38 @@ void CCharacter::HandleZones()
 			m_Core.m_Vel = TempVel;
 		}
 	}
-
-}
-
-void CCharacter::Snap(int SnappingClient)
-{
-	int Id = m_pPlayer->GetCID();
-
-	if (!Server()->Translate(Id, SnappingClient))
+	const CTeleTile *pTeleLayer = GameServer()->Collision()->TeleLayer();
+	if(!pTeleLayer)
 		return;
-
-	if(NetworkClipped(SnappingClient))
-		return;
-
-	if(m_Core.m_VTeam < 0 ) {
-    	CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
-    	if(!pP)
-      		return;
-        pP->m_X = (int)m_Pos.x;
-        pP->m_Y = (int)m_Pos.y-48;
-        pP->m_Type = POWERUP_ARMOR;
-	};
-	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, Id, sizeof(CNetObj_Character)));
-	if(!pCharacter)
-		return;
-
-	// write down the m_Core
-	if(!m_ReckoningTick || GameServer()->m_World.m_Paused)
+	int TeleNumber = pTeleLayer[Index].m_Number;
+	int TeleType = pTeleLayer[Index].m_Type;
+	if((TeleNumber > 0) && (TeleType != TILE_TELEOUT) && (TeleType != TILE_TELECHECKOUT))
 	{
-		// no dead reckoning when paused because the client doesn't know
-		// how far to perform the reckoning
-		pCharacter->m_Tick = 0;
-		m_Core.Write(pCharacter);
+  		const std::vector<vec2> &Outs = //TeleType == TILE_TELECHECKOUT ?
+				// GameServer()->Collision()->TeleCheckOuts(TeleNumber) :
+				GameServer()->Collision()->TeleOuts(TeleNumber);
+      	if(Outs.empty())   	{
+     		dbg_msg("character", "No tele out for tele number: %d, type %d", TeleNumber, TeleType);
+     		return;
+      	}
+       	switch(TeleType)    {
+          	case TILE_TELEIN:
+            case TILE_TELEINRED:
+          	case TILE_TELECHECKOUT:
+     		break;
+      	    default:
+         		dbg_msg("character", "Unsupported tele type: %d", TeleType);
+        		return;
+       	}
+       	int DestTeleNumber = 0;//random_int(0, Outs.size() - 1);
+      	vec2 DestPosition = Outs.at(DestTeleNumber);
+        ResetInput();
+      	m_Core.m_Pos = DestPosition;
+      	if((TeleType == TILE_TELEIN) || (TeleType == TILE_TELECHECKOUT))
+      	{
+     		m_Core.m_Vel = vec2(0, 0);
+      		//GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+       	}
+
 	}
-	else
-	{
-		pCharacter->m_Tick = m_ReckoningTick;
-		m_SendCore.Write(pCharacter);
-	}
-
-	// set emote
-	if (m_EmoteStop < Server()->Tick()) {		m_EmoteType = EMOTE_NORMAL;		m_EmoteStop = -1;   }
-
-	if (pCharacter->m_HookedPlayer != -1)	{
-		if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
-			pCharacter->m_HookedPlayer = -1;
-	}
-
-    // GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P
-
-	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
-	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
-	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
-
-	pCharacter->m_Weapon = m_Core.m_FreezeTicks ? WEAPON_NINJA : m_ActiveWeapon;
-	pCharacter->m_AttackTick = m_AttackTick;
-	pCharacter->m_Direction = m_Input.m_Direction;
-
-	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 ||
-		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
-	{
-    	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
-    	pCharacter->m_Armor = m_Core.m_FreezeTicks ? 10-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*10 : m_Armor;
-		pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
-	}
-	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 }

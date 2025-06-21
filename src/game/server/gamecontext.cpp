@@ -1660,7 +1660,7 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
     char aBuf[128];
     if(pSelf->m_apPlayers[ClientID]->PlayerEvent() != CPlayer::EVENT_NONE)
     {
-        str_format(aBuf, sizeof(aBuf), "You cant accept duels right now");
+        str_format(aBuf, sizeof(aBuf), "You cant accept duels at this moment");
         pSelf->SendChatTarget(ClientID, _(aBuf));
         return;
     }
@@ -1675,16 +1675,17 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
     }
     if(pSelf->m_apPlayers[Inviter]->PlayerEvent() != CPlayer::EVENT_NONE)
     {
-        str_format(aBuf, sizeof(aBuf), "The Player cannot accept the duel right now");
+        str_format(aBuf, sizeof(aBuf), "Inviter cannot accept the duel at this moment");
         pSelf->SendChatTarget(ClientID, _(aBuf));
         return;
     }
+
     str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
     pSelf->SendChatTarget(ClientID, _(aBuf));
 
     pSelf->m_apPlayers[Inviter]->m_1vs1Player = ClientID;
     pSelf->m_apPlayers[ClientID]->m_1vs1Player = Inviter;
-    pSelf->m_apPlayers[ClientID]->m_1vs1Score = 0;
+    pSelf->m_apPlayers[Inviter]->m_1vs1Score = 0;
     pSelf->m_apPlayers[ClientID]->m_1vs1Score = 0;
 
     if(pSelf->m_apPlayers[Inviter]->GetCharacter())

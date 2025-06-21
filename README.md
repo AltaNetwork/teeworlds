@@ -13,6 +13,8 @@ This is a foundation\frame for single gametype teeworlds mod
     bam
 
 PLANS:
+  FLAGBASED TUNE SENDING
+  DDHAMMER
   Tournament
   Cusomization
   Database
@@ -20,17 +22,21 @@ PLANS:
   Whispers
   @everyone
 
-BUGS:
-  spectators respawn
-
 TO FIX:
-  Teams
+  spectators respawn NOW ITS A FUCKING FEATURE NIGGA, YES YOU CANT SPECTATE
+2.1MB
+200kb/s
+3kb/s # LOWEST I FOUND
+TO IMPROV:
+  Duels
   1vs1
-  Passive
 
 Changelog *by veqi*
 ---------------------------
 
+- HookTrough
+- Tele
+- Speedups
 - Spawn Passive
 - 1vs1
 - DDNet Gun

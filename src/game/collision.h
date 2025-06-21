@@ -7,6 +7,9 @@
 #include <base/tl/array.h>
 #include <base/math.h>
 
+#include <map>
+#include <vector>
+
 class CTile;
 class CLayers;
 class CTeleTile;
@@ -60,11 +63,23 @@ public:
 	int GetZoneHandle(const char* pName);
 	int GetZoneValueAt(int ZoneHandle, float x, float y);
 
-	CSpeedupTile *m_pSpeedup;
+	const std::vector<vec2> &TeleOuts(int Number) const;
+	const std::vector<vec2> &TeleCheckOuts(int Number) const;
 
 	int IsSpeedup(int Index) const;
 	int GetMapIndex(vec2 Pos) const;
 	void GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const;
+	CTeleTile *TeleLayer() { return m_pTele; }
+
+private:
+
+	CTeleTile *m_pTele;
+	CTile *m_pFront;
+	// TILE_TELEOUT
+	std::map<int, std::vector<vec2>> m_TeleOuts;
+	// TILE_TELECHECKOUT
+	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+	CSpeedupTile *m_pSpeedup;
 
 };
 

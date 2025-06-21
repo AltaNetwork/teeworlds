@@ -1,5 +1,3 @@
-
-
 #include "collision.h"
 #include "mapitems.h"
 #include <base/system.h>
@@ -11,9 +9,9 @@
 #include <engine/kernel.h>
 
 #include <game/mapitems.h>
-#include <game/zones.h>
 #include <game/layers.h>
 #include <game/collision.h>
+
 #include <game/gamecore.h>
 #include <game/animation.h>
 
@@ -195,12 +193,37 @@ void CCollision::Init(class CLayers *pLayers)
 	m_Width = m_pLayers->GameLayer()->m_Width;
 	m_Height = m_pLayers->GameLayer()->m_Height;
 	m_pTiles = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->GameLayer()->m_Data));
-	// m_pTele = 0;
+	m_pTele = 0;
 	m_pSpeedup = 0;
+	m_pFront = 0;
 
 	if(m_pLayers->SpeedupLayer())
-	{
 		m_pSpeedup = static_cast<CSpeedupTile *>(m_pLayers->Map()->GetData(m_pLayers->SpeedupLayer()->m_Speedup));
+	if(m_pLayers->FrontLayer())
+	    m_pFront = static_cast<CTile *>(m_pLayers->Map()->GetData(m_pLayers->FrontLayer()->m_Front));
+
+	if(m_pLayers->TeleLayer())
+	{
+    	// Init tele tiles
+    	m_pTele = static_cast<CTeleTile *>(m_pLayers->Map()->GetData(m_pLayers->TeleLayer()->m_Tele));
+
+    	// Init tele outs
+    	for(int i = 0; i < m_Width * m_Height; i++)
+    	{
+    		int Number = m_pTele[i].m_Number;
+    		int Type = m_pTele[i].m_Type;
+    		if(Number > 0)
+    		{
+    			if(Type == TILE_TELEOUT)
+    			{
+    				m_TeleOuts[Number].emplace_back(i % m_Width * 32.0f + 16.0f, i / m_Width * 32.0f + 16.0f);
+    			}
+    			else if(Type == TILE_TELECHECKOUT)
+    			{
+    				m_TeleCheckOuts[Number].emplace_back(i % m_Width * 32.0f + 16.0f, i / m_Width * 32.0f + 16.0f);
+    			}
+    		}
+    	}
 	}
 
 	for(int i = 0; i < m_Width*m_Height; i++)
@@ -216,9 +239,13 @@ void CCollision::Init(class CLayers *pLayers)
 			break;
 		case TILE_SOLID:
 			m_pTiles[i].m_Index = COLFLAG_SOLID;
+			if(m_pFront && m_pFront[i].m_Index == TILE_THROUGH)
+			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
 			break;
 		case TILE_NOHOOK:
 			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
+			if(m_pFront && m_pFront[i].m_Index == TILE_THROUGH)
+			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
 			break;
 		case TILE_THROUGH:
 		    m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_THROUGH;
@@ -438,4 +465,16 @@ int CCollision::GetMapIndex(vec2 Pos) const
 		return Index;
 	// else
 		// return -1;
+}
+
+const std::vector<vec2> &CCollision::TeleOuts(int Number) const
+{
+	static const std::vector<vec2> sEmptyVector;
+	return m_TeleOuts.contains(Number) ? m_TeleOuts.at(Number) : sEmptyVector;
+}
+
+const std::vector<vec2> &CCollision::TeleCheckOuts(int Number) const
+{
+	static const std::vector<vec2> sEmptyVector;
+	return m_TeleCheckOuts.contains(Number) ? m_TeleCheckOuts.at(Number) : sEmptyVector;
 }

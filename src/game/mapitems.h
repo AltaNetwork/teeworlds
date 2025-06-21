@@ -46,34 +46,40 @@ enum
 	TILE_SOLID,
 	TILE_DEATH,
 	TILE_NOHOOK,
-	TILE_THROUGH, // TILE NO-LASER
-	TILE_FREEZE=9,
-	TILE_UNFREEZE=11,
-	TILE_CP1=35,
-	TILE_CP2,
-	TILE_CP3,
-	TILE_CP4,
-	TILE_CP5,
-	TILE_CP6,
-	TILE_CP7,
-	TILE_CP8,
-	TILE_CP9,
-	TILE_CP10,
-	TILE_CP11,
-	TILE_CP12,
-	TILE_CP13,
-	TILE_CP14,
-	TILE_CP15,
-	TILE_CP16,
-	TILE_CP17,
-	TILE_CP18,
-	TILE_CP19,
-	TILE_CP20,
-	TILE_CP21,
-	TILE_CP22,
-	TILE_CP23,
-	TILE_CP24,
-	TILE_CP25,
+	TILE_THROUGH = 5,
+	TILE_FREEZE = 9,
+	TILE_TELEINRED,
+	TILE_UNFREEZE,
+	TILE_TELEIN = 26,
+	TILE_TELEOUT,
+	TILE_TELECHECKOUT = 30,
+	TILE_TELECHECKIN,
+
+	// TILE_CP1=35,
+	// TILE_CP2,
+	// TILE_CP3,
+	// TILE_CP4,
+	// TILE_CP5,
+	// TILE_CP6,
+	// TILE_CP7,
+	// TILE_CP8,
+	// TILE_CP9,
+	// TILE_CP10,
+	// TILE_CP11,
+	// TILE_CP12,
+	// TILE_CP13,
+	// TILE_CP14,
+	// TILE_CP15,
+	// TILE_CP16,
+	// TILE_CP17,
+	// TILE_CP18,
+	// TILE_CP19,
+	// TILE_CP20,
+	// TILE_CP21,
+	// TILE_CP22,
+	// TILE_CP23,
+	// TILE_CP24,
+	// TILE_CP25,
 
 	TILEFLAG_VFLIP=1,
 	TILEFLAG_HFLIP=2,
@@ -201,6 +207,7 @@ struct CMapItemLayerTilemap
 
 	int m_Tele;
 	int m_Speedup;
+	int m_Front;
 } ;
 
 struct CMapItemLayerQuads
@@ -244,7 +251,7 @@ struct CMapItemEnvelope : public CMapItemEnvelope_v1
 	int m_Synchronized;
 };
 
-// DDNET
+// DDRACENETWORK
 
 class CTeleTile
 {
