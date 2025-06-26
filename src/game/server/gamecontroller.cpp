@@ -18,7 +18,6 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_pServer = m_pGameServer->Server();
 	m_pGameType = "MOD";
 
-	//
 	DoWarmup(g_Config.m_SvWarmup);
 	m_UnpauseTimer = 0;
 	m_GameOverTick = -1;
@@ -334,12 +333,12 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
 	{
         pKiller->m_1vs1Score++;
-        if(pKiller->m_1vs1Score > 3)
+        if(pKiller->m_1vs1Score > 9)
         {
             pKiller->m_1vs1Player = -1;
             pVictim->GetPlayer()->m_1vs1Player = -1;
             char aBuf[256];
-            str_format(aBuf, sizeof(aBuf), "%s, %s duel ended with a result of ( %d : %d )",
+            str_format(aBuf, sizeof(aBuf), "'%s' won a duel against '%s' with result of %d:%d",
                 Server()->ClientName(pKiller->GetCID()), Server()->ClientName(pVictim->GetPlayer()->GetCID()),
                 pKiller->m_1vs1Score, pVictim->GetPlayer()->m_1vs1Score);
             GameServer()->SendChatTarget(-1, _(aBuf));
@@ -600,10 +599,12 @@ void IGameController::Snap(int SnappingClient)
 
 	pGameInfoEx->m_Flags =
 		GAMEINFOFLAG_ALLOW_HOOK_COLL |
+		GAMEINFOFLAG_UNLIMITED_AMMO |
+		// GAMEINFOFLAG_PREDICT_DDRACE |
 		GAMEINFOFLAG_ALLOW_ZOOM;
-	pGameInfoEx->m_Flags2 =
-	    GAMEINFOFLAG2_HUD_AMMO |
-		GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
+	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE;
+	 //    GAMEINFOFLAG2_HUD_AMMO |
+		// GAMEINFOFLAG2_HUD_HEALTH_ARMOR |
 	pGameInfoEx->m_Version = 8;
 
 	// This object needs to be snapped alongside pGameInfoObj for that object to work properly

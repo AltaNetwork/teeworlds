@@ -491,28 +491,28 @@ void CGameContext::SendTuningParams(int ClientID, bool firsttime)
 	CTuningParams FakeTuning;
 	mem_comp(&FakeTuning, &m_Tuning, sizeof(CTuningParams));
 
-	CPlayer *pPlayer = m_apPlayers[ClientID];
+	// CPlayer *pPlayer = m_apPlayers[ClientID];
 
-	if(pPlayer && !firsttime) {
-	    if(pPlayer->GetCharacter()->GetCore().m_VTeam < 0)
-		{
-			FakeTuning.m_PlayerCollision = 0;
-			FakeTuning.m_PlayerHooking = 0;
-        }
-		if(pPlayer->GetCharacter()->GetCore().m_FreezeTicks)
-		{
-            FakeTuning.m_GroundControlAccel = 0;
-            FakeTuning.m_GroundControlSpeed = 0;
-            FakeTuning.m_AirControlSpeed = 0;
-            FakeTuning.m_AirControlAccel = 0;
-            FakeTuning.m_GroundJumpImpulse = 0;
-            FakeTuning.m_AirJumpImpulse = 0;
-            FakeTuning.m_HookLength = 0;
-            FakeTuning.m_HookFireSpeed = 0;
-            FakeTuning.m_HookDragAccel = 0;
-            FakeTuning.m_HookDragSpeed = 0;
-		}
-	}
+	// if(pPlayer && !firsttime) {
+	//     if(pPlayer->GetCharacter()->GetCore().m_VTeam < 0)
+	// 	{
+	// 		FakeTuning.m_PlayerCollision = 0;
+	// 		FakeTuning.m_PlayerHooking = 0;
+ //        }
+	// 	if(pPlayer->GetCharacter()->GetCore().m_FreezeTicks)
+	// 	{
+ //            FakeTuning.m_GroundControlAccel = 0;
+ //            FakeTuning.m_GroundControlSpeed = 0;
+ //            FakeTuning.m_AirControlSpeed = 0;
+ //            FakeTuning.m_AirControlAccel = 0;
+ //            FakeTuning.m_GroundJumpImpulse = 0;
+ //            FakeTuning.m_AirJumpImpulse = 0;
+ //            FakeTuning.m_HookLength = 0;
+ //            FakeTuning.m_HookFireSpeed = 0;
+ //            FakeTuning.m_HookDragAccel = 0;
+ //            FakeTuning.m_HookDragSpeed = 0;
+	// 	}
+	// }
 
 	CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
 	int *pParams = (int *)&FakeTuning;
@@ -1034,10 +1034,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				return;
 
 			pPlayer->m_LastSetSpectatorMode = Server()->Tick();
-			if(pMsg->m_SpectatorID != SPEC_FREEVIEW && (!m_apPlayers[pMsg->m_SpectatorID] || m_apPlayers[pMsg->m_SpectatorID]->GetTeam() == TEAM_SPECTATORS))
-				SendChatTarget(ClientID, _("Invalid spectator id used"));
-			else
-				pPlayer->m_SpectatorID = pMsg->m_SpectatorID;
+			// if(pMsg->m_SpectatorID != SPEC_FREEVIEW && (!m_apPlayers[pMsg->m_SpectatorID] || m_apPlayers[pMsg->m_SpectatorID]->GetTeam() == TEAM_SPECTATORS))
+			// 	SendChatTarget(ClientID, _("Invalid spectator id used"));
+			// else
+			pPlayer->m_SpectatorID = pMsg->m_SpectatorID;
 		}
 		else if (MsgID == NETMSGTYPE_CL_CHANGEINFO)
 		{
@@ -1620,16 +1620,49 @@ void CGameContext::ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *p
 	}
 }
 
+void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    char aBuf[128];
+    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_NONE)
+    {
+        str_format(aBuf, sizeof(aBuf), "Leave what nigga?");
+        pSelf->SendChatTarget(ClientID, _(aBuf));
+        return;
+    }
+
+    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_DUEL)
+    {
+        pSelf->m_apPlayers[pSelf->m_apPlayers[ClientID]->m_1vs1Player]->m_1vs1Score = 9;
+
+        if(pSelf->m_apPlayers[ClientID]->GetCharacter())
+            pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_SELF);
+        return;
+    }
+
+    str_format(aBuf, sizeof(aBuf), "Cannot leave at the moment");
+    pSelf->SendChatTarget(ClientID, _(aBuf));
+    return;
+}
+
 void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
-    // auto *pController = pSelf->m_pController;
 
     const char *pName = pResult->GetString(0);
+    int pWager = pResult->GetInteger(0);
     int Inviter = pResult->GetClientID();
     int Invited = -1;
     char aBuf[128];
-    // pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_VTeam = WantedTeam;
+    if(!str_comp(pName, ""))
+   	{
+	    str_format(aBuf, sizeof(aBuf), "Duels are a thing yk. and you call them by doing /duel <player name>... also you can add a number which is a basically a bet");
+        pSelf->SendChatTarget(Inviter, _(aBuf));
+		return;
+	}
+
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!str_comp(pName, pSelf->Server()->ClientName(i)))
@@ -1645,10 +1678,16 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
         pSelf->SendChatTarget(Inviter, _(aBuf));
 		return;
 	}
-    str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s ( Wager: %d )", pSelf->Server()->ClientName(Invited), 0);
+	if(Invited == Inviter)
+	{
+	    str_format(aBuf, sizeof(aBuf), "You cannot invite your self");
+        pSelf->SendChatTarget(Inviter, _(aBuf));
+		return;
+	}
+    str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s of %d wager", pSelf->Server()->ClientName(Invited), pWager);
     pSelf->SendChatTarget(Inviter, _(aBuf));
     pSelf->m_apPlayers[Invited]->m_InvitedBy = Inviter;
-    str_format(aBuf, sizeof(aBuf), "%s invited you to a duel ( Wager: %d ). Type /accept to fight", pSelf->Server()->ClientName(Inviter), 0);
+    str_format(aBuf, sizeof(aBuf), "%s invited you to a duel with %d wager. Type /accept to fight", pSelf->Server()->ClientName(Inviter), pWager);
     pSelf->SendChatTarget(Invited, _(aBuf));
 }
 
@@ -1887,6 +1926,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
 	Console()->Register("duel", "?s", CFGFLAG_CHAT, ConDuel, this, "send duel");
+	Console()->Register("leave", "?s", CFGFLAG_CHAT, ConLeave, this, "leave event");
 	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");
 	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
@@ -2029,6 +2069,24 @@ void CGameContext::OnSnap(int ClientID)
 		if(m_apPlayers[i])
 			m_apPlayers[i]->Snap(ClientID);
 	}
+
+	int *pUuidItem = (int *)Server()->SnapNewItem(0, 32764, 16); // NETOBJTYPE_EX
+	if(pUuidItem)
+    {
+    	pUuidItem[0] = 1993229659;
+    	pUuidItem[1] = -102024632;
+    	pUuidItem[2] = -1378361269;
+    	pUuidItem[3] = -1810037668;
+    }
+
+	int *pUuidItemP = (int *)Server()->SnapNewItem(0, 32765, 16); // NETOBJTYPE_EX 2
+	if(pUuidItemP)
+    {
+    	pUuidItemP[0] = 583701389;
+    	pUuidItemP[1] = 327171627;
+    	pUuidItemP[2] = -1636052395;
+    	pUuidItemP[3] = -1901674991;
+    }
 }
 void CGameContext::OnPreSnap() {}
 void CGameContext::OnPostSnap()

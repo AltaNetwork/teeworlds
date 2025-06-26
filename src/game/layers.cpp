@@ -61,8 +61,6 @@ void CLayers::Init(class IKernel *pKernel)
 						m_pGameGroup->m_ClipW = 0;
 						m_pGameGroup->m_ClipH = 0;
 					}
-
-					//break;
 				}
 				if(pTilemap->m_Flags & TILESLAYERFLAG_TELE)
 				{

@@ -96,9 +96,6 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-		if(!m_pCharacter && m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
-			m_ViewPos -= vec2(clamp(m_ViewPos.x-m_LatestActivity.m_TargetX, -500.0f, 500.0f), clamp(m_ViewPos.y-m_LatestActivity.m_TargetY, -400.0f, 400.0f));
-
 		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || PlayerEvent() != EVENT_NONE))
 			m_Spawning = true;
 
@@ -125,15 +122,16 @@ void CPlayer::Tick()
 		if(PlayerEvent() == EVENT_DUEL && Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
 		{
     		char Buf[256];
-    		str_format(Buf, sizeof(Buf), "                                                     \n%s: %d\n%s: %d",
+    		str_format(Buf, sizeof(Buf), "                                                  \n\n\n%s: %d\n%s: %d",
                 Server()->ClientName(m_ClientID), m_1vs1Score,
                 Server()->ClientName(m_1vs1Player), GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Score);
     		GameServer()->SendBroadcast(Buf, m_ClientID);
 		}
+		if(m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
+			m_ViewPos = vec2(m_LatestActivity.m_TargetX, m_LatestActivity.m_TargetY);
 	}
 	else
 	{
-		// ++m_RespawnTick;
 		++m_DieTick;
 		++m_ScoreStartTick;
 		++m_LastActionTick;
@@ -221,6 +219,16 @@ void CPlayer::Snap(int SnappingClient)
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
 
+	int m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
+
+	int BaseColor = m_RainbowColor * 0x010000;
+	int Color = 0xff32;
+
+	pClientInfo->m_UseCustomColor = true;
+	pClientInfo->m_ColorBody = BaseColor + Color;
+    pClientInfo->m_ColorFeet = BaseColor+Color;
+
+
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
@@ -228,8 +236,8 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
-	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = m_Team;
+	pPlayerInfo->m_Score = m_ViewPos.x;//m_Score;
+	pPlayerInfo->m_Team = TEAM_RED;//m_Team;
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;
@@ -244,6 +252,14 @@ void CPlayer::Snap(int SnappingClient)
 		pSpectatorInfo->m_X = m_ViewPos.x;
 		pSpectatorInfo->m_Y = m_ViewPos.y;
 	}
+
+	// WARNING, this is very hardcoded; for ddnet client support
+	CNetObj_DDNetPlayer *pDDNetPlayer = (CNetObj_DDNetPlayer *)Server()->SnapNewItem(32765, GetCID(), 8);
+	if(!pDDNetPlayer)
+		return;
+
+	if(m_Team == TEAM_SPECTATORS)
+    	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
 }
 
 void CPlayer::FakeSnap(int SnappingClient)
@@ -319,6 +335,9 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 	if(m_pCharacter)
 		m_pCharacter->OnDirectInput(NewInput);
 
+	m_LatestActivity.m_TargetX = NewInput->m_TargetX;
+	m_LatestActivity.m_TargetY = NewInput->m_TargetY;
+
 	if(!m_pCharacter && m_Team != TEAM_SPECTATORS && (NewInput->m_Fire&1))
 		m_Spawning = true;
 
@@ -327,8 +346,8 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 		m_LatestActivity.m_TargetY != NewInput->m_TargetY || NewInput->m_Jump ||
 		NewInput->m_Fire&1 || NewInput->m_Hook)
 	{
-		m_LatestActivity.m_TargetX = NewInput->m_TargetX;
-		m_LatestActivity.m_TargetY = NewInput->m_TargetY;
+		// m_LatestActivity.m_TargetX = NewInput->m_TargetX;
+		// m_LatestActivity.m_TargetY = NewInput->m_TargetY;
 		m_LastActionTick = Server()->Tick();
 	}
 }
@@ -387,8 +406,6 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 	m_Team = Team;
 	m_LastActionTick = Server()->Tick();
 	m_SpectatorID = SPEC_FREEVIEW;
-	// we got to wait 0.5 secs before respawning
-	// m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
@@ -427,6 +444,7 @@ void CPlayer::SetLanguage(const char* pLanguage)
 {
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
 }
+
 int CPlayer::PlayerEvent()
 {
     if(m_1vs1Player != -1 && GameServer()->m_apPlayers[m_1vs1Player])

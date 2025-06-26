@@ -46,6 +46,6 @@ MACRO_TUNING_PARAM(LaserDamage, laser_damage, 5)
 MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1)
 MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1)
 
-MACRO_TUNING_PARAM(Freeze, freeze_length, 3.0f * SERVER_TICK_SPEED)
+MACRO_TUNING_PARAM(Freeze, freeze_length, 3)
 
 #endif

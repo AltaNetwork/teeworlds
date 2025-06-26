@@ -1,29 +1,36 @@
 from datatypes import *
 
 Emotes = ["NORMAL", "PAIN", "HAPPY", "SURPRISE", "ANGRY", "BLINK"]
-PlayerFlags = ["PLAYING", "IN_MENU", "CHATTING", "SCOREBOARD", "AIM", "SPEC_CAM"]
+PlayerFlags = ["PLAYING", "IN_MENU", "CHATTING", "SCOREBOARD"]
 GameFlags = ["TEAMS", "FLAGS"]
-GameStateFlags = ["GAMEOVER", "SUDDENDEATH", "PAUSED", "RACETIME"]
-
+GameStateFlags = ["GAMEOVER", "SUDDENDEATH", "PAUSED"]
+CharacterFlags = ["SOLO", "JETPACK", "COLLISION_DISABLED", "ENDLESS_HOOK", "ENDLESS_JUMP", "SUPER",
+                  "HAMMER_HIT_DISABLED", "SHOTGUN_HIT_DISABLED", "GRENADE_HIT_DISABLED", "LASER_HIT_DISABLED", "HOOK_HIT_DISABLED",
+                  "TELEGUN_GUN", "TELEGUN_GRENADE", "TELEGUN_LASER",
+                  "WEAPON_HAMMER", "WEAPON_GUN", "WEAPON_SHOTGUN", "WEAPON_GRENADE", "WEAPON_LASER", "WEAPON_NINJA",
+				  "MOVEMENTS_DISABLED", "IN_FREEZE", "PRACTICE_MODE", "LOCK_MODE", "TEAM0_MODE", "INVINCIBLE"]
 GameInfoFlags = [
-	"TIMESCORE", # Ill think about it ( unused )
-	"UNN1", "UNN2", "UNN3", "UNN4", "UNN5", "UNN6", "UNN7", "UNN8", "UNN9", "UNN10",
-	"UNLIMITED_AMMO", # Ill think about it ( unused )
-	"UNN11", "UNN12",
-	"ALLOW_EYE_WHEEL", "ALLOW_HOOK_COLL", "ALLOW_ZOOM" # Used
+	"TIMESCORE", "GAMETYPE_RACE", "GAMETYPE_FASTCAP", "GAMETYPE_FNG",
+	"GAMETYPE_DDRACE", "GAMETYPE_DDNET", "GAMETYPE_BLOCK_WORLDS",
+	"GAMETYPE_VANILLA", "GAMETYPE_PLUS", "FLAG_STARTS_RACE", "RACE",
+	"UNLIMITED_AMMO", "DDRACE_RECORD_MESSAGE", "RACE_RECORD_MESSAGE",
+	"ALLOW_EYE_WHEEL", "ALLOW_HOOK_COLL", "ALLOW_ZOOM", "BUG_DDRACE_GHOST",
+	"BUG_DDRACE_INPUT", "BUG_FNG_LASER_RANGE", "BUG_VANILLA_BOUNCE",
+	"PREDICT_FNG", "PREDICT_DDRACE", "PREDICT_DDRACE_TILES", "PREDICT_VANILLA",
+	"ENTITIES_DDNET", "ENTITIES_DDRACE", "ENTITIES_RACE", "ENTITIES_FNG",
+	"ENTITIES_VANILLA", "DONT_MASK_ENTITIES", "ENTITIES_BW"
+	# Full, use GameInfoFlags2 for more flags
 ]
-
 GameInfoFlags2 = [
-	"UNN13", "UNN14", "UNN15", "UNN16", # Completely unused
-	"HUD_HEALTH_ARMOR", "HUD_AMMO", "HUD_DDRACE", "NO_WEAK_HOOK" # DDrace Hud and No weak hook currently unused
+	"ALLOW_X_SKINS", "GAMETYPE_CITY", "GAMETYPE_FDDRACE", "ENTITIES_FDDRACE", "HUD_HEALTH_ARMOR", "HUD_AMMO",
+	"HUD_DDRACE", "NO_WEAK_HOOK", "NO_SKIN_CHANGE_FOR_FROZEN"
 ]
+ExPlayerFlags = ["AFK", "PAUSED", "SPEC"]
 
 Emoticons = ["OOP", "EXCLAMATION", "HEARTS", "DROP", "DOTDOT", "MUSIC", "SORRY", "GHOST", "SUSHI", "SPLATTEE", "DEVILTEE", "ZOMG", "ZZZ", "WTF", "EYES", "QUESTION"]
 
-Powerups = ["HEALTH", "ARMOR", "WEAPON", "NINJA", "ARMOR_SHOTGUN", "ARMOR_GRENADE", "ARMOR_NINJA", "ARMOR_LASER"]
+Powerups = ["HEALTH", "ARMOR", "WEAPON", "NINJA"]
 Authed = ["NO", "HELPER", "MOD", "ADMIN"]
-EntityClasses = ["PROJECTILE", "DOOR", "DRAGGER_WEAK", "DRAGGER_NORMAL", "DRAGGER_STRONG", "GUN_NORMAL", "GUN_EXPLOSIVE", "GUN_FREEZE", "GUN_UNFREEZE", "LIGHT", "PICKUP"]
-Teams = ["ALL", "SPECTATORS", "RED", "BLUE", "WHISPER_SEND", "WHISPER_RECV"]
 
 RawHeader = '''
 
@@ -58,18 +65,18 @@ Enums = [
 	Enum("POWERUP", Powerups),
 	Enum("EMOTICON", Emoticons),
 	Enum("AUTHED", Authed),
-	Enum("ENTITYCLASS", EntityClasses),
 ]
 
 Flags = [
 	Flags("PLAYERFLAG", PlayerFlags),
 	Flags("GAMEFLAG", GameFlags),
 	Flags("GAMESTATEFLAG", GameStateFlags),
-	# Flags("CHARACTERFLAG", CharacterFlags),
+	Flags("CHARACTERFLAG", CharacterFlags),
 	Flags("GAMEINFOFLAG", GameInfoFlags),
 	Flags("GAMEINFOFLAG2", GameInfoFlags2),
-	# Flags("EXPLAYERFLAG", ExPlayerFlags),
+	Flags("EXPLAYERFLAG", ExPlayerFlags),
 ]
+
 Objects = [
 
 	NetObject("PlayerInput", [
@@ -153,7 +160,7 @@ Objects = [
 		NetIntAny("m_Angle"),
 		NetIntRange("m_Direction", -1, 1),
 
-    		NetIntRange("m_Jumped", 0, 3),
+		NetIntRange("m_Jumped", 0, 3),
 		NetIntRange("m_HookedPlayer", 0, 'MAX_CLIENTS-1'),
 		NetIntRange("m_HookState", -1, 5),
 		NetTick("m_HookTick"),
@@ -237,10 +244,32 @@ Objects = [
 		NetIntAny("m_Angle"),
 	]),
 
+	NetObject("DDNetCharacter", [
+		NetIntAny("m_Flags"),
+		NetTick("m_FreezeEnd"),
+		NetIntRange("m_Jumps", -1, 255),
+		NetIntAny("m_TeleCheckpoint"),
+		NetIntRange("m_StrongWeakId", 0, 'MAX_CLIENTS-1'),
+
+		# New data fields for jump display, freeze bar and ninja bar
+		# Default values indicate that these values should not be used
+		NetIntRange("m_JumpedTotal", -1, 255),
+		NetTick("m_NinjaActivationTick"),
+		NetTick("m_FreezeStart"),
+		# New data fields for improved target accuracy
+		NetIntAny("m_TargetX"),
+		NetIntAny("m_TargetY"),
+	]),
+
 	NetObject("GameInfoEx", [
 		NetIntAny("m_Flags"),
 		NetIntAny("m_Version"),
 		NetIntAny("m_Flags2"),
+	]),
+
+	NetObject("DDNetPlayer", [
+		NetIntAny("m_Flags"),
+		NetIntRange("m_AuthLevel", "AUTHED_NO", "AUTHED_ADMIN"),
 	]),
 ]
 
@@ -367,6 +396,6 @@ Messages = [
 		NetStringStrict("m_Value"),
 		NetStringStrict("m_Reason"),
 	]),
-	NetMessage("Cl_IsDDNet", []),
-	NetMessage("Cl_IsDDRace64", []),
+
+	NetMessage("Cl_IsDDNetLegacy", []),
 ]

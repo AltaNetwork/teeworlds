@@ -60,6 +60,8 @@ public:
 	bool TakeWeapon(int Weapon);
 	void GiveNinja();
 
+	void Freeze(int Length = 0);
+
 	void SetEmote(int Emote, int Tick);
 
 	bool IsAlive() const { return m_Alive; }
@@ -68,6 +70,7 @@ public:
 
 
 	int m_PassiveTicks;
+	vec2 m_ChrViewPos;
 
 private:
 	// player controlling this character
@@ -120,6 +123,8 @@ private:
 
 	int m_Health;
 	int m_Armor;
+
+	int m_CheckPoint;
 
 	// ninja
 	struct

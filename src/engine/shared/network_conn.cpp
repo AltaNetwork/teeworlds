@@ -118,7 +118,6 @@ int CNetConnection::QueueChunkEx(int Flags, int DataSize, const void *pData, int
 	mem_copy(pChunkData, pData, DataSize);
 	pChunkData += DataSize;
 
-	//
 	m_Construct.m_NumChunks++;
 	m_Construct.m_DataSize = (int)(pChunkData-m_Construct.m_aChunkData);
 

@@ -15,6 +15,7 @@ This is a foundation\frame for single gametype teeworlds mod
 PLANS:
   FLAGBASED TUNE SENDING
   DDHAMMER
+  FAST DOWNLOAD
   Tournament
   Cusomization
   Database
@@ -24,9 +25,11 @@ PLANS:
 
 TO FIX:
   spectators respawn NOW ITS A FUCKING FEATURE NIGGA, YES YOU CANT SPECTATE
+  Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
 2.1MB
 200kb/s
 3kb/s # LOWEST I FOUND
+
 TO IMPROV:
   Duels
   1vs1
@@ -34,6 +37,7 @@ TO IMPROV:
 Changelog *by veqi*
 ---------------------------
 
+- Bandwidth concious spectator
 - HookTrough
 - Tele
 - Speedups
@@ -66,6 +70,6 @@ Changelog
 - Content related to vanilla gametypes removed (necropotame)
 - Compatibility with bam 0.5.0 (heinrich5991)
 - Antispoof system (east, heinrich5991, def-)
-- Allow 64 players to **join** *( veqi added listing )* on the server (DDNet team, Neox)
+- Allow 64 players to join on the server (DDNet team, Neox)
 - Add TeeUniverse Portable Maps compatibility (necropotame)
 - Add per-player tune system (necropotame)

@@ -12,6 +12,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Energy = StartEnergy;
 	m_Dir = Direction;
 	m_Bounces = 0;
+	// m_FirstBounce = false;
 	m_EvalTick = 0;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
@@ -22,10 +23,14 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);
+	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At);//, pOwnerChar);
 	if(!pHit)
 		return false;
-
+	if(pOwnerChar->GetCore().m_VTeam == 0)
+	{ } else {
+	    m_Energy = -1;
+		return false;
+	}
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;

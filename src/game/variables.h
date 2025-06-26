@@ -73,6 +73,7 @@ MACRO_CONFIG_INT(SvSpamprotection, sv_spamprotection, 1, 0, 1, CFGFLAG_SERVER, "
 MACRO_CONFIG_INT(SvRespawnDelayTDM, sv_respawn_delay_tdm, 3, 0, 10, CFGFLAG_SERVER, "Time needed to respawn after death in tdm gametype")
 
 MACRO_CONFIG_INT(SvSpawnPassive, sv_spawn_passive, 2.5, -1, 1000, CFGFLAG_SERVER, "Time players spawns with passive")
+MACRO_CONFIG_INT(SvRainbowSpeed, sv_rainbow_speed, 1, 0, 1000, CFGFLAG_SERVER, "Rainbow speed")
 
 MACRO_CONFIG_INT(SvSpectatorSlots, sv_spectator_slots, 0, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Number of slots to reserve for spectators")
 MACRO_CONFIG_INT(SvTeambalanceTime, sv_teambalance_time, 1, 0, 1000, CFGFLAG_SERVER, "How many minutes to wait before autobalancing teams")
