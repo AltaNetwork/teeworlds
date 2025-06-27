@@ -1,5 +1,3 @@
-
-
 #include "snapshot.h"
 #include "compression.h"
 

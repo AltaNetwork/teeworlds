@@ -4,6 +4,7 @@
 #include <base/math.h>
 #include <base/system.h>
 
+#include <cstddef>
 #include <engine/config.h>
 #include <engine/console.h>
 #include <engine/engine.h>
@@ -259,6 +260,35 @@ void CServerBan::ConBanExt(IConsole::IResult *pResult, void *pUser)
 	}
 	else
 		ConBan(pResult, pUser);
+}
+
+void CServer::ConRedirect(IConsole::IResult *pResult, void *pUser)
+{
+    // Cast pUser to CServer* to get the server instance
+    CServer *pSelf = static_cast<CServer *>(pUser);
+
+    // Now call RedirectClient on that instance
+    // Assuming you want client 0 to be redirected to port 8303
+    pSelf->RedirectClient(0, 8303); // Use pSelf to call the member function
+}
+
+void CServer::RedirectClient(int ClientID, int Port)
+{
+	if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+		return;
+
+	char aBuf[512];
+
+	Port = 8303;
+
+	str_format(aBuf, sizeof(aBuf), "redirecting '%s' to port %d", ClientName(ClientID), Port);
+	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "redirect", aBuf);
+
+	CMsgPacker Msg(65548);
+	Msg.AddInt(Port);
+
+	SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
+	Kick(ClientID, "Failed to redirect."); // TO FIX NIGGA
 }
 
 
@@ -1878,6 +1908,8 @@ void CServer::RegisterCommands()
 
 	// register console commands
 	Console()->Register("kick", "i?r", CFGFLAG_SERVER, ConKick, this, "Kick player with specified id for any reason");
+
+	Console()->Register("redirect", "i", CFGFLAG_SERVER, ConRedirect, this, "redirect");
 	Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
 	Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
 	Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");

@@ -1,7 +1,7 @@
 #include "localization.h"
 
 /* BEGIN EDIT *********************************************************/
-#include <engine/external/json.h>
+#include <engine/external/json/json.h>
 #include <engine/storage.h>
 #include <unicode/ushape.h>
 #include <unicode/ubidi.h>

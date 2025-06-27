@@ -102,10 +102,21 @@ engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*
 server = Compile(server_settings, Collect("src/engine/server/*.cpp"))
 game_shared = Compile(settings, Collect("src/game/*.cpp"), nethash, network_source)
 game_server = Compile(settings, CollectRecursive("src/game/server/*.cpp"), server_content_source)
-external = Compile(settings, Collect("src/engine/external/*.c"))
+md5_comp = Compile(settings, Collect("src/engine/external/md5/*.c"))
+json_comp = Compile(settings, Collect("src/engine/external/json/*.c", "src/engine/external/json/*.cpp"))
+
+
+settings.cc.includes:Add("src/engine/external/md5")
+settings.cc.includes:Add("src/engine/external/json")
+settings.cc.defines:Add("CONF_OPENSSL")
+settings.cc.flags:Add("`pkg-config --cflags openssl`")
+settings.link.flags:Add("`pkg-config --libs openssl`")
+
+external = Compile(settings, Collect("src/engine/external/*.c", "src/engine/external/*.cpp"))
+
 -- build server
 server_exe = Link(server_settings, "teeworlds_srv", engine, server,
-    game_shared, game_server, zlib, external, json)
+    game_shared, game_server, zlib, external, md5_comp, json_comp)
 
 -- make targets
 s = PseudoTarget("server" .. "_" .. settings.config_name, server_exe, serverlaunch, icu_depends)

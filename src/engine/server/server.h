@@ -179,6 +179,8 @@ public:
 
 	void Kick(int ClientID, const char *pReason);
 
+	void RedirectClient(int ClientID, int Port);
+
 	void DemoRecorder_HandleAutoStart();
 	bool DemoRecorder_IsRecording();
 
@@ -232,6 +234,8 @@ public:
 	int Run();
 
 	static void ConKick(IConsole::IResult *pResult, void *pUser);
+
+	static void ConRedirect(IConsole::IResult *pResult, void *pUserData);
 	static void ConStatus(IConsole::IResult *pResult, void *pUser);
 	static void ConShutdown(IConsole::IResult *pResult, void *pUser);
 	//static void ConRecord(IConsole::IResult *pResult, void *pUser);
