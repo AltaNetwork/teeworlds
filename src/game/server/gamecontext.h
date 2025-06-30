@@ -184,7 +184,7 @@ public:
 
 	//
 	void CheckPureTuning();
-	void SendTuningParams(int ClientID, bool firsttime = false);
+	void SendTuningParams(int ClientID, int Flags = 0);
 
 	//
 	void SwapTeams();

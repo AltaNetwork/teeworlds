@@ -14,6 +14,15 @@ enum
 	WEAPON_WORLD = -1, // death tiles etc
 };
 
+enum
+{
+    FTUNE_NOMOVE = 1, // All 3 used by "freeze"; flag "0" is used on connection
+    FTUNE_NOHOOK = 2,
+    FTUNE_NOJUMP = 4,
+    FTUNE_NOCOLL = 8,
+    FTUNE_CANTHOOK = 16,
+};
+
 class CCharacter : public CEntity
 {
 	MACRO_ALLOC_POOL_ID()

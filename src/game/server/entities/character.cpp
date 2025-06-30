@@ -247,6 +247,9 @@ void CCharacter::HandleWeaponSwitch()
 	// Direct Weapon selection
 	if(m_LatestInput.m_WantedWeapon)
 		WantedWeapon = m_Input.m_WantedWeapon-1;
+	// char aBuf[256];
+	// str_format(aBuf, sizeof(aBuf), "                         \nINPUT: %d\nTICK:%d",m_LatestInput.m_WantedWeapon ,Server()->Tick(), aBuf);
+	// GameServer()->SendBroadcast(aBuf, m_pPlayer->GetCID());
 
 	// check for insane values
 	if(WantedWeapon >= 0 && WantedWeapon < NUM_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
@@ -545,6 +548,19 @@ void CCharacter::Tick()
 
 	// 	m_pPlayer->m_ForceBalanced = false;
 	// }
+	int Flags = 0;
+	if(m_Core.m_FreezeTicks != 0)
+	{
+	    Flags |= FTUNE_CANTHOOK;
+		Flags |= FTUNE_NOJUMP;
+		Flags |= FTUNE_NOMOVE;
+	}
+	if(m_Core.m_VTeam < 0)
+	{
+	    Flags |= FTUNE_NOCOLL;
+		Flags |= FTUNE_NOHOOK;
+	}
+	GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
 
 	if(m_PassiveTicks != 0)
 	{
@@ -841,7 +857,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 void CCharacter::Snap(int SnappingClient)
 {
 	int Id = m_pPlayer->GetCID();
-	// int IDStarter = m_ID*Id+1;
 
 	if(NetworkClipped(SnappingClient))
 		return;
@@ -894,8 +909,6 @@ void CCharacter::Snap(int SnappingClient)
 			pCharacter->m_HookedPlayer = -1;
 	}
 
-    // GameServer()->SendTuningParams(m_pPlayer->GetCID()); // inneficent but works :P // TO FIXXXXXX
-
 	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
 	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
@@ -904,32 +917,21 @@ void CCharacter::Snap(int SnappingClient)
 	pCharacter->m_AttackTick = m_AttackTick;
 	pCharacter->m_Direction = m_Input.m_Direction;
 
-	// if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 ||
-	// 	(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
-	// {
- //    	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
- //    	pCharacter->m_Armor = m_Core.m_FreezeTicks ? 10-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*10 : m_Armor;
-	// 	pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
-	// }
+	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 || m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID)
+	{
+    	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
+    	pCharacter->m_Armor = m_Core.m_FreezeTicks != 0 ? 10-m_Core.m_FreezeTicks/(GameServer()->Tuning()->m_Freeze*SERVER_TICK_SPEED)*10 : m_Armor;
+		pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
+	}
+
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
 	CNetObj_DDNetCharacter *pDDNetCharacter = (CNetObj_DDNetCharacter *)Server()->SnapNewItem(32764, m_pPlayer->GetCID(), 40);
 	if(!pDDNetCharacter)
 		return;
 
-	if(m_Core.m_FreezeTicks == 0 )
-	{
-    	if (m_aWeapons[0].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
-    	if (m_aWeapons[1].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN;
-    	if (m_aWeapons[2].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
-    	if (m_aWeapons[3].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
-    	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
-	}
-	if (m_aWeapons[5].m_Got || m_Core.m_FreezeTicks != 0 )
-	    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
-	if(m_Core.m_VTeam < 0)	pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
+	// if(m_Core.m_VTeam < 0)	pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
 	//pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
-	pDDNetCharacter->m_NinjaActivationTick = Server()->Tick()-m_Core.m_FreezeTicks/GameServer()->Tuning()->m_Freeze*8;//-800+m_Core.m_FreezeTicks;//m_Ninja.m_ActivationTick;
 	pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 
