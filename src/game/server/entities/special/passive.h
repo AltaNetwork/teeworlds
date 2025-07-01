@@ -12,7 +12,7 @@ public:
 
 private:
 	int m_Owner;
-	int m_LifeSpan;
+	// int m_LifeSpan;
 };
 
 #endif

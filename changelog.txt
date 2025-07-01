@@ -1,0 +1,56 @@
+=== idea list:
+    FAST DOWNLOAD
+    Tournament
+    Cusomization
+    Database
+    Muting
+    Whispers
+    @everyone
+
+=== fixage list:
+  spectators respawn NOW ITS A FUCKING FEATURE NIGGA, YES YOU CANT SPECTATE
+  Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
+2.1MB
+200kb/s
+3kb/s # LOWEST I FOUND
+
+=== improvise list:
+  Duels
+
+==============CHANGELOG==============
+DDNet Hammer
+Flag based tune seding
+Bandwidth concious spectator
+HookTrough
+Tele
+Speedups
+Spawn Passive
+1vs1
+DDNet Gun
+Allow unzoom
+Afk tiles
+Indirect kills
+Better freeze display in shields
+Air Jumps
+DDRace Pickups
+Teams & Passive support
+Stoppers support
+Spectator support
+Freeze support
+Experimental 128 player support (veqi)
+==============OLD CHANGELOG FROM TEE CORE=====================
+Chat commands
+Add iculib (ErrorDreemurr)
+Localization for vanilla system chat (ErrorDreemurr)
+Enity Bug fix (ErrorDreemurr)
+Change languages command bug fix (ErrorDreemurr)
+Localization System (In InfClass) (Necropotame)
+Chat command for Switch languages (FlowerFell-Sans)
+Json Example (FlowerFell-Sans)
+Content related to client,editor,tools,master & version srv removed (necropotame)
+Content related to vanilla gametypes removed (necropotame)
+Compatibility with bam 0.5.0 (heinrich5991)
+Antispoof system (east, heinrich5991, def-)
+Allow 64 players to join on the server (DDNet team, Neox)
+Add TeeUniverse Portable Maps compatibility (necropotame)
+Add per-player tune system (necropotame)

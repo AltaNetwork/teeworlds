@@ -315,7 +315,7 @@ void CCharacter::FireWeapon()
 														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 			for (int i = 0; i < Num; ++i)    {
 			    CCharacter *pTarget = apEnts[i];
-				if ((pTarget == this) || GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL) || (pTarget->GetCore().m_VTeam != m_Core.m_VTeam || m_Core.m_VTeam == -1))
+				if ((pTarget == this) /*|| GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL)*/ || (pTarget->GetCore().m_VTeam != m_Core.m_VTeam))
 					continue;
 
 				// set his velocity to fast upward (for now)
@@ -1094,17 +1094,32 @@ void CCharacter::HandleZones()
             return;
         DestPosition = CheckOuts.at(DestTeleNumber);
 	}
-	if(TeleType == 10 || TeleType == 26 )
+	if(TeleType == 10 || TeleType == 26 ) // NORMAL TELE IN
     {
         const std::vector<vec2> &Outs = GameServer()->Collision()->TeleOuts(TeleNumber);
         if(Outs.empty())
             return;
         DestPosition = Outs.at(DestTeleNumber);
     }
-    if(DestPosition)
-        m_Core.m_Pos = DestPosition;
-    if((TeleType == 63) || (TeleType == 10))
+    if(TeleType > 9 && TeleType < 64)
     {
-    	m_Core.m_Vel = vec2(0, 0);
-	}
+        if(DestPosition)
+            m_Core.m_Pos = DestPosition;
+        if((TeleType == 63) || (TeleType == 10))
+        {
+           	m_Core.m_Vel = vec2(0, 0);
+    	}
+    } else {
+        switch(TeleType)
+        {
+            case 197:
+                if(TeleNumber == 1)
+                    m_PassiveTicks = 1;
+                else if (TeleNumber == 255)
+                    m_PassiveTicks = -1;
+                else
+                    m_PassiveTicks = SERVER_TICK_SPEED*(TeleNumber-1);
+                break;
+        }
+    }
 }

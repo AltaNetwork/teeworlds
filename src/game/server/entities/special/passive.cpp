@@ -27,15 +27,8 @@ void CPassiveIndicator::Tick()
 {
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-	if(!pOwnerChar || !pOwnerChar->IsAlive())
+	if(!pOwnerChar || !pOwnerChar->IsAlive() || pOwnerChar->GetCore().m_VTeam > -1)
 	{
-		Reset();
-		return;
-	}
-
-	if(pOwnerChar->GetCore().m_VTeam > -1)
-	{
-		GameServer()->CreateDeath(m_Pos, m_Owner);
 		Reset();
 		return;
 	}

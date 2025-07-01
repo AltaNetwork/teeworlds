@@ -22,7 +22,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_SpawnTeam = 0;
 	m_1vs1Player = -1;
 	m_1vs1Score = 0;
-	m_InvitedBy = 0;
+	m_InvitedBy = -1;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
