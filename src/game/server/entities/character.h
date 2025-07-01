@@ -81,6 +81,8 @@ public:
 	int m_PassiveTicks;
 	vec2 m_ChrViewPos;
 
+	bool m_PassiveInd;
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

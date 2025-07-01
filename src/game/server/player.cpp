@@ -236,7 +236,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
-	pPlayerInfo->m_Score = m_ViewPos.x;//m_Score;
+	pPlayerInfo->m_Score = m_Score;
 	pPlayerInfo->m_Team = TEAM_RED;//m_Team;
 
 	if(m_ClientID == SnappingClient)

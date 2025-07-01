@@ -598,7 +598,6 @@ void IGameController::Snap(int SnappingClient)
 		return;
 
 	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL |  GAMEINFOFLAG_ALLOW_ZOOM;
-		// GAMEINFOFLAG_PREDICT_DDRACE |
 	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE |  GAMEINFOFLAG2_HUD_AMMO |    GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
 	pGameInfoEx->m_Version = 8;
 

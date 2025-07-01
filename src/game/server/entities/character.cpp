@@ -10,6 +10,7 @@
 #include "character.h"
 #include "laser.h"
 #include "pickup.h"
+#include "special/passive.h"
 #include "projectile.h"
 
 //input count
@@ -91,6 +92,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
         m_Core.m_VTeam = GameServer()->m_pController->VTeam1vs1(m_pPlayer->GetCID(),m_pPlayer->m_1vs1Player);
         Freeze(3);
 	}
+
+	m_PassiveInd = false;
+
 	return true;
 }
 
@@ -540,14 +544,6 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
-	// if(m_pPlayer->m_ForceBalanced)
-	// {
-	// 	char Buf[128];
-	// 	str_format(Buf, sizeof(Buf), "You were moved to %s due to team balancing", GameServer()->m_pController->GetTeamName(m_pPlayer->GetTeam()));
-	// 	GameServer()->SendBroadcast(Buf, m_pPlayer->GetCID());
-
-	// 	m_pPlayer->m_ForceBalanced = false;
-	// }
 	int Flags = 0;
 	if(m_Core.m_FreezeTicks != 0)
 	{
@@ -571,6 +567,11 @@ void CCharacter::Tick()
             m_Core.m_VTeam = -m_pPlayer->GetCID()-1;
 	}
 
+	if(m_Core.m_VTeam < 0 && !m_PassiveInd)
+	{
+    	new CPassiveIndicator(GameWorld(),m_Pos,m_pPlayer->GetCID());
+        m_PassiveInd = true;
+	}
 
 	if(m_Core.m_FreezeTicks!=0)
 	{
@@ -587,7 +588,7 @@ void CCharacter::Tick()
 	HandleZones();
 	HandleWeapons();
 
-	if(m_Core.m_HookedPlayer != -1)
+	if(m_Core.m_HookedPlayer != -1 && GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
 	{
     	GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->GetCore().m_LastContact = m_pPlayer->GetCID();
         GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->GetCore().m_LastContactTicks = SERVER_TICK_SPEED;
@@ -718,7 +719,9 @@ void CCharacter::Die(int Killer, int Weapon, bool SendKillMsg)
     if(m_pPlayer->PlayerEvent() == m_pPlayer->EVENT_DUEL && Weapon != WEAPON_GAME)// && Weapon != WEAPON_WORLD)
 	{
 	    Killer = m_pPlayer->m_1vs1Player;
-        GameServer()->m_apPlayers[Killer]->GetCharacter()->Die(m_pPlayer->m_1vs1Player, WEAPON_GAME , false);
+		CPlayer* p1vs1Player = GameServer()->m_apPlayers[m_pPlayer->m_1vs1Player];
+		if(p1vs1Player->GetCharacter())
+            p1vs1Player->GetCharacter()->Die(m_pPlayer->m_1vs1Player, WEAPON_GAME , false);
 	}
 
     int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
@@ -736,8 +739,7 @@ void CCharacter::Die(int Killer, int Weapon, bool SendKillMsg)
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	// send the kill message
-	if(SendKillMsg)
-	{
+	if(SendKillMsg)	{
 	CNetMsg_Sv_KillMsg Msg;
 	Msg.m_Killer = Killer;
 	Msg.m_Victim = m_pPlayer->GetCID();

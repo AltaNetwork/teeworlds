@@ -138,7 +138,7 @@ void CPickup::Snap(int SnappingClient)
 	if(!pP)
 		return;
 
-	pP->m_X = (int)m_Pos.x;//+Server()->Tick()%25;
+	pP->m_X = (int)m_Pos.x;
 	pP->m_Y = (int)m_Pos.y;
 	pP->m_Type = m_Type;
 	pP->m_Subtype = m_Subtype;
