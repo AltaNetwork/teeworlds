@@ -2,9 +2,10 @@ LonerStuff
 ==========
 This is a ddrace-blocker built in Serbia by veqi.
 
+*Based on [teecore](https://github.com/Veljko277/) thats based on 0.6.4 [teeworlds](https://github.com/teeworlds)*
+
 [Changelog](https://github.com/Veljko277/lonerstuff/blob/main/changelog.txt)
 
-*Based on [teecore](https://github.com/teeworlds) 0.6.4*
 
 **Building & Installing dependencies**
 -----------------------

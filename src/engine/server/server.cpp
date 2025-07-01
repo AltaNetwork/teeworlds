@@ -30,6 +30,7 @@
 
 #include "register.h"
 #include "server.h"
+#include "accounts.h"
 
 #include <engine/server/localization.h>
 #include <fstream>
@@ -823,7 +824,7 @@ void CServer::SendRconLineAuthed(const char *pLine, void *pUser)
 	int i;
 
 	if(ReentryGuard) return;
-	ReentryGuard++;
+	ReentryGuard+=1;
 
 	for(i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -831,7 +832,7 @@ void CServer::SendRconLineAuthed(const char *pLine, void *pUser)
 			pThis->SendRconLine(i, pLine);
 	}
 
-	ReentryGuard--;
+	ReentryGuard-=1;
 }
 
 void CServer::SendRconCmdAdd(const IConsole::CCommandInfo *pCommandInfo, int ClientID)
@@ -1824,6 +1825,32 @@ void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 	((CServer *)pUser)->m_MapReload = 1;
 }
 
+void CServer::ConRegister(IConsole::IResult *pResult, void *pUserData)
+{
+    CServer *pServer = (CServer *)pUserData;
+
+	const char *pDescription = pResult->GetString(0);
+	const char *pCommand = pResult->GetString(1);
+
+	if(pServer->m_pAccounts->Register(pDescription, pCommand))
+	    pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "registered");
+	else
+	    pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "failed to register");
+}
+
+void CServer::ConLogin(IConsole::IResult *pResult, void *pUserData)
+{
+    CServer *pServer = (CServer *)pUserData;
+	const char *pDescription = pResult->GetString(0);
+	const char *pCommand = pResult->GetString(1);
+
+	if(pServer->m_pAccounts->Login(pDescription, pCommand))
+        pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "logged in");
+    else
+        pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "failed to login");
+}
+
+
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
 {
 	CServer *pServer = (CServer *)pUser;
@@ -1914,6 +1941,9 @@ void CServer::RegisterCommands()
 	Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
 	Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");
 
+    Console()->Register("login", "", CFGFLAG_CHAT, ConLogin, this, "Logout of rcon");
+    Console()->Register("register", "", CFGFLAG_CHAT, ConRegister, this, "Logout of rcon");
+
 	//Console()->Register("record", "?s", CFGFLAG_SERVER|CFGFLAG_STORE, ConRecord, this, "Record to a file");
 	//Console()->Register("stoprecord", "", CFGFLAG_SERVER, ConStopRecord, this, "Stop recording");
 
@@ -1997,6 +2027,13 @@ int main(int argc, const char **argv) // ignore_convention
 	IStorage *pStorage = CreateStorage("Teeworlds", IStorage::STORAGETYPE_SERVER, argc, argv); // ignore_convention
 	IConfig *pConfig = CreateConfig();
 
+	pServer->m_pAccounts = new CAccounts();
+    pServer->m_pAccounts->Init();
+
+    pServer->m_pAccounts->Register("123","qwe");
+    if(pServer->m_pAccounts->Login("123","qwe"))
+        dbg_msg("sql", "logged in");
+
 	pServer->m_pLocalization = new CLocalization(pStorage);
 	pServer->m_pLocalization->InitConfig(0, NULL);
 	if(!pServer->m_pLocalization->Init())
@@ -2051,7 +2088,6 @@ int main(int argc, const char **argv) // ignore_convention
 
 	// free
 	delete pServer->m_pLocalization;
-
 	delete pServer;
 	delete pKernel;
 	delete pEngineMap;

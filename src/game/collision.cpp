@@ -239,16 +239,13 @@ void CCollision::Init(class CLayers *pLayers)
 			break;
 		case TILE_SOLID:
 			m_pTiles[i].m_Index = COLFLAG_SOLID;
-			if(m_pFront && m_pFront[i].m_Index == TILE_THROUGH)
+			if(m_pFront && (m_pFront[i].m_Index == TILE_THROUGH || m_pFront[i].m_Index == 66))
 			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
 			break;
 		case TILE_NOHOOK:
 			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
-			if(m_pFront && m_pFront[i].m_Index == TILE_THROUGH)
+			if(m_pFront && (m_pFront[i].m_Index == TILE_THROUGH || m_pFront[i].m_Index == 66))
 			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
-			break;
-		case TILE_THROUGH:
-		    m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_THROUGH;
 			break;
 		case TILE_FREEZE:
 			m_pTiles[i].m_Index = COLFLAG_FREEZE;

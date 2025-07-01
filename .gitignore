@@ -6,3 +6,4 @@ datasrc/*.pyc
 objs/
 src/game/generated
 teeworlds_srv*
+*.db

@@ -96,6 +96,8 @@ settings.cc.flags:Add("-std=c++20")
 zlib = Compile(settings, Collect("src/engine/external/zlib/*.c"))
 settings.cc.includes:Add("src/engine/external/zlib")
 
+settings.link.flags:Add("-lsqlite3")
+
 engine_settings = settings:Copy()
 server_settings = engine_settings:Copy()
 engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.c"))
