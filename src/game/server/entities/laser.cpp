@@ -4,16 +4,17 @@
 #include <game/server/gamecontext.h>
 #include "laser.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner)
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Strength)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
+	m_PrevPos = m_From;
 	m_Owner = Owner;
 	m_Energy = StartEnergy;
 	m_Dir = Direction;
 	m_Bounces = 0;
-	// m_FirstBounce = false;
 	m_EvalTick = 0;
+	m_Strength = Strength;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
@@ -23,18 +24,27 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At);//, pOwnerChar);
+	CCharacter *pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At);
+	if(m_Bounces == 0) // first bounce
+	    pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar);
 	if(!pHit)
 		return false;
-	// if(pOwnerChar->GetCore().m_VTeam == 0)
-	// { } else {
-	//     m_Energy = -1;
-	// 	return false;
-	// }
-	m_From = From;
-	m_Pos = At;
-	m_Energy = -1;
-	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE);
+
+
+	if(pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE))
+	{ // simpler team detection
+    	m_From = From;
+    	m_Pos = At;
+    	m_Energy = -1;
+        if(!m_Strength)
+       	    pHit->Freeze(0);
+	} else return false;
+	if(m_Strength)
+	{
+    	const vec2 &HitPos = pHit->GetCore().m_Pos;
+    	vec2 newvel = vec2(normalize(/*pOwnerChar->GetCore().m_Pos*/m_PrevPos - HitPos) * m_Strength);
+    	pHit->GetCore().m_Vel += newvel;
+	}
 	return true;
 }
 
@@ -49,6 +59,7 @@ void CLaser::DoBounce()
 	}
 
 	vec2 To = m_Pos + m_Dir * m_Energy;
+	m_PrevPos = m_Pos;
 
 	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
 	{

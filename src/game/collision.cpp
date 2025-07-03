@@ -285,7 +285,7 @@ int CCollision::IsSpeedup(int Index) const
 
 void CCollision::GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const
 {
-	if(Index < 0 || !m_pSpeedup)
+	if(!m_pSpeedup || Index < 0 )
 		return;
 	float Angle = m_pSpeedup[Index].m_Angle * (pi / 180.0f);
 	*Force = m_pSpeedup[Index].m_Force;

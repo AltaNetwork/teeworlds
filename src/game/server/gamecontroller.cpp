@@ -585,7 +585,7 @@ void IGameController::Snap(int SnappingClient)
 	if(GameServer()->m_World.m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
 	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
-	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : GameServer()->m_apPlayers[SnappingClient]->GetCharacter() ? GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_PassiveTicks-1 : m_Warmup;
+	pGameInfoObj->m_WarmupTimer = GameServer()->m_World.m_Paused ? m_UnpauseTimer : -1;
 
 	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
 	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;

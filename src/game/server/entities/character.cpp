@@ -94,6 +94,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	}
 
 	m_PassiveInd = false;
+	m_SentFlags = false;
 
 	return true;
 }
@@ -354,23 +355,23 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_SHOTGUN:
 		{
-			int ShotSpread = 2;
+			// int ShotSpread = 2;
 
-			for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			{
-				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-				float a = GetAngle(Direction);
-				a += Spreading[i+2];
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					vec2(cosf(a), sinf(a))*Speed,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					1, 0, 0, -1, WEAPON_SHOTGUN, m_Core.m_VTeam);
-			}
-
+			// for(int i = -ShotSpread; i <= ShotSpread; ++i)
+			// {
+			// 	float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
+			// 	float a = GetAngle(Direction);
+			// 	a += Spreading[i+2];
+			// 	float v = 1-(absolute(i)/(float)ShotSpread);
+			// 	float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+			// 	new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+			// 		m_pPlayer->GetCID(),
+			// 		ProjStartPos,
+			// 		vec2(cosf(a), sinf(a))*Speed,
+			// 		(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
+			// 		1, 0, 0, -1, WEAPON_SHOTGUN, m_Core.m_VTeam);
+			// }
+			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), 10);
 			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 		} break;
 
@@ -459,7 +460,7 @@ void CCharacter::HandleWeapons()
 
 bool CCharacter::GiveWeapon(int Weapon, int Ammo)
 {
-	if(m_aWeapons[Weapon].m_Ammo < g_pData->m_Weapons.m_aId[Weapon].m_Maxammo || !m_aWeapons[Weapon].m_Got)
+	if(/*m_aWeapons[Weapon].m_Ammo < g_pData->m_Weapons.m_aId[Weapon].m_Maxammo ||*/ !m_aWeapons[Weapon].m_Got)
 	{
 		m_aWeapons[Weapon].m_Got = true;
 		m_aWeapons[Weapon].m_Ammo = -1;//min(g_pData->m_Weapons.m_aId[Weapon].m_Maxammo, Ammo);
@@ -550,20 +551,28 @@ void CCharacter::Tick()
 	    Flags |= FTUNE_CANTHOOK;
 		Flags |= FTUNE_NOJUMP;
 		Flags |= FTUNE_NOMOVE;
+		m_SentFlags = false;
 	}
 	if(m_Core.m_VTeam < 0)
 	{
 	    Flags |= FTUNE_NOCOLL;
 		Flags |= FTUNE_NOHOOK;
+		m_SentFlags = false;
 	}
-	GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
-
+	if(!m_SentFlags)
+	{
+	    GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
+		m_SentFlags = true;
+	}
 	if(m_PassiveTicks != 0)
 	{
     	if(m_PassiveTicks > 0) { m_PassiveTicks--; }
 		if(m_PassiveTicks == 0)
+		{
 		    m_Core.m_VTeam = 0;
-        else
+			m_SentFlags = false;
+		}
+		else
             m_Core.m_VTeam = -m_pPlayer->GetCID()-1;
 	}
 
@@ -577,6 +586,7 @@ void CCharacter::Tick()
 	{
 	    m_Core.m_FreezeTicks--;
 		ResetInput();
+		m_SentFlags = false;
 		if(Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
 		    GameServer()->CreateDamageInd(m_Pos, 0, m_Core.m_FreezeTicks / SERVER_TICK_SPEED + 1);
 	}
@@ -951,59 +961,40 @@ void CCharacter::HandleZones()
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH ||
-		GameLayerClipped(m_Pos)) // DEATH ( GameLayer )
-	{		Die(m_pPlayer->GetCID(), WEAPON_WORLD); 	}
-    if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
-    GameLayerClipped(m_Pos)) // DEATH ( "teeworlds" layer under "#Zones" group )
-    {        Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
+		GameLayerClipped(m_Pos)) 	{		Die(m_pPlayer->GetCID(), WEAPON_WORLD); 	}
+	/* DEATH ( GAMELAYER ) */
 	if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
-		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
-		GameLayerClipped(m_Pos)) /* UNFREEZE ( GAMELAYER ) */	{	    Freeze(0);		}
+		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE)
+    /* UNFREEZE ( GAMELAYER ) */	{	    Freeze(0);		}
 	if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
-		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
-		GameLayerClipped(m_Pos)) /* FREEZE ( GAMELAYER ) */	{	    Freeze(GameServer()->Tuning()->m_Freeze);		}
+		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE)
+	/* FREEZE ( GAMELAYER ) */	{	    Freeze(GameServer()->Tuning()->m_Freeze);		}
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
-		GameLayerClipped(m_Pos)) // FREEZE BUT FOR QUADS ( "teeworlds" layer under "#Zones" group )
-	{
-        Freeze(3);
-	}
-	// if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 2 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 2 ||
-	// 	GameLayerClipped(m_Pos))	{   m_PassiveTicks = -1;  } // PASSIVE ON ( "teeworlds" layer under "#Zones" group )
-	// if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 3 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 3 ||
-	// 	GameLayerClipped(m_Pos))	{   m_PassiveTicks = 1;  } // PASSIVE OFF ( "teeworlds" layer under "#Zones" group )
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1)
+	/* FREEZE ( #ZONES>TEEWORLDS ) */	{	    Freeze(GameServer()->Tuning()->m_Freeze);		}
+ if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
+    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1)
+    /* DEATH ( #ZONES>DEATH ) */   {        Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
 	// if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
 	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
 	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
 	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
 	// 	GameLayerClipped(m_Pos)) // DOWN STOPPER ( "teeworlds" layer under "#Zones" group )
 	//     {		    if(m_Core.m_Vel.y < 0)  m_Core.m_Vel.y = 0;	}
-	// if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 5 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 5 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 5 ||
-	// 	GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 5 ||
-	// 	GameLayerClipped(m_Pos))	{   GameServer()->m_apPlayers[m_pPlayer->GetCID()]->SetTeam(-1, false, false); Die(m_pPlayer->GetCID(),WEAPON_WORLD);  } // AFK TILE ( "teeworlds" layer under "#Zones" group )
 	// if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 6 ||
  //    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
  //    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 6 ||
  //    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
  //    GameLayerClipped(m_Pos)) // DEATH IN DUEL ( "teeworlds" layer under "#Zones" group )
- //    {        if(m_Core.m_VTeam > 0) Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
+ //    {      		if(Index == 1 && m_Core.m_VTeam > 0)    Die(m_pPlayer->GetCID(), WEAPON_WORLD);      }
 
  // ▒█▀▀▀█ ▒█▀▀█ ▒█▀▀▀ ▒█▀▀▀ ▒█▀▀▄ 　 ▒█░▒█ ▒█▀▀█
  // ░▀▀▀▄▄ ▒█▄▄█ ▒█▀▀▀ ▒█▀▀▀ ▒█░▒█ 　 ▒█░▒█ ▒█▄▄█

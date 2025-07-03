@@ -1,6 +1,8 @@
 === idea list:
     FAST DOWNLOAD
     Tournament
+    King of the Hill
+    FlagHunt
     Cusomization
     Database
     Muting
@@ -8,6 +10,7 @@
     @everyone
 
 === fixage list:
+CHECK LAST COMMIT BUNCH OF WORK TO DO...
   spectators respawn NOW ITS A FUCKING FEATURE NIGGA, YES YOU CANT SPECTATE
   Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
 2.1MB
@@ -15,9 +18,15 @@
 3kb/s # LOWEST I FOUND
 
 === improvise list:
-  Duels
+    Passive 3 secound rule
+    Duels
 
 ==============CHANGELOG==============
+Removed passive in warmup
+Fixed tuning flags sender
+Documents
+DDNet Laser
+DDNet Shotgun
 DDNet Hammer
 Flag based tune seding
 Bandwidth concious spectator

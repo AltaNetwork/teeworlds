@@ -75,7 +75,7 @@ void CPickup::Tick()
 				{
 					if(pChr->GiveWeapon(m_Subtype, 10))
 					{
-						RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
+						RespawnTime = 1;//g_pData->m_aPickups[m_Type].m_Respawntime;
 
 						if(m_Subtype == WEAPON_GRENADE)
 							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE);

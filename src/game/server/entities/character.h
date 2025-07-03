@@ -82,6 +82,7 @@ public:
 	vec2 m_ChrViewPos;
 
 	bool m_PassiveInd;
+	bool m_SentFlags;
 
 private:
 	// player controlling this character
