@@ -19,8 +19,10 @@ void CPassiveIndicator::Reset()
 {
     CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
     if(pOwnerChar)
+    {
         pOwnerChar->m_PassiveInd = false;
-	GameServer()->m_World.DestroyEntity(this);
+    }
+    GameServer()->m_World.DestroyEntity(this);
 }
 
 void CPassiveIndicator::Tick()

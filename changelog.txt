@@ -6,7 +6,6 @@
     Cusomization
     Database
     Muting
-    Whispers
     @everyone
 
 === fixage list:
@@ -18,11 +17,13 @@ CHECK LAST COMMIT BUNCH OF WORK TO DO...
 3kb/s # LOWEST I FOUND
 
 === improvise list:
-    Passive 3 secound rule
     Duels
+    Whispers in logs
 
 ==============CHANGELOG==============
-Removed passive in warmup
+Whispers*
+Passive 3 secound rule*
+Removed passive secounds in warmup
 Fixed tuning flags sender
 Documents
 DDNet Laser

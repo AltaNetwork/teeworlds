@@ -2,7 +2,7 @@
   "translation": [
     {
       "key": "Language successfully switched to English",
-      "value": "Језик је успешно пребачен на енглески"
+      "value": "Језик је успешно пребачен на Српски"
     },
     {
       "key": "Unknown language or no input language code",
@@ -163,6 +163,10 @@
     {
       "key": "'{str:Player}' joined the game",
       "value": "'{str:Player}' се придружио игри"
+    },
+    {
+      "key": "Passive will be disabled in 3 secs",
+      "value": "Пасивни мод се искључује за 3 секунде"
     }
   ]
 }

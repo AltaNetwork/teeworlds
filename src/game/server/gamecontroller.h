@@ -21,8 +21,8 @@ typedef unsigned __int64 uint64_t;
 */
 class IGameController
 {
-	vec2 m_aaSpawnPoints[3][64];
-	int m_aNumSpawnPoints[3];
+	vec2 m_aaSpawnPoints[3+64][64];
+	int m_aNumSpawnPoints[3+64];
 
 	class CGameContext *m_pGameServer;
 	class IServer *m_pServer;

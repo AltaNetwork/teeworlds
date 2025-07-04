@@ -2027,12 +2027,12 @@ int main(int argc, const char **argv) // ignore_convention
 	IStorage *pStorage = CreateStorage("Teeworlds", IStorage::STORAGETYPE_SERVER, argc, argv); // ignore_convention
 	IConfig *pConfig = CreateConfig();
 
-	pServer->m_pAccounts = new CAccounts();
-    pServer->m_pAccounts->Init();
+	// pServer->m_pAccounts = new CAccounts();
+ //    pServer->m_pAccounts->Init();
 
-    pServer->m_pAccounts->Register("123","qwe");
-    if(pServer->m_pAccounts->Login("123","qwe"))
-        dbg_msg("sql", "logged in");
+    // pServer->m_pAccounts->Register("123","qwe");
+    // if(pServer->m_pAccounts->Login("123","qwe"))
+    //     dbg_msg("sql", "logged in");
 
 	pServer->m_pLocalization = new CLocalization(pStorage);
 	pServer->m_pLocalization->InitConfig(0, NULL);

@@ -116,7 +116,7 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 	int SubType = 0;
 
 	if(str_comp(pName, "spawn") == 0)
-		m_aaSpawnPoints[0][m_aNumSpawnPoints[0]++] = Pos;
+		m_aaSpawnPoints[0+TeleNum][m_aNumSpawnPoints[0+TeleNum]++] = Pos;
 	else if(str_comp(pName, "redSpawn") == 0)
 		m_aaSpawnPoints[1][m_aNumSpawnPoints[1]++] = Pos;
 	else if(str_comp(pName, "buleSpawn") == 0)

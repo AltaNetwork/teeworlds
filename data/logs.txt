@@ -1,0 +1,59 @@
+[6867dce2][server]: starting...
+[6867dce2][datafile]: loading. filename='maps/vv3.map'
+[6867dce2][datafile]: allocsize=7520
+[6867dce2][datafile]: readsize=6968
+[6867dce2][datafile]: swaplen=6988
+[6867dce2][datafile]: item_size=6120
+[6867dce2][datafile]: loading done. datafile='maps/vv3.map'
+[6867dce2][server]: maps/vv3.map crc is 794ff998
+[6867dce2][server]: server name is 'teecore'
+[6867dce2][datafile]: loading data index=41 size=9210 uncompressed=416000
+[6867dce2][datafile]: loading data index=45 size=886 uncompressed=624000
+[6867dce2][datafile]: loading data index=43 size=1166 uncompressed=208000
+[6867dce2][datafile]: loading data index=50 size=47 uncompressed=152
+[6867dce2][datafile]: loading data index=51 size=48 uncompressed=152
+[6867dce2][server]: version 0.6 626fce9a778df4d4
+[6867dce4][server]: player is ready. ClientID=0 addr=192.168.1.118:53567 secure=yes
+[6867dce4][server]: 'veqi' -> 'veqi'
+[6867dce4][server]: player has entered the game. ClientID=0 addr=192.168.1.118:53567
+[6867dce4][game]: team_join player='0:veqi' team=0
+[6867dce4][datafile]: loading data index=52 size=12 uncompressed=152
+[6867dce4][datafile]: loading data index=53 size=67 uncompressed=152
+[6867dced][server]: player is ready. ClientID=1 addr=192.168.1.118:34755 secure=yes
+[6867dced][server]: 'qevi' -> 'qevi'
+[6867dced][server]: player has entered the game. ClientID=1 addr=192.168.1.118:34755
+[6867dced][game]: team_join player='1:qevi' team=0
+[6867dcf1][chat]: 1:-2:qevi: nigag
+[6867dcfb][server]: client dropped. cid=1 addr=192.168.1.118:34755 reason=''
+[6867dcfb][game]: kill killer='1:qevi' victim='1:qevi' weapon=-3 special=0
+[6867dcfb][game]: leave player='1:qevi'
+[6867dd0d][server]: player is ready. ClientID=1 addr=192.168.1.118:42770 secure=yes
+[6867dd0d][server]: 'veqi' -> 'veqi'
+[6867dd0d][server]: '(1)veqi' -> '(1)veqi'
+[6867dd0d][server]: player has entered the game. ClientID=1 addr=192.168.1.118:42770
+[6867dd0d][game]: team_join player='1:(1)veqi' team=0
+[6867dd0f][chat]: 1:-2:(1)veqi: niga
+[6867dd2e][game]: kill killer='0:veqi' victim='0:veqi' weapon=-2 special=0
+[6867dd36][chat]: 0:-2:veqi: nigga kill your self
+[6867dd39][chat]: 1:-2:(1)veqi: WHAT??
+[6867dd3d][chat]: 1:-2:(1)veqi: no no you do it
+[6867dd58][game]: pickup player='1:(1)veqi' item=2/2
+[6867dd58][game]: pickup player='1:(1)veqi' item=2/3
+[6867dd5b][game]: pickup player='0:veqi' item=2/4
+[6867dd5b][game]: pickup player='0:veqi' item=2/3
+[6867dd74][game]: kill killer='0:veqi' victim='0:veqi' weapon=-3 special=0
+[6867dd74][game]: kill killer='0:veqi' victim='1:(1)veqi' weapon=5 special=0
+[6867dd7f][game]: kill killer='1:(1)veqi' victim='1:(1)veqi' weapon=-3 special=0
+[6867dd7f][game]: kill killer='1:(1)veqi' victim='0:veqi' weapon=5 special=0
+[6867dd81][game]: kill killer='0:veqi' victim='0:veqi' weapon=-3 special=0
+[6867dd81][game]: kill killer='0:veqi' victim='1:(1)veqi' weapon=-2 special=0
+[6867dd89][server]: client dropped. cid=1 addr=192.168.1.118:42770 reason=''
+[6867dd89][game]: kill killer='1:(1)veqi' victim='1:(1)veqi' weapon=-3 special=0
+[6867dd89][game]: leave player='1:(1)veqi'
+[6867dd8e][game]: pickup player='0:veqi' item=2/4
+[6867dd90][game]: pickup player='0:veqi' item=2/2
+[6867dd90][game]: pickup player='0:veqi' item=2/3
+[6867dd97][game]: kill killer='0:veqi' victim='0:veqi' weapon=-1 special=0
+[6867dd9a][game]: pickup player='0:veqi' item=2/2
+[6867dd9a][game]: pickup player='0:veqi' item=2/3
+[6867dd9a][game]: pickup player='0:veqi' item=2/4

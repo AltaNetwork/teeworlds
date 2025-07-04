@@ -266,45 +266,69 @@ void CGameContext::SendChatTarget(int To, const char *pText, ...)
 }
 
 
-void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText)
+void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, int Reciever)
 {
 	char aBuf[256];
-	if(ChatterClientID >= 0 && ChatterClientID < MAX_CLIENTS)
+
+	const bool ValidChatter = ChatterClientID >= 0 && ChatterClientID < MAX_CLIENTS && m_apPlayers[ChatterClientID];
+
+	// Console log
+	if(ValidChatter)
 		str_format(aBuf, sizeof(aBuf), "%d:%d:%s: %s", ChatterClientID, Team, Server()->ClientName(ChatterClientID), pText);
 	else
 		str_format(aBuf, sizeof(aBuf), "*** %s", pText);
-	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, Team!=CHAT_ALL?"teamchat":"chat", aBuf);
 
-	if(m_apPlayers[ChatterClientID]->m_Mute == true) {
-	   SendChatTarget(ChatterClientID,"Chat is unavailable for you");
-	   return;
+	Console()->Print(IConsole::OUTPUT_LEVEL_ADDINFO, Team != CHAT_ALL ? "teamchat" : "chat", aBuf);
+
+	// Mute check
+	if(ValidChatter && m_apPlayers[ChatterClientID]->m_Mute)
+	{
+		SendChatTarget(ChatterClientID, "Chat is unavailable for you");
+		return;
 	}
-	if(Team == CHAT_ALL)
+
+	// Private message
+	if(Reciever != -1)
 	{
 		CNetMsg_Sv_Chat Msg;
-		Msg.m_Team = 0;
+		Msg.m_Team = CHAT_WHISPER_SEND;
 		Msg.m_ClientID = ChatterClientID;
 		Msg.m_pMessage = pText;
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ChatterClientID);
+
+		Msg.m_Team = CHAT_WHISPER_RECV;
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, Reciever);
+		return;
+	}
+
+	// Public or team chat
+	CNetMsg_Sv_Chat Msg;
+	Msg.m_ClientID = ChatterClientID;
+	Msg.m_pMessage = pText;
+
+	if(Team == CHAT_ALL)
+	{
+		Msg.m_Team = CHAT_ALL;
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 	}
 	else
 	{
-		CNetMsg_Sv_Chat Msg;
-		Msg.m_Team = 1;
-		Msg.m_ClientID = ChatterClientID;
-		Msg.m_pMessage = pText;
+		Msg.m_Team = CHAT_BLUE;
 
-		// pack one for the recording only
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NOSEND, -1);
+		// Recording only (not sent)
+		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NOSEND, -1);
 
-		// send to the clients
+		// Send to team members only
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(m_apPlayers[i] && m_apPlayers[i]->GetTeam() == Team)
-				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL|MSGFLAG_NORECORD, i);
+			{
+				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
+			}
 		}
 	}
 }
+
 
 void CGameContext::SendEmoticon(int ClientID, int Emoticon)
 {
@@ -796,7 +820,59 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				m_ChatResponseTargetID = ClientID;
 
-				Console()->ExecuteLineFlag(pMsg->m_pMessage + 1, ClientID, CFGFLAG_CHAT);
+				if(str_comp_num("/w ", pMsg->m_pMessage, 3) == 0)
+{
+					const char *pBody = pMsg->m_pMessage + 3; // skip "/w "
+					char aTarget[32];
+					char aMessage[256];
+
+					// Split into target and message
+					if(sscanf(pBody, "%31s %[^\n]", aTarget, aMessage) != 2)
+					{
+						SendChatTarget(ClientID, "Usage: /w <name or ID> <message>");
+						return;
+					}
+
+					// Try to parse target as ID first
+					int ReceiverID = -1;
+					if(isdigit(aTarget[0]))
+					{
+						int ID = str_toint(aTarget);
+						if(ID >= 0 && ID < MAX_CLIENTS && m_apPlayers[ID])
+							ReceiverID = ID;
+					}
+					else
+					{
+						// Match by name
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(m_apPlayers[i] && str_comp(Server()->ClientName(i), aTarget) == 0)
+							{
+								ReceiverID = i;
+								break;
+							}
+						}
+					}
+
+					if(ReceiverID == -1)
+					{
+						SendChatTarget(ClientID, "Whisper failed: player not found");
+						return;
+					}
+
+					if(ReceiverID == ClientID)
+					{
+						SendChatTarget(ClientID, "You can't whisper to yourself");
+						return;
+					}
+
+					// Finally send the parsed whisper message
+					SendChat(ClientID, CHAT_ALL, aMessage, ReceiverID);
+					return;
+                }
+
+				else
+				    Console()->ExecuteLineFlag(pMsg->m_pMessage + 1, ClientID, CFGFLAG_CHAT);
 
 				m_ChatResponseTargetID = -1;
 				Console()->SetAccessLevel(IConsole::ACCESS_LEVEL_ADMIN);
@@ -1889,7 +1965,7 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 
 	if(ReentryGuard)
 		return;
-	ReentryGuard++;
+	ReentryGuard+=1;
 
 	if(*pLine == '[')
 	do
@@ -1898,7 +1974,7 @@ void CGameContext::ConsoleOutputCallback_Chat(const char *pLine, void *pUser)
 
 	pSelf->SendChatTarget(ClientID, pLine);
 
-	ReentryGuard--;
+	ReentryGuard-=1;
 }
 
 void CGameContext::OnConsoleInit()
@@ -1982,17 +2058,15 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
     	m_pTele = (CTeleTile *)Kernel()->RequestInterface<IMap>()->GetData(pTeleMap->m_Tele);
 	}
 	int TeleNumber = 0;
-    int TeleType = 0;
+
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
 		for(int x = 1; x < pTileMap->m_Width; x++)
 		{
 			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+			TeleNumber = 0;
 			if(TeleLayer)
-			{
 			    TeleNumber = m_pTele[y*pTileMap->m_Width+x].m_Number;
-    			TeleType = m_pTele[y*pTileMap->m_Width+x].m_Type;
-			}
 			if(Index >= ENTITY_OFFSET)
 			{
 				vec2 Pivot(x*32.0f+16.0f, y*32.0f+16.0f);
@@ -2059,7 +2133,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 					vec2 P3(fx2f(pQuads[q].m_aPoints[3].x), fx2f(pQuads[q].m_aPoints[3].y));
 					vec2 Pivot(fx2f(pQuads[q].m_aPoints[4].x), fx2f(pQuads[q].m_aPoints[4].y));
 
-					m_pController->OnEntity(aLayerName, Pivot, P0, P1, P2, P3, pQuads[q].m_PosEnv);
+					m_pController->OnEntity(aLayerName, Pivot, P0, P1, P2, P3, pQuads[q].m_PosEnv, 0);
 				}
 			}
 		}

@@ -167,13 +167,15 @@ public:
 		CHAT_ALL=-2,
 		CHAT_SPEC=-1,
 		CHAT_RED=0,
-		CHAT_BLUE=1
+		CHAT_BLUE=1,
+		CHAT_WHISPER_SEND=2,
+		CHAT_WHISPER_RECV=3
 	};
 
 	// network
 	void SendMotd(int To, const char* pText);
 	void SendChatTarget(int To, const char *pText, ...);
-	void SendChat(int ClientID, int Team, const char *pText);
+	void SendChat(int ClientID, int Team, const char *pText, int Reciever = -1);
 	void SendEmoticon(int ClientID, int Emoticon);
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendBroadcast(const char *pText, int ClientID);

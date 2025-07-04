@@ -51,7 +51,7 @@ void CPickup::Tick()
 		switch (m_Type)
 		{
 			case POWERUP_HEALTH:
-			    pChr->GetCore().m_FreezeTicks = GameServer()->Tuning()->m_Freeze;
+			    pChr->Freeze(3);
 				if(pChr->IncreaseHealth(1))
 				{
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);

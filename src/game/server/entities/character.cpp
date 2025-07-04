@@ -566,7 +566,10 @@ void CCharacter::Tick()
 	}
 	if(m_PassiveTicks != 0)
 	{
-    	if(m_PassiveTicks > 0) { m_PassiveTicks--; }
+    	if(m_PassiveTicks > 0)
+            m_PassiveTicks--;
+        if(m_PassiveTicks == SERVER_TICK_SPEED*3)
+       	    GameServer()->SendChatTarget(m_pPlayer->GetCID(), _("Passive will be disabled in 3 secs"));
 		if(m_PassiveTicks == 0)
 		{
 		    m_Core.m_VTeam = 0;
@@ -932,7 +935,7 @@ void CCharacter::Snap(int SnappingClient)
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == -1 || m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID)
 	{
     	pCharacter->m_Health = m_TakeDamage ? clamp(m_Health,0,10) : 10;
-    	pCharacter->m_Armor = m_Core.m_FreezeTicks != 0 ? 10-m_Core.m_FreezeTicks/(GameServer()->Tuning()->m_Freeze*SERVER_TICK_SPEED)*10 : m_Armor;
+    	pCharacter->m_Armor = m_Core.m_FreezeTicks != 0 ? 10-m_Core.m_FreezeTicks/(g_Config.m_FreezeLength*SERVER_TICK_SPEED)*10 : m_Armor;
 		pCharacter->m_AmmoCount = m_aWeapons[m_ActiveWeapon].m_Ammo < 0 ? 1 : clamp(m_aWeapons[m_ActiveWeapon].m_Ammo,0,10);
 	}
 
@@ -972,12 +975,12 @@ void CCharacter::HandleZones()
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_FREEZE)
-	/* FREEZE ( GAMELAYER ) */	{	    Freeze(GameServer()->Tuning()->m_Freeze);		}
+	/* FREEZE ( GAMELAYER ) */	{	    Freeze(g_Config.m_FreezeLength);		}
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1)
-	/* FREEZE ( #ZONES>TEEWORLDS ) */	{	    Freeze(GameServer()->Tuning()->m_Freeze);		}
+	/* FREEZE ( #ZONES>TEEWORLDS ) */	{	    Freeze(g_Config.m_FreezeLength);		}
  if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||

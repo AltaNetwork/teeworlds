@@ -47,7 +47,7 @@ CPlayer::~CPlayer()
 
 void CPlayer::HandleTuningParams()
 {
-	if(!(m_PrevTuningParams == m_NextTuningParams))
+	if(m_PrevTuningParams != m_NextTuningParams)
 	{
 		if(m_IsReady)
 		{
