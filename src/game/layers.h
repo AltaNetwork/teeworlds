@@ -5,7 +5,7 @@
 
 #include <engine/map.h>
 #include <game/mapitems.h>
-#include <game/zones.h>
+// #include <game/zones.h>
 
 class CLayers
 {

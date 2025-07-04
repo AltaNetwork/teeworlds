@@ -16,11 +16,11 @@
 #define GAME_NETVERSION "0.6 626fce9a778df4d4" //the std game version
 static const char GAME_RELEASE_VERSION[8] = {'0', '.', '6', '.', '4', 0};
 
-#define MOD_NAME "Block"
-#define MOD_VERSION "1.0"
-#define MOD_AUTHORS ""
-#define MOD_CREDITS ""
-#define MOD_THANKS ""
+#define MOD_NAME "DDrace Blocker"
+#define MOD_VERSION "0.16"
+#define MOD_AUTHORS "veλko"
+#define MOD_CREDITS "Pointer, veqi"
+#define MOD_THANKS "Rei, FlowerFell-Sans, necropotame, Neox, heinrich5991, ErrorDreemurr, def-, east"
 #define MOD_SOURCES ""
 #endif
 #endif

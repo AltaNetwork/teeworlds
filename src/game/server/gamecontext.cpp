@@ -1974,12 +1974,25 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();
 	CTile *pTiles = (CTile *)Kernel()->RequestInterface<IMap>()->GetData(pTileMap->m_Data);
-
+	bool TeleLayer = m_Layers.TeleLayer();
+	CTeleTile *m_pTele = nullptr;
+	if(TeleLayer)
+	{
+    	CMapItemLayerTilemap *pTeleMap = m_Layers.TeleLayer();
+    	m_pTele = (CTeleTile *)Kernel()->RequestInterface<IMap>()->GetData(pTeleMap->m_Tele);
+	}
+	int TeleNumber = 0;
+    int TeleType = 0;
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
 		for(int x = 1; x < pTileMap->m_Width; x++)
 		{
 			int Index = pTiles[y*pTileMap->m_Width+x].m_Index;
+			if(TeleLayer)
+			{
+			    TeleNumber = m_pTele[y*pTileMap->m_Width+x].m_Number;
+    			TeleType = m_pTele[y*pTileMap->m_Width+x].m_Type;
+			}
 			if(Index >= ENTITY_OFFSET)
 			{
 				vec2 Pivot(x*32.0f+16.0f, y*32.0f+16.0f);
@@ -1990,7 +2003,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				switch(Index - ENTITY_OFFSET)
 				{
 					case ENTITY_SPAWN:
-						m_pController->OnEntity("spawn", Pivot, P0, P1, P2, P3, -1);
+						m_pController->OnEntity("spawn", Pivot, P0, P1, P2, P3, -1, TeleNumber);
 						break;
 					case ENTITY_SPAWN_RED:
 						m_pController->OnEntity("redSpawn", Pivot, P0, P1, P2, P3, -1);

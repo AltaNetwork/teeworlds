@@ -109,8 +109,7 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 	return Eval.m_Got;
 }
 
-
-bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv)
+bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, vec2 P2, vec2 P3, int PosEnv, int TeleNum)
 {
 	vec2 Pos = (P0 + P1 + P2 + P3)/4.0f;
 	int Type = -1;
