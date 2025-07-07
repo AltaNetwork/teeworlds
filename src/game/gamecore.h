@@ -218,6 +218,8 @@ public:
 	void Tick(bool UseInput, const CTuningParams* pTuningParams);
 	void Move(const CTuningParams* pTuningParams);
 
+	void ResetHook();
+
 	void Read(const CNetObj_CharacterCore *pObjCore);
 	void Write(CNetObj_CharacterCore *pObjCore);
 	void Quantize();

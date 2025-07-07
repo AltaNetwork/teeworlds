@@ -1,59 +1,135 @@
-[6867dce2][server]: starting...
-[6867dce2][datafile]: loading. filename='maps/vv3.map'
-[6867dce2][datafile]: allocsize=7520
-[6867dce2][datafile]: readsize=6968
-[6867dce2][datafile]: swaplen=6988
-[6867dce2][datafile]: item_size=6120
-[6867dce2][datafile]: loading done. datafile='maps/vv3.map'
-[6867dce2][server]: maps/vv3.map crc is 794ff998
-[6867dce2][server]: server name is 'teecore'
-[6867dce2][datafile]: loading data index=41 size=9210 uncompressed=416000
-[6867dce2][datafile]: loading data index=45 size=886 uncompressed=624000
-[6867dce2][datafile]: loading data index=43 size=1166 uncompressed=208000
-[6867dce2][datafile]: loading data index=50 size=47 uncompressed=152
-[6867dce2][datafile]: loading data index=51 size=48 uncompressed=152
-[6867dce2][server]: version 0.6 626fce9a778df4d4
-[6867dce4][server]: player is ready. ClientID=0 addr=192.168.1.118:53567 secure=yes
-[6867dce4][server]: 'veqi' -> 'veqi'
-[6867dce4][server]: player has entered the game. ClientID=0 addr=192.168.1.118:53567
-[6867dce4][game]: team_join player='0:veqi' team=0
-[6867dce4][datafile]: loading data index=52 size=12 uncompressed=152
-[6867dce4][datafile]: loading data index=53 size=67 uncompressed=152
-[6867dced][server]: player is ready. ClientID=1 addr=192.168.1.118:34755 secure=yes
-[6867dced][server]: 'qevi' -> 'qevi'
-[6867dced][server]: player has entered the game. ClientID=1 addr=192.168.1.118:34755
-[6867dced][game]: team_join player='1:qevi' team=0
-[6867dcf1][chat]: 1:-2:qevi: nigag
-[6867dcfb][server]: client dropped. cid=1 addr=192.168.1.118:34755 reason=''
-[6867dcfb][game]: kill killer='1:qevi' victim='1:qevi' weapon=-3 special=0
-[6867dcfb][game]: leave player='1:qevi'
-[6867dd0d][server]: player is ready. ClientID=1 addr=192.168.1.118:42770 secure=yes
-[6867dd0d][server]: 'veqi' -> 'veqi'
-[6867dd0d][server]: '(1)veqi' -> '(1)veqi'
-[6867dd0d][server]: player has entered the game. ClientID=1 addr=192.168.1.118:42770
-[6867dd0d][game]: team_join player='1:(1)veqi' team=0
-[6867dd0f][chat]: 1:-2:(1)veqi: niga
-[6867dd2e][game]: kill killer='0:veqi' victim='0:veqi' weapon=-2 special=0
-[6867dd36][chat]: 0:-2:veqi: nigga kill your self
-[6867dd39][chat]: 1:-2:(1)veqi: WHAT??
-[6867dd3d][chat]: 1:-2:(1)veqi: no no you do it
-[6867dd58][game]: pickup player='1:(1)veqi' item=2/2
-[6867dd58][game]: pickup player='1:(1)veqi' item=2/3
-[6867dd5b][game]: pickup player='0:veqi' item=2/4
-[6867dd5b][game]: pickup player='0:veqi' item=2/3
-[6867dd74][game]: kill killer='0:veqi' victim='0:veqi' weapon=-3 special=0
-[6867dd74][game]: kill killer='0:veqi' victim='1:(1)veqi' weapon=5 special=0
-[6867dd7f][game]: kill killer='1:(1)veqi' victim='1:(1)veqi' weapon=-3 special=0
-[6867dd7f][game]: kill killer='1:(1)veqi' victim='0:veqi' weapon=5 special=0
-[6867dd81][game]: kill killer='0:veqi' victim='0:veqi' weapon=-3 special=0
-[6867dd81][game]: kill killer='0:veqi' victim='1:(1)veqi' weapon=-2 special=0
-[6867dd89][server]: client dropped. cid=1 addr=192.168.1.118:42770 reason=''
-[6867dd89][game]: kill killer='1:(1)veqi' victim='1:(1)veqi' weapon=-3 special=0
-[6867dd89][game]: leave player='1:(1)veqi'
-[6867dd8e][game]: pickup player='0:veqi' item=2/4
-[6867dd90][game]: pickup player='0:veqi' item=2/2
-[6867dd90][game]: pickup player='0:veqi' item=2/3
-[6867dd97][game]: kill killer='0:veqi' victim='0:veqi' weapon=-1 special=0
-[6867dd9a][game]: pickup player='0:veqi' item=2/2
-[6867dd9a][game]: pickup player='0:veqi' item=2/3
-[6867dd9a][game]: pickup player='0:veqi' item=2/4
+[686a9f43][server]: starting...
+[686a9f43][datafile]: loading. filename='maps/vv3.map'
+[686a9f43][datafile]: allocsize=7520
+[686a9f43][datafile]: readsize=6968
+[686a9f43][datafile]: swaplen=6988
+[686a9f43][datafile]: item_size=6120
+[686a9f43][datafile]: loading done. datafile='maps/vv3.map'
+[686a9f43][server]: maps/vv3.map crc is 19b58df5
+[686a9f43][server]: server name is 'teecore'
+[686a9f43][datafile]: loading data index=41 size=9210 uncompressed=416000
+[686a9f43][datafile]: loading data index=45 size=886 uncompressed=624000
+[686a9f43][datafile]: loading data index=43 size=1172 uncompressed=208000
+[686a9f43][datafile]: loading data index=50 size=47 uncompressed=152
+[686a9f43][datafile]: loading data index=51 size=48 uncompressed=152
+[686a9f43][server]: version 0.6 626fce9a778df4d4
+[686a9f5b][server]: player is ready. ClientID=0 addr=127.0.0.1:50602 secure=no
+[686a9f5c][server]: 'nameless tee' -> 'nameless tee'
+[686a9f5c][server]: player has entered the game. ClientID=0 addr=127.0.0.1:50602
+[686a9f5c][game]: team_join player='0:nameless tee' team=0
+[686a9f5c][datafile]: loading data index=52 size=12 uncompressed=152
+[686a9f5c][datafile]: loading data index=53 size=67 uncompressed=152
+[686a9f69][game]: pickup player='0:nameless tee' item=2/2
+[686a9f6a][game]: pickup player='0:nameless tee' item=2/3
+[686a9f6a][game]: pickup player='0:nameless tee' item=2/4
+[686a9f75][server]: client dropped. cid=0 addr=127.0.0.1:50602 reason=''
+[686a9f75][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686a9f75][game]: leave player='0:nameless tee'
+[686a9f79][server]: player is ready. ClientID=0 addr=127.0.0.1:63827 secure=no
+[686a9f7a][server]: 'nameless tee' -> 'nameless tee'
+[686a9f7a][server]: player has entered the game. ClientID=0 addr=127.0.0.1:63827
+[686a9f7a][game]: team_join player='0:nameless tee' team=0
+[686a9f85][game]: pickup player='0:nameless tee' item=2/4
+[686a9f8f][game]: pickup player='0:nameless tee' item=2/3
+[686aa02c][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa036][game]: pickup player='0:nameless tee' item=2/4
+[686aa036][game]: pickup player='0:nameless tee' item=2/3
+[686aa036][game]: pickup player='0:nameless tee' item=2/2
+[686aa061][game]: pickup player='0:nameless tee' item=2/3
+[686aa061][game]: pickup player='0:nameless tee' item=2/4
+[686aa08b][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa099][server]: ClientID=0 authed (admin)
+[686aa0b7][game]: pickup player='0:nameless tee' item=2/4
+[686aa0b7][game]: pickup player='0:nameless tee' item=2/3
+[686aa0b8][game]: pickup player='0:nameless tee' item=2/2
+[686aa0c5][chat]: 0:-2:nameless tee: aaa
+[686aa0c7][chat]: 0:-2:nameless tee: nigga what???
+[686aa0dc][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa0dd][game]: pickup player='0:nameless tee' item=2/2
+[686aa0e8][game]: pickup player='0:nameless tee' item=2/4
+[686aa0e8][game]: pickup player='0:nameless tee' item=2/3
+[686aa101][server]: ClientID=0 rcon='sv_map Multeasymap'
+[686aa101][datafile]: loading. filename='maps/Multeasymap.map'
+[686aa101][datafile]: allocsize=4568
+[686aa101][datafile]: readsize=4112
+[686aa101][datafile]: swaplen=4132
+[686aa101][datafile]: item_size=3444
+[686aa101][datafile]: loading done. datafile='maps/Multeasymap.map'
+[686aa101][server]: maps/Multeasymap.map crc is 1e369053
+[686aa101][datafile]: loading data index=28 size=1298 uncompressed=130000
+[686aa101][datafile]: loading data index=30 size=156 uncompressed=65000
+[686aa107][server]: player is ready. ClientID=0 addr=127.0.0.1:63827 secure=no
+[686aa107][server]: player has entered the game. ClientID=0 addr=127.0.0.1:63827
+[686aa107][game]: team_join player='0:nameless tee' team=0
+[686aa107][datafile]: loading data index=40 size=53 uncompressed=152
+[686aa107][datafile]: loading data index=41 size=658 uncompressed=130000
+[686aa1b2][Console]: funvotewon!
+[686aa1ba][chat]: 0:-2:nameless tee: nigga
+[686aa1bc][chat]: 0:-2:nameless tee: ???
+[686aa1d9][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa1f9][server]: ClientID=0 rcon='sv_map Copy Love Box'
+[686aa1f9][datafile]: loading. filename='maps/Copy Love Box.map'
+[686aa1f9][datafile]: allocsize=6008
+[686aa1f9][datafile]: readsize=5536
+[686aa1f9][datafile]: swaplen=5556
+[686aa1f9][datafile]: item_size=4808
+[686aa1f9][datafile]: loading done. datafile='maps/Copy Love Box.map'
+[686aa1f9][server]: maps/Copy Love Box.map crc is 870d6d0c
+[686aa1f9][datafile]: loading data index=32 size=2508 uncompressed=244800
+[686aa1f9][datafile]: loading data index=40 size=407 uncompressed=367200
+[686aa1f9][datafile]: loading data index=38 size=267 uncompressed=244800
+[686aa1f9][datafile]: loading data index=41 size=66 uncompressed=304
+[686aa1f9][datafile]: loading data index=42 size=68 uncompressed=304
+[686aa202][server]: player is ready. ClientID=0 addr=127.0.0.1:63827 secure=no
+[686aa202][server]: player has entered the game. ClientID=0 addr=127.0.0.1:63827
+[686aa202][game]: team_join player='0:nameless tee' team=0
+[686aa202][datafile]: loading data index=43 size=371 uncompressed=244800
+[686aa209][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa212][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa254][server]: player is ready. ClientID=1 addr=192.168.1.118:35526 secure=yes
+[686aa254][server]: 'veqi' -> 'veqi'
+[686aa254][server]: player has entered the game. ClientID=1 addr=192.168.1.118:35526
+[686aa254][game]: team_join player='1:veqi' team=0
+[686aa28b][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa28b][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa295][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa295][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa29f][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa29f][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa2a8][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa2a8][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa2b3][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa2b3][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa30e][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa30e][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa31b][server]: ClientID=0 rcon='broadcast nigga'
+[686aa31d][server]: ClientID=0 rcon='broadcast nigga'
+[686aa324][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa324][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa32a][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa32a][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa335][game]: kill killer='1:veqi' victim='1:veqi' weapon=-3 special=0
+[686aa335][game]: kill killer='1:veqi' victim='0:nameless tee' weapon=-2 special=0
+[686aa339][game]: kill killer='1:veqi' victim='1:veqi' weapon=-3 special=0
+[686aa339][game]: kill killer='1:veqi' victim='0:nameless tee' weapon=-2 special=0
+[686aa33a][game]: kill killer='1:veqi' victim='1:veqi' weapon=-3 special=0
+[686aa33a][game]: kill killer='1:veqi' victim='0:nameless tee' weapon=-2 special=0
+[686aa33e][game]: kill killer='1:veqi' victim='1:veqi' weapon=-3 special=0
+[686aa33e][game]: team_join player='1:veqi' m_Team=-1
+[686aa34f][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa34f][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa356][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa356][game]: kill killer='1:veqi' victim='0:nameless tee' weapon=-2 special=0
+[686aa35e][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa35e][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa363][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa363][game]: kill killer='0:nameless tee' victim='1:veqi' weapon=5 special=0
+[686aa367][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-1 special=0
+[686aa372][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa3d3][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-2 special=0
+[686aa3dd][game]: pickup player='0:nameless tee' item=2/4
+[686aa3df][game]: pickup player='0:nameless tee' item=2/3
+[686aa3df][game]: pickup player='0:nameless tee' item=2/2
+[686aa4b9][server]: client dropped. cid=0 addr=127.0.0.1:63827 reason=''
+[686aa4b9][game]: kill killer='0:nameless tee' victim='0:nameless tee' weapon=-3 special=0
+[686aa4b9][game]: leave player='0:nameless tee'

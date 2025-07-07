@@ -1,11 +1,8 @@
-
-
 #include <new>
 #include <optional>
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
-// #include <game/zones.h>
 
 #include "character.h"
 #include "laser.h"
@@ -945,8 +942,6 @@ void CCharacter::Snap(int SnappingClient)
 	if(!pDDNetCharacter)
 		return;
 
-	// if(m_Core.m_VTeam < 0)	pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
-	//pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
 	pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 
@@ -1100,6 +1095,7 @@ void CCharacter::HandleZones()
         if((TeleType == 63) || (TeleType == 10))
         {
            	m_Core.m_Vel = vec2(0, 0);
+            m_Core.ResetHook();
     	}
     } else {
         switch(TeleType)

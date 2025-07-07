@@ -237,7 +237,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = TEAM_RED;//m_Team;
+	pPlayerInfo->m_Team = SnappingClient == id ? m_Team : TEAM_RED;
 
 	if(m_ClientID == SnappingClient)
 		pPlayerInfo->m_Local = 1;

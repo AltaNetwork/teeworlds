@@ -430,6 +430,13 @@ void CCharacterCore::Move(const CTuningParams* pTuningParams)
 	m_Pos = NewPos;
 }
 
+void CCharacterCore::ResetHook()
+{
+    m_HookedPlayer = -1;
+    m_HookState = HOOK_RETRACTED;
+    m_HookPos = m_Pos;
+}
+
 void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore)
 {
 	pObjCore->m_X = round_to_int(m_Pos.x);

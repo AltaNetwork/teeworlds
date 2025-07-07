@@ -21,6 +21,7 @@ CHECK LAST COMMIT BUNCH OF WORK TO DO...
     Whispers in logs
 
 ==============CHANGELOG==============
+Fix tele with reset hook
 Whispers*
 Passive 3 secound rule*
 Removed passive secounds in warmup
