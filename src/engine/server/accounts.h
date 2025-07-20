@@ -17,7 +17,7 @@ class CAccounts
 	// {
 	// 	int m_NIGGA;
 	// };
-	UserDatabase db;
+	// UserDatabase db;
 public:
 	CAccounts();
 	void Init();

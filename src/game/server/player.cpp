@@ -24,6 +24,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_1vs1Score = 0;
 	m_InvitedBy = -1;
 
+	m_Cosmetics = 0;
+
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
 	m_Authed = IServer::AUTHED_NO;
@@ -218,16 +220,21 @@ void CPlayer::Snap(int SnappingClient)
 	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
 	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
 
-
 	int m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
+	float fval = 256-abs(cos(Server()->Tick()/50.0f)) * 256.0f;
+	int m_PulseColor = static_cast<int>(fval);
 
 	int BaseColor = m_RainbowColor * 0x010000;
-	int Color = 0xff32;
-
-	pClientInfo->m_UseCustomColor = true;
-	pClientInfo->m_ColorBody = BaseColor + Color;
-    pClientInfo->m_ColorFeet = BaseColor+Color;
-
+    int Color = 0xff32;
+    if(m_Cosmetics > 0)
+        pClientInfo->m_UseCustomColor = true;
+	if(m_Cosmetics&COSM_RAINBOW)
+    	pClientInfo->m_ColorBody = BaseColor + Color;
+	if(m_Cosmetics&COSM_RAINBOWFEET)
+	    pClientInfo->m_ColorFeet = BaseColor + Color;
+	BaseColor = 96000;
+	if(m_Cosmetics&COSM_PULSEREDFEET)
+        pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)

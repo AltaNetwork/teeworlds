@@ -1063,15 +1063,17 @@ void CCharacter::HandleZones()
 		return;
 	int TeleNumber = pTeleLayer[Index].m_Number;
 	int TeleType = pTeleLayer[Index].m_Type;
+
 	if(TeleNumber < 1 || TeleType == TILE_TELEOUT || TeleType == 30)
 	    return;
+
 	if(TeleType == 29 )
 	{ // CHECKPOINT
         m_CheckPoint = TeleNumber;
         return;
 	}
 
-	int DestTeleNumber = 0;//clamp(random(),0,Outs.size() - 1);
+	int DestTeleNumber = 0;
 	vec2 DestPosition;
 
 	if(TeleType == 63 || TeleType == 32) // CFRM
@@ -1079,25 +1081,34 @@ void CCharacter::HandleZones()
 	    const std::vector<vec2> &CheckOuts = GameServer()->Collision()->TeleCheckOuts(m_CheckPoint);
 	    if(CheckOuts.empty())
             return;
+        DestTeleNumber = clamp(static_cast<int>(random()), 0, static_cast<int>(CheckOuts.size()) - 1);
         DestPosition = CheckOuts.at(DestTeleNumber);
 	}
-	if(TeleType == 10 || TeleType == 26 ) // NORMAL TELE IN
+	if(TeleType == 10 || TeleType == 26 || TeleType == 14 ) // NORMAL TELE IN
     {
         const std::vector<vec2> &Outs = GameServer()->Collision()->TeleOuts(TeleNumber);
         if(Outs.empty())
             return;
+        DestTeleNumber = clamp(static_cast<int>(random()), 0, static_cast<int>(Outs.size()) - 1);
         DestPosition = Outs.at(DestTeleNumber);
+        if(TeleType == 14 && (m_ActiveWeapon != WEAPON_HAMMER || m_AttackTick != Server()->Tick()-SERVER_TICK_SPEED/8))
+            DestPosition = vec2(0,0);
     }
-    if(TeleType > 9 && TeleType < 64)
+    if(TeleType < 64)
     {
-        if(DestPosition)
+        if(DestPosition != vec2(0,0))
             m_Core.m_Pos = DestPosition;
         if((TeleType == 63) || (TeleType == 10))
         {
            	m_Core.m_Vel = vec2(0, 0);
             m_Core.ResetHook();
     	}
-    } else {
+    }
+
+    //### CUSTOM TELEPORT ITEMS###//
+
+    if(TeleType > 64)
+    {
         switch(TeleType)
         {
             case 197:

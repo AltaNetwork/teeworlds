@@ -46,7 +46,7 @@ public:
 	bool Get(int Index, float *pValue);
 	bool Get(const char *pName, float *pValue);
 
-	bool operator==(const CTuningParams& TuningParams)
+	bool operator==(const CTuningParams& TuningParams) const
 	{
 		#define MACRO_TUNING_PARAM(Name,ScriptName,Value) if(m_##Name != TuningParams.m_##Name) return false;
 		#include "tuning.h"

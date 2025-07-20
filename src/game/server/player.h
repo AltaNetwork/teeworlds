@@ -47,6 +47,10 @@ public:
 		EVENT_NONE=0,
 		EVENT_DUEL,
 		EVENT_TOURNAMENT,
+
+		COSM_RAINBOW=1,
+		COSM_RAINBOWFEET=2,
+		COSM_PULSEREDFEET=4,
 	};
 
 	//---------------------------------------------------------
@@ -92,6 +96,8 @@ public:
 	int m_1vs1Player;
 	int m_1vs1Score;
 	int m_InvitedBy;
+
+	int m_Cosmetics;
 
 	int m_DieTick;
 	int m_Score;

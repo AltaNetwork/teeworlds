@@ -306,7 +306,7 @@ void CDemoRecorder::AddDemoMarker()
 	if(m_NumTimelineMarkers > 0)
 	{
 		int Diff = m_LastTickMarker - m_aTimelineMarkers[m_NumTimelineMarkers-1];
-		if(Diff < SERVER_TICK_SPEED*1.0f)
+		if(Diff < SERVER_TICK_SPEED/**1.0f*/)
 			return;
 	}
 

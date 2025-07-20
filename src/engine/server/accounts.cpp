@@ -1,7 +1,7 @@
 #include "accounts.h"
 
 CAccounts::CAccounts()
-: db("data/accounts.db") // or whatever your actual DB file is
+// : db("data/accounts.db") // or whatever your actual DB file is
 {
 }
 
@@ -12,10 +12,10 @@ void CAccounts::Init()
 
 bool CAccounts::Login(const std::string& username, const std::string& password)
 {
-    return db.authenticate(username, password);
+    return false;//db.authenticate(username, password);
 }
 
 bool CAccounts::Register(const std::string& username, const std::string& password)
 {
-    return db.add_user(username, password, 0, 0);
+    return false;//db.add_user(username, password, 0, 0);
 }

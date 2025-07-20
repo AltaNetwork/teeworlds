@@ -1868,7 +1868,7 @@ void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
     int ClientID = pResult->GetClientID();
     int Value = pResult->GetInteger(0);
     char aBuf[128];
-    pSelf->m_apPlayers[ClientID]->m_1vs1Player = Value;//GetCharacter()->GetCore().m_LastContact = Value;
+    pSelf->m_apPlayers[ClientID]->m_Cosmetics = Value;
     str_format(aBuf, sizeof(aBuf), "Value set to %d", Value);
     pSelf->SendChatTarget(ClientID, _(aBuf));
 }

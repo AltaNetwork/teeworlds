@@ -3,7 +3,7 @@ Import("configure.lua")
 --- Setup Config -------
 config = NewConfig()
 config:Add(OptCCompiler("compiler"))
-config:Add(OptLibrary("zlib", "zlib.h", false))
+config:Add(OptLibrary("zlib", "zlib.h", true))
 config:Finalize("config.lua")
 settings = NewSettings()
 
@@ -92,19 +92,19 @@ settings.cc.flags:Add("`pkg-config --cflags icu-uc icu-i18n`")
 settings.link.flags:Add("`pkg-config --libs icu-uc icu-i18n`")
 -- ExFlags
 settings.cc.flags:Add("-std=c++20")
+-- Use system zlib library instead of compiling a local copy
+settings.link.libs:Add("z")
 
-zlib = Compile(settings, Collect("src/engine/external/zlib/*.c"))
-settings.cc.includes:Add("src/engine/external/zlib")
-
-settings.link.flags:Add("-lsqlite3")
+-- settings.link.flags:Add("-lsqlite3")
+-- Make Database interface in rust to avoid conflits and split work
 
 engine_settings = settings:Copy()
 server_settings = engine_settings:Copy()
-engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.c"))
+engine = Compile(engine_settings, Collect("src/engine/shared/*.cpp", "src/base/*.cpp"))
 server = Compile(server_settings, Collect("src/engine/server/*.cpp"))
 game_shared = Compile(settings, Collect("src/game/*.cpp"), nethash, network_source)
 game_server = Compile(settings, CollectRecursive("src/game/server/*.cpp"), server_content_source)
-md5_comp = Compile(settings, Collect("src/engine/external/md5/*.c"))
+md5_comp = Compile(settings, Collect("src/engine/external/md5/*.cpp"))
 json_comp = Compile(settings, Collect("src/engine/external/json/*.c", "src/engine/external/json/*.cpp"))
 
 
