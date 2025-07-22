@@ -1,9 +1,10 @@
 === idea list:
+    steal uuid howtodo from infclass
     FAST DOWNLOAD
     Tournament
     King of the Hill
     FlagHunt
-    Cusomization
+    Cusomization*
     Database
     Muting
     @everyone

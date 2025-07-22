@@ -443,6 +443,8 @@ void IGameController::Tick()
 			StartRound();
 	}
 
+	m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
+
 	if(m_GameOverTick != -1)
 	{
 		// game over.. wait for restart

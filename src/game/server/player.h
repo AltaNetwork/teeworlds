@@ -51,6 +51,10 @@ public:
 		COSM_RAINBOW=1,
 		COSM_RAINBOWFEET=2,
 		COSM_PULSEREDFEET=4,
+		COSM_RANDOMSKIN=8,
+		COSM_RANDOMSKINCOALA=16,
+		COSM_RANDOMSKINSANTA=32,
+		COSM_RANDOMSKINKITTY=64,
 	};
 
 	//---------------------------------------------------------
@@ -131,7 +135,6 @@ private:
 	CGameContext *GameServer() const { return m_pGameServer; }
 	IServer *Server() const;
 
-	//
 	bool m_Spawning;
 	int m_ClientID;
 	int m_Team;
@@ -144,8 +147,90 @@ private:
 
 	void HandleTuningParams(); //This function will send the new parameters if needed
 
+	const char* ProccessName() const;
+	const char* ProccessClan() const;
+	const char* ProccessSkin() const;
+
 public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 };
+
+static const char *aSkins[] = {
+	"bluekitty",
+	"bluestripe",
+	"brownbear",
+	"cammo",
+	"cammostripes",
+	"coala",
+	"default",
+	"limekitty",
+	"pinky",
+	"redbopp",
+	"redstripe",
+	"saddo",
+	"toptri",
+	"twinbop",
+	"twintri",
+	"warpaint"
+};
+
+static const char *aSkinsCoala[] = {
+	"coala_bluekitty",
+	"coala_bluestripe",
+	"coala_cammo",
+	"coala_cammostripes",
+	"coala",
+	"coala_default",
+	"coala_limekitty",
+	"coala_pinky",
+	"coala_redbopp",
+	"coala_redstripe",
+	"coala_saddo",
+	"coala_toptri",
+	"coala_twinbop",
+	"coala_twintri",
+	"coala_warpaint"
+};
+
+static const char *aSkinsSanta[] = {
+	"santa_bluekitty",
+	"santa_bluestripe",
+	"santa_brownbear",
+	"santa_cammo",
+	"santa_cammostripes",
+	"santa_coala",
+	"santa_default",
+	"santa_limekitty",
+	"santa_pinky",
+	"santa_redbopp",
+	"santa_redstripe",
+	"santa_saddo",
+	"santa_toptri",
+	"santa_twinbop",
+	"santa_twintri",
+	"santa_warpaint"
+};
+
+static const char *aSkinsKitty[] = {
+	"bluekitty",
+	"kitty_bluestripe",
+	"kitty_brownbear",
+	"kitty_cammo",
+	"kitty_cammostripes",
+	"kitty_coala",
+	"kitty_default",
+	"limekitty",
+	"kitty_pinky",
+	"kitty_redbopp",
+	"kitty_redstripe",
+	"kitty_saddo",
+	"kitty_toptri",
+	"kitty_twinbop",
+	"kitty_twintri",
+	"kitty_warpaint"
+};
+
+
+
 
 #endif

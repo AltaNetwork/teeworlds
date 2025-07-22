@@ -165,89 +165,34 @@ void CPlayer::Snap(int SnappingClient)
 	if(!Server()->ClientIngame(m_ClientID))
 		return;
 
-	int id = m_ClientID;
-	if (!Server()->Translate(id, SnappingClient)) return;
-
-	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, id, sizeof(CNetObj_ClientInfo)));
+	CNetObj_ClientInfo *pClientInfo = static_cast<CNetObj_ClientInfo *>(Server()->SnapNewItem(NETOBJTYPE_CLIENTINFO, m_ClientID, sizeof(CNetObj_ClientInfo)));
 	if(!pClientInfo)
 		return;
 
-	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "");
-	if(m_PlayerFlags&PLAYERFLAG_IN_MENU)	{
-        switch ((Server()->Tick()/(SERVER_TICK_SPEED/2)+m_ClientID)%4) {
-            case 3:
-                str_format(aBuf, sizeof(aBuf), " oᵒ˚");
-                break;
-            case 2:
-                str_format(aBuf, sizeof(aBuf), " oᵒ");
-                break;
-            case 1:
-                str_format(aBuf, sizeof(aBuf), " o");
-                break;
-            case 0:
-                str_format(aBuf, sizeof(aBuf), " ");
-                break;
-        }
-    }
-    char aBufName[128];
-	str_format(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), aBuf);
-	StrToInts(&pClientInfo->m_Name0, 4, aBufName);
+    char aBufName[16];
+    snprintf(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), ProccessName());
+    StrToInts(&pClientInfo->m_Name0, 4, aBufName);
 
-	str_format(aBuf, sizeof(aBuf), "");
-	char aBufClan[128];
-	str_format(aBufClan, sizeof(aBufClan), "%s",Server()->ClientClan(m_ClientID));
-	if(m_PlayerFlags&PLAYERFLAG_CHATTING)	{
-        switch ((Server()->Tick()/(SERVER_TICK_SPEED/3)+m_ClientID)%4) {
-            case 3:
-                str_format(aBuf, sizeof(aBuf), "...✍");
-                break;
-            case 2:
-                str_format(aBuf, sizeof(aBuf), "..✍");
-                break;
-            case 1:
-                str_format(aBuf, sizeof(aBuf), ".✍");
-                break;
-            case 0:
-                str_format(aBuf, sizeof(aBuf), "✍");
-                break;
-        }
-    }
+    char aBufClan[12];
+    snprintf(aBufClan, sizeof(aBufClan), "%s", ProccessClan());
+    StrToInts(&pClientInfo->m_Clan0, 4, aBufClan);
 
-	StrToInts(&pClientInfo->m_Clan0, 3, aBuf);
-	StrToInts(&pClientInfo->m_Skin0, 6, m_TeeInfos.m_SkinName);
-	pClientInfo->m_UseCustomColor = m_TeeInfos.m_UseCustomColor;
-	pClientInfo->m_ColorBody = m_TeeInfos.m_ColorBody;
-	pClientInfo->m_ColorFeet = m_TeeInfos.m_ColorFeet;
+    int Colour = 0xff32 + GameServer()->m_pController->m_RainbowColor * 0x010000; // rainbow colour
+	StrToInts(&pClientInfo->m_Skin0, 6, ProccessSkin());
+	pClientInfo->m_UseCustomColor = m_Cosmetics < 5 && m_Cosmetics > 0 ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
+	pClientInfo->m_ColorBody = m_Cosmetics&COSM_RAINBOW ? Colour : m_TeeInfos.m_ColorBody;
+	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
 
-	int m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
-	float fval = 256-abs(cos(Server()->Tick()/50.0f)) * 256.0f;
-	int m_PulseColor = static_cast<int>(fval);
-
-	int BaseColor = m_RainbowColor * 0x010000;
-    int Color = 0xff32;
-    if(m_Cosmetics > 0)
-        pClientInfo->m_UseCustomColor = true;
-	if(m_Cosmetics&COSM_RAINBOW)
-    	pClientInfo->m_ColorBody = BaseColor + Color;
-	if(m_Cosmetics&COSM_RAINBOWFEET)
-	    pClientInfo->m_ColorFeet = BaseColor + Color;
-	BaseColor = 96000;
-	if(m_Cosmetics&COSM_PULSEREDFEET)
-        pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
-
-	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, id, sizeof(CNetObj_PlayerInfo)));
+	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_Local = 0;
-	pPlayerInfo->m_ClientID = id;
+	pPlayerInfo->m_ClientID = m_ClientID;
 	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = SnappingClient == id ? m_Team : TEAM_RED;
-
-	if(m_ClientID == SnappingClient)
-		pPlayerInfo->m_Local = 1;
+	pPlayerInfo->m_Team = SnappingClient == m_ClientID ? false /* anonymous event */ ? TEAM_BLUE : m_Team : TEAM_RED;
+	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
 	{
@@ -266,7 +211,7 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	if(m_Team == TEAM_SPECTATORS)
-    	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
+    	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_PAUSED;
 }
 
 void CPlayer::FakeSnap(int SnappingClient)
@@ -457,11 +402,69 @@ int CPlayer::PlayerEvent()
     if(m_1vs1Player != -1 && GameServer()->m_apPlayers[m_1vs1Player])
     {
         if(m_ClientID != m_1vs1Player && // cant fight yourself
-            // GameServer()->m_apPlayers[m_1vs1Player] && // exists
             GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Player == m_ClientID) // cant fight a guy thats already fighting someone else
             return EVENT_DUEL;
         else
             m_1vs1Player = -1;
     }
     return EVENT_NONE;
+}
+
+const char* CPlayer::ProccessName() const
+{
+    static char s_aBuf[24]; // Static to avoid returning pointer to local, but not thread-safe if called concurrently for different players
+
+    if (m_PlayerFlags & PLAYERFLAG_IN_MENU) {
+        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 2) + m_ClientID) % 4) {
+            case 3: str_format(s_aBuf, sizeof(s_aBuf), " oᵒ˚"); break;
+            case 2: str_format(s_aBuf, sizeof(s_aBuf), " oᵒ"); break;
+            case 1: str_format(s_aBuf, sizeof(s_aBuf), " o"); break;
+            case 0: str_format(s_aBuf, sizeof(s_aBuf), " "); break;
+            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
+        }
+    } else {
+        str_format(s_aBuf, sizeof(s_aBuf), ""); // No animation
+    }
+    return s_aBuf;
+}
+
+const char* CPlayer::ProccessClan() const
+{
+    static char s_aBuf[24]; // Static to avoid returning pointer to local
+
+    if (m_PlayerFlags & PLAYERFLAG_CHATTING) {
+        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 3) + m_ClientID) % 4) {
+            case 3: str_format(s_aBuf, sizeof(s_aBuf), "...✍"); break;
+            case 2: str_format(s_aBuf, sizeof(s_aBuf), "..✍"); break;
+            case 1: str_format(s_aBuf, sizeof(s_aBuf), ".✍"); break;
+            case 0: str_format(s_aBuf, sizeof(s_aBuf), "✍"); break;
+            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
+        }
+    } else {
+        str_format(s_aBuf, sizeof(s_aBuf), Server()->ClientClan(m_ClientID)); // No animation
+    }
+    return s_aBuf;
+}
+
+const char* CPlayer::ProccessSkin() const
+{
+    static char s_aBuf[24]; // Static to avoid returning pointer to local
+    str_format(s_aBuf, sizeof(s_aBuf), "default");
+    str_format(s_aBuf, sizeof(s_aBuf), m_TeeInfos.m_SkinName);
+    if(m_Cosmetics&COSM_RANDOMSKINSANTA)
+        str_format(s_aBuf, sizeof(s_aBuf), aSkinsSanta[Server()->Tick()/50%15]);
+    if(m_Cosmetics&COSM_RANDOMSKIN)
+        str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
+    if(m_Cosmetics&COSM_RANDOMSKINCOALA)
+        str_format(s_aBuf, sizeof(s_aBuf), aSkinsCoala[Server()->Tick()/50%15]);
+    if(m_Cosmetics&COSM_RANDOMSKINKITTY)
+        str_format(s_aBuf, sizeof(s_aBuf), aSkinsKitty[Server()->Tick()/50%15]);
+
+	// float fval = 256-abs(cos(Server()->Tick()/50.0f)) * 256.0f;
+	// int m_PulseColor = static_cast<int>(fval);
+
+	// BaseColor = 96000;
+	// if(m_Cosmetics&COSM_PULSEREDFEET)
+ //        pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
+    return s_aBuf;
 }

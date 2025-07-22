@@ -152,6 +152,7 @@ public:
 	bool CheckTeamBalance();
 	bool CanChangeTeam(CPlayer *pPplayer, int JoinTeam);
 	int ClampTeam(int Team);
+	int m_RainbowColor;
 
 	virtual void PostReset();
 
