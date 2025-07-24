@@ -17,8 +17,8 @@
       "value": "'{str:PlayerName}' је ушао и придружио се игри"
     },
     {
-      "key": "'{str:PlayerName}' has left the game ({str:Reason})",
-      "value": "'{str:PlayerName}' је напустио игру ({str:Reason})"
+      "key": "'%s' has left the game ({str:Reason})",
+      "value": "'%s' је напустио игру ({str:Reason})"
     },
     {
       "key": "'{str:PlayerName}' has left the game",

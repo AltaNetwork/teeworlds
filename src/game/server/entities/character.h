@@ -12,15 +12,15 @@ enum
 	WEAPON_GAME = -3, // team switching etc
 	WEAPON_SELF = -2, // console kill command
 	WEAPON_WORLD = -1, // death tiles etc
-};
 
-enum
-{
     FTUNE_NOMOVE = 1, // All 3 used by "freeze"; flag "0" is used on connection
     FTUNE_NOHOOK = 2,
     FTUNE_NOJUMP = 4,
     FTUNE_NOCOLL = 8,
     FTUNE_CANTHOOK = 16,
+
+    FLAG_NOKILLMSG = 1,
+    FLAG_ENDDUEL = 2,
 };
 
 class CCharacter : public CEntity
@@ -56,7 +56,7 @@ public:
 	void ResetInput();
 	void FireWeapon();
 
-	void Die(int Killer, int Weapon, bool SendKillMsg = true);
+	void Die(int Killer, int Weapon, int Flags = 0);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);

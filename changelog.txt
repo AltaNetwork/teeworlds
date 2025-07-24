@@ -10,8 +10,9 @@
     @everyone
 
 === fixage list:
-CHECK LAST COMMIT BUNCH OF WORK TO DO...
-  spectators respawn NOW ITS A FUCKING FEATURE NIGGA, YES YOU CANT SPECTATE
+
+  fix laser vteam collision stuff
+  spectators respawn
   Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
 2.1MB
 200kb/s
@@ -22,6 +23,7 @@ CHECK LAST COMMIT BUNCH OF WORK TO DO...
     Whispers in logs
 
 ==============CHANGELOG==============
+duel DOESNT breaks on player disconnect
 Fix tele with reset hook
 Whispers*
 Passive 3 secound rule*
@@ -37,7 +39,7 @@ HookTrough
 Tele
 Speedups
 Spawn Passive
-1vs1
+Duels
 DDNet Gun
 Allow unzoom
 Afk tiles

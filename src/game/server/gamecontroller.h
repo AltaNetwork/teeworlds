@@ -89,7 +89,7 @@ public:
 	void ChangeMap(const char *pToMap);
 
     bool IsFriendlyFire(int ClientID1, int ClientID2);
-    int VTeam1vs1(int ClientID1, int ClientID2);
+    int VTeamDuel(int ClientID1, int ClientID2);
 
 	bool IsForceBalanced();
 
@@ -135,7 +135,7 @@ public:
 			weapon - What weapon that killed it. Can be -1 for undefined
 				weapon when switching team or player suicides.
 	*/
-	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
+	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon, int Flags = 0);
 
 
 	virtual void OnPlayerInfoChange(class CPlayer *pP);

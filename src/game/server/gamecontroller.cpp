@@ -6,6 +6,7 @@
 
 #include <game/generated/protocol.h>
 
+#include "entities/character.h"
 #include "entities/pickup.h"
 #include "gamecontroller.h"
 #include "gamecontext.h"
@@ -323,27 +324,34 @@ void IGameController::OnPlayerInfoChange(class CPlayer *pP)
 }
 
 
-int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
+int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon, int Flags)
 {
     // do scoreing
 	if(!pKiller || pKiller == pVictim->GetPlayer() || Weapon == WEAPON_GAME)
 		return 0;
 
-	if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
-	{
-        pKiller->m_1vs1Score++;
-        if(pKiller->m_1vs1Score > 9)
+    pKiller->m_Score++;
+    CPlayer *mVictim = pVictim->GetPlayer();
+
+    if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
+    {
+        pKiller->m_DuelScore++;
+        if(Flags&FLAG_ENDDUEL)
+            pKiller->m_DuelScore = 10;
+        if(GameServer()->m_apPlayers[pKiller->GetCID()]->m_DuelScore > 9)
         {
-            pKiller->m_1vs1Player = -1;
-            pVictim->GetPlayer()->m_1vs1Player = -1;
             char aBuf[256];
             str_format(aBuf, sizeof(aBuf), "'%s' won a duel against '%s' with result of %d:%d",
-                Server()->ClientName(pKiller->GetCID()), Server()->ClientName(pVictim->GetPlayer()->GetCID()),
-                pKiller->m_1vs1Score, pVictim->GetPlayer()->m_1vs1Score);
+                Server()->ClientName(mVictim->m_DuelPlayer), Server()->ClientName(mVictim->GetCID()),
+                GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_DuelScore, mVictim->m_DuelScore);
             GameServer()->SendChatTarget(-1, _(aBuf));
+
+            GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_SpawnTeam = 0;
+            mVictim->m_SpawnTeam = 0;
+            GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_DuelPlayer = -1;
+            mVictim->m_DuelPlayer = -1;
         }
-	}
-    pKiller->m_Score++;
+    }
 	return 0;
 }
 
@@ -390,7 +398,7 @@ void IGameController::TogglePause()
 	}
 }
 
-int IGameController::VTeam1vs1(int ClientID1, int ClientID2)
+int IGameController::VTeamDuel(int ClientID1, int ClientID2)
 {
     int B = ClientID2>ClientID1 ? ClientID2 : ClientID1;
     int A = ClientID2>ClientID1 ? ClientID1 : ClientID2; // A is always less than B

@@ -35,7 +35,7 @@ public:
 	void OnPredictedInput(CNetObj_PlayerInput *NewInput);
 	void OnDisconnect(const char *pReason);
 
-	void KillCharacter(int Weapon = WEAPON_GAME);
+	void KillCharacter(int Weapon = WEAPON_GAME, int Flags = 0);
 	CCharacter *GetCharacter();
 
 	const char* GetLanguage();
@@ -56,6 +56,7 @@ public:
 		COSM_RANDOMSKINSANTA=32,
 		COSM_RANDOMSKINKITTY=64,
 	};
+	void DuelTick();
 
 	//---------------------------------------------------------
 	// this is used for snapping so we know how we can clip the view for the player
@@ -97,8 +98,8 @@ public:
 
 	// int m_RespawnTick;
 	int	m_SpawnTeam;
-	int m_1vs1Player;
-	int m_1vs1Score;
+	int m_DuelPlayer;
+	int m_DuelScore;
 	int m_InvitedBy;
 
 	int m_Cosmetics;
@@ -174,61 +175,61 @@ static const char *aSkins[] = {
 	"warpaint"
 };
 
-static const char *aSkinsCoala[] = {
-	"coala_bluekitty",
-	"coala_bluestripe",
-	"coala_cammo",
-	"coala_cammostripes",
-	"coala",
-	"coala_default",
-	"coala_limekitty",
-	"coala_pinky",
-	"coala_redbopp",
-	"coala_redstripe",
-	"coala_saddo",
-	"coala_toptri",
-	"coala_twinbop",
-	"coala_twintri",
-	"coala_warpaint"
-};
+// static const char *aSkinsCoala[] = {
+// 	"coala_bluekitty",
+// 	"coala_bluestripe",
+// 	"coala_cammo",
+// 	"coala_cammostripes",
+// 	"coala",
+// 	"coala_default",
+// 	"coala_limekitty",
+// 	"coala_pinky",
+// 	"coala_redbopp",
+// 	"coala_redstripe",
+// 	"coala_saddo",
+// 	"coala_toptri",
+// 	"coala_twinbop",
+// 	"coala_twintri",
+// 	"coala_warpaint"
+// };
 
-static const char *aSkinsSanta[] = {
-	"santa_bluekitty",
-	"santa_bluestripe",
-	"santa_brownbear",
-	"santa_cammo",
-	"santa_cammostripes",
-	"santa_coala",
-	"santa_default",
-	"santa_limekitty",
-	"santa_pinky",
-	"santa_redbopp",
-	"santa_redstripe",
-	"santa_saddo",
-	"santa_toptri",
-	"santa_twinbop",
-	"santa_twintri",
-	"santa_warpaint"
-};
+// static const char *aSkinsSanta[] = {
+// 	"santa_bluekitty",
+// 	"santa_bluestripe",
+// 	"santa_brownbear",
+// 	"santa_cammo",
+// 	"santa_cammostripes",
+// 	"santa_coala",
+// 	"santa_default",
+// 	"santa_limekitty",
+// 	"santa_pinky",
+// 	"santa_redbopp",
+// 	"santa_redstripe",
+// 	"santa_saddo",
+// 	"santa_toptri",
+// 	"santa_twinbop",
+// 	"santa_twintri",
+// 	"santa_warpaint"
+// };
 
-static const char *aSkinsKitty[] = {
-	"bluekitty",
-	"kitty_bluestripe",
-	"kitty_brownbear",
-	"kitty_cammo",
-	"kitty_cammostripes",
-	"kitty_coala",
-	"kitty_default",
-	"limekitty",
-	"kitty_pinky",
-	"kitty_redbopp",
-	"kitty_redstripe",
-	"kitty_saddo",
-	"kitty_toptri",
-	"kitty_twinbop",
-	"kitty_twintri",
-	"kitty_warpaint"
-};
+// static const char *aSkinsKitty[] = {
+// 	"bluekitty",
+// 	"kitty_bluestripe",
+// 	"kitty_brownbear",
+// 	"kitty_cammo",
+// 	"kitty_cammostripes",
+// 	"kitty_coala",
+// 	"kitty_default",
+// 	"limekitty",
+// 	"kitty_pinky",
+// 	"kitty_redbopp",
+// 	"kitty_redstripe",
+// 	"kitty_saddo",
+// 	"kitty_toptri",
+// 	"kitty_twinbop",
+// 	"kitty_twintri",
+// 	"kitty_warpaint"
+// };
 
 
 

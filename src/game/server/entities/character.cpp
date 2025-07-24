@@ -86,7 +86,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	if(pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL)
 	{
-        m_Core.m_VTeam = GameServer()->m_pController->VTeam1vs1(m_pPlayer->GetCID(),m_pPlayer->m_1vs1Player);
+        m_Core.m_VTeam = GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
         Freeze(3);
 	}
 
@@ -565,7 +565,7 @@ void CCharacter::Tick()
 	{
     	if(m_PassiveTicks > 0)
             m_PassiveTicks--;
-        if(m_PassiveTicks == SERVER_TICK_SPEED*3)
+        if(m_PassiveTicks == (SERVER_TICK_SPEED*3)-1)
        	    GameServer()->SendChatTarget(m_pPlayer->GetCID(), _("Passive will be disabled in 3 secs"));
 		if(m_PassiveTicks == 0)
 		{
@@ -721,20 +721,19 @@ bool CCharacter::IncreaseArmor(int Amount)
 	return true;
 }
 
-void CCharacter::Die(int Killer, int Weapon, bool SendKillMsg)
+void CCharacter::Die(int Killer, int Weapon, int Flags)
 {
 	// we got to wait 0.5 secs before respawning
 	// m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 
     if(m_pPlayer->PlayerEvent() == m_pPlayer->EVENT_DUEL && Weapon != WEAPON_GAME)// && Weapon != WEAPON_WORLD)
 	{
-	    Killer = m_pPlayer->m_1vs1Player;
-		CPlayer* p1vs1Player = GameServer()->m_apPlayers[m_pPlayer->m_1vs1Player];
-		if(p1vs1Player->GetCharacter())
-            p1vs1Player->GetCharacter()->Die(m_pPlayer->m_1vs1Player, WEAPON_GAME , false);
+	    Killer = m_pPlayer->m_DuelPlayer;
+		CPlayer* pDuelPlayer = GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer];
+		if(pDuelPlayer->GetCharacter())
+            pDuelPlayer->GetCharacter()->Die(m_pPlayer->m_DuelPlayer, WEAPON_GAME, FLAG_NOKILLMSG);
 	}
 
-    int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
 
     if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
     {
@@ -742,20 +741,23 @@ void CCharacter::Die(int Killer, int Weapon, bool SendKillMsg)
            Weapon = 5; // replace with ninja
     }
 
+    int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
+
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "kill killer='%d:%s' victim='%d:%s' weapon=%d special=%d",
+	str_format(aBuf, sizeof(aBuf), "kill killer='%d:%s' victim='%d:%s' weapon=%d special=%d, flags=%d",
 		Killer, Server()->ClientName(Killer),
-		m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial);
+		m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), Weapon, ModeSpecial, Flags);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	// send the kill message
-	if(SendKillMsg)	{
-	CNetMsg_Sv_KillMsg Msg;
-	Msg.m_Killer = Killer;
-	Msg.m_Victim = m_pPlayer->GetCID();
-	Msg.m_Weapon = Weapon;
-	Msg.m_ModeSpecial = ModeSpecial;
-	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+	if(!Flags&FLAG_NOKILLMSG)
+	{
+    	CNetMsg_Sv_KillMsg Msg;
+    	Msg.m_Killer = Killer;
+    	Msg.m_Victim = m_pPlayer->GetCID();
+    	Msg.m_Weapon = Weapon;
+    	Msg.m_ModeSpecial = ModeSpecial;
+    	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
 	}
 	// a nice sound
 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_DIE);
@@ -915,11 +917,6 @@ void CCharacter::Snap(int SnappingClient)
 
 	// set emote
 	if (m_EmoteStop < Server()->Tick()) {		m_EmoteType = EMOTE_NORMAL;		m_EmoteStop = -1;   }
-
-	if (pCharacter->m_HookedPlayer != -1)	{
-		if (!Server()->Translate(pCharacter->m_HookedPlayer, SnappingClient))
-			pCharacter->m_HookedPlayer = -1;
-	}
 
 	pCharacter->m_Emote = m_EmoteType == EMOTE_NORMAL && m_Core.m_FreezeTicks ? EMOTE_BLINK : m_EmoteType;
 	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
@@ -1107,6 +1104,7 @@ void CCharacter::HandleZones()
 
     //### CUSTOM TELEPORT ITEMS###//
 
+    int NumberXTick = SERVER_TICK_SPEED*(TeleNumber);
     if(TeleType > 64)
     {
         switch(TeleType)
@@ -1117,7 +1115,11 @@ void CCharacter::HandleZones()
                 else if (TeleNumber == 255)
                     m_PassiveTicks = -1;
                 else
-                    m_PassiveTicks = SERVER_TICK_SPEED*(TeleNumber-1);
+                    m_PassiveTicks = NumberXTick-SERVER_TICK_SPEED;
+                break;
+            case 198:
+                if(m_PassiveTicks != 0 &&(m_PassiveTicks > NumberXTick || m_PassiveTicks == -1))
+                    m_PassiveTicks = NumberXTick;
                 break;
         }
     }

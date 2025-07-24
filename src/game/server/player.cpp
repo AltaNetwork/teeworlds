@@ -20,8 +20,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_TeamChangeTick = Server()->Tick();
 
 	m_SpawnTeam = 0;
-	m_1vs1Player = -1;
-	m_1vs1Score = 0;
+	m_DuelPlayer = -1;
+	m_DuelScore = 0;
 	m_InvitedBy = -1;
 
 	m_Cosmetics = 0;
@@ -95,18 +95,17 @@ void CPlayer::Tick()
 		}
 	}
 
-
 	if(!GameServer()->m_World.m_Paused)
 	{
+	    if(PlayerEvent() == EVENT_DUEL)
+			DuelTick();
 		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || PlayerEvent() != EVENT_NONE))
 			m_Spawning = true;
 
 		if(m_pCharacter)
 		{
 			if(m_pCharacter->IsAlive())
-			{
 				m_ViewPos = m_pCharacter->m_Pos;
-			}
 			else
 			{
 				delete m_pCharacter;
@@ -114,21 +113,7 @@ void CPlayer::Tick()
 			}
 		}
 		else if(m_Spawning)
-		{
-		    if(PlayerEvent() == EVENT_DUEL)
-			    m_SpawnTeam = 1;
-			else
-                m_SpawnTeam = 0;
 			TryRespawn();
-		}
-		if(PlayerEvent() == EVENT_DUEL && Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
-		{
-    		char Buf[256];
-    		str_format(Buf, sizeof(Buf), "                                                  \n\n\n%s: %d\n%s: %d",
-                Server()->ClientName(m_ClientID), m_1vs1Score,
-                Server()->ClientName(m_1vs1Player), GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Score);
-    		GameServer()->SendBroadcast(Buf, m_ClientID);
-		}
 		if(m_Team == TEAM_SPECTATORS && m_SpectatorID == SPEC_FREEVIEW)
 			m_ViewPos = vec2(m_LatestActivity.m_TargetX, m_LatestActivity.m_TargetY);
 	}
@@ -235,7 +220,7 @@ void CPlayer::FakeSnap(int SnappingClient)
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
-	KillCharacter();
+	KillCharacter(WEAPON_SELF, FLAG_ENDDUEL);
 
 	if(Server()->ClientIngame(m_ClientID))
 	{
@@ -243,7 +228,7 @@ void CPlayer::OnDisconnect(const char *pReason)
 		if(pReason && *pReason)
 		{
 			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(m_ClientID), pReason);
-			GameServer()->SendChatTarget(-1, _("'{str:PlayerName}' has left the game ({str:Reason})"), "PlayerName", Server()->ClientName(m_ClientID), "Reason", pReason);
+			GameServer()->SendChatTarget(-1, _("'%s' has left the game ({str:Reason})"), "PlayerName", Server()->ClientName(m_ClientID), "Reason", pReason);
 		}
 		else
 		{
@@ -311,11 +296,11 @@ CCharacter *CPlayer::GetCharacter()
 	return 0;
 }
 
-void CPlayer::KillCharacter(int Weapon)
+void CPlayer::KillCharacter(int Weapon, int Flags)
 {
 	if(m_pCharacter)
 	{
-		m_pCharacter->Die(m_ClientID, Weapon);
+		m_pCharacter->Die(m_ClientID, Weapon, Flags);
 		delete m_pCharacter;
 		m_pCharacter = 0;
 	}
@@ -340,20 +325,20 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 		if(Team == TEAM_SPECTATORS)
 		{
 			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the spectators"),"Player", Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the redteam"),"Player", Server()->ClientName(m_ClientID));
-		}else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
-		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the blueteam"),"Player", Server()->ClientName(m_ClientID));
+		// }else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
+		// {
+		// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the redteam"),"Player", Server()->ClientName(m_ClientID));
+		// }else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
+		// {
+		// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the blueteam"),"Player", Server()->ClientName(m_ClientID));
 		}else
 		{
 			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the game"),"Player", Server()->ClientName(m_ClientID));
 		}
 	}
 
-	if(KillChr)
-	    KillCharacter();
+	// if(KillChr)
+	//     KillCharacter();
 
 	m_Team = Team;
 	m_LastActionTick = Server()->Tick();
@@ -399,15 +384,29 @@ void CPlayer::SetLanguage(const char* pLanguage)
 
 int CPlayer::PlayerEvent()
 {
-    if(m_1vs1Player != -1 && GameServer()->m_apPlayers[m_1vs1Player])
+    if(m_DuelPlayer != -1 && GameServer()->m_apPlayers[m_DuelPlayer])
     {
-        if(m_ClientID != m_1vs1Player && // cant fight yourself
-            GameServer()->m_apPlayers[m_1vs1Player]->m_1vs1Player == m_ClientID) // cant fight a guy thats already fighting someone else
+        if(m_DuelPlayer != -1)
             return EVENT_DUEL;
-        else
-            m_1vs1Player = -1;
     }
     return EVENT_NONE;
+}
+
+void CPlayer::DuelTick()
+{
+    if(m_ClientID == m_DuelPlayer && GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelPlayer == m_ClientID)
+        m_DuelPlayer = -1;
+
+    m_SpawnTeam = 1;
+
+    if(Server()->Tick()%SERVER_TICK_SPEED == 1)
+	{
+		char Buf[256];
+		str_format(Buf, sizeof(Buf), "%s: %d\n%s: %d                                                  ",
+            Server()->ClientName(m_ClientID), m_DuelScore,
+            Server()->ClientName(m_DuelPlayer), GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelScore);
+		GameServer()->SendBroadcast(Buf, m_ClientID);
+	}
 }
 
 const char* CPlayer::ProccessName() const
@@ -451,14 +450,14 @@ const char* CPlayer::ProccessSkin() const
     static char s_aBuf[24]; // Static to avoid returning pointer to local
     str_format(s_aBuf, sizeof(s_aBuf), "default");
     str_format(s_aBuf, sizeof(s_aBuf), m_TeeInfos.m_SkinName);
-    if(m_Cosmetics&COSM_RANDOMSKINSANTA)
-        str_format(s_aBuf, sizeof(s_aBuf), aSkinsSanta[Server()->Tick()/50%15]);
+    // if(m_Cosmetics&COSM_RANDOMSKINSANTA)
+    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsSanta[Server()->Tick()/50%15]);
     if(m_Cosmetics&COSM_RANDOMSKIN)
         str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
-    if(m_Cosmetics&COSM_RANDOMSKINCOALA)
-        str_format(s_aBuf, sizeof(s_aBuf), aSkinsCoala[Server()->Tick()/50%15]);
-    if(m_Cosmetics&COSM_RANDOMSKINKITTY)
-        str_format(s_aBuf, sizeof(s_aBuf), aSkinsKitty[Server()->Tick()/50%15]);
+    // if(m_Cosmetics&COSM_RANDOMSKINCOALA)
+    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsCoala[Server()->Tick()/50%15]);
+    // if(m_Cosmetics&COSM_RANDOMSKINKITTY)
+    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsKitty[Server()->Tick()/50%15]);
 
 	// float fval = 256-abs(cos(Server()->Tick()/50.0f)) * 256.0f;
 	// int m_PulseColor = static_cast<int>(fval);

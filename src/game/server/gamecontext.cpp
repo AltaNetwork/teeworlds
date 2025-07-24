@@ -1713,17 +1713,14 @@ void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
     char aBuf[128];
     if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_NONE)
     {
-        str_format(aBuf, sizeof(aBuf), "Leave what nigga?");
+        str_format(aBuf, sizeof(aBuf), "Nothing to leave");
         pSelf->SendChatTarget(ClientID, _(aBuf));
         return;
     }
 
     if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_DUEL)
     {
-        pSelf->m_apPlayers[pSelf->m_apPlayers[ClientID]->m_1vs1Player]->m_1vs1Score = 9;
-
-        if(pSelf->m_apPlayers[ClientID]->GetCharacter())
-            pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_SELF);
+        pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_SELF, FLAG_ENDDUEL);
         return;
     }
 
@@ -1807,10 +1804,10 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
     str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
     pSelf->SendChatTarget(ClientID, _(aBuf));
 
-    pSelf->m_apPlayers[Inviter]->m_1vs1Player = ClientID;
-    pSelf->m_apPlayers[ClientID]->m_1vs1Player = Inviter;
-    pSelf->m_apPlayers[Inviter]->m_1vs1Score = 0;
-    pSelf->m_apPlayers[ClientID]->m_1vs1Score = 0;
+    pSelf->m_apPlayers[Inviter]->m_DuelPlayer = ClientID;
+    pSelf->m_apPlayers[ClientID]->m_DuelPlayer = Inviter;
+    pSelf->m_apPlayers[Inviter]->m_DuelScore = 0;
+    pSelf->m_apPlayers[ClientID]->m_DuelScore = 0;
 
     if(pSelf->m_apPlayers[Inviter]->GetCharacter())
         pSelf->m_apPlayers[Inviter]->GetCharacter()->Die(Inviter, WEAPON_GAME);
