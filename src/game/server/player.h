@@ -55,6 +55,12 @@ public:
 		COSM_RANDOMSKINCOALA=16,
 		COSM_RANDOMSKINSANTA=32,
 		COSM_RANDOMSKINKITTY=64,
+
+		SETTINGS_OLDUI=1,
+		SETTINGS_WEAPONUI=2,
+		SETTINGS_OLDFREEZE=4,
+		SETTINGS_OPAQUEPASSIVE=8,
+		SETTINGS_PREDICTVANILLA=16,
 	};
 	void DuelTick();
 
@@ -103,6 +109,7 @@ public:
 	int m_InvitedBy;
 
 	int m_Cosmetics;
+	int m_Settings;
 
 	int m_DieTick;
 	int m_Score;

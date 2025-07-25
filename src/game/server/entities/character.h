@@ -138,6 +138,9 @@ private:
 
 	int m_CheckPoint;
 
+	int m_FreezeStart;
+	bool m_DeepFrozen;
+
 	// ninja
 	struct
 	{

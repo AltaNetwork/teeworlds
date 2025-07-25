@@ -93,6 +93,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_PassiveInd = false;
 	m_SentFlags = false;
 
+	m_FreezeStart = 0;
+	m_DeepFrozen = false;
 	return true;
 }
 
@@ -543,14 +545,14 @@ void CCharacter::ResetInput()
 void CCharacter::Tick()
 {
 	int Flags = 0;
-	if(m_Core.m_FreezeTicks != 0)
+	if(m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE && m_Core.m_FreezeTicks != 0)
 	{
 	    Flags |= FTUNE_CANTHOOK;
 		Flags |= FTUNE_NOJUMP;
 		Flags |= FTUNE_NOMOVE;
 		m_SentFlags = false;
 	}
-	if(m_Core.m_VTeam < 0)
+	if(m_Core.m_VTeam < 0 && ~m_pPlayer->m_Settings&CPlayer::SETTINGS_OPAQUEPASSIVE)
 	{
 	    Flags |= FTUNE_NOCOLL;
 		Flags |= FTUNE_NOHOOK;
@@ -586,6 +588,7 @@ void CCharacter::Tick()
 	{
 	    m_Core.m_FreezeTicks--;
 		ResetInput();
+		m_DeepFrozen = false;//Server()->Tick()-m_Core.m_FreezeTicks == m_FreezeStart ? true : false;
 		m_SentFlags = false;
 		if(Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
 		    GameServer()->CreateDamageInd(m_Pos, 0, m_Core.m_FreezeTicks / SERVER_TICK_SPEED + 1);
@@ -621,41 +624,9 @@ void CCharacter::TickDefered()
 	}
 
     //	lastsentcore
-	// vec2 StartPos = m_Core.m_Pos;
-	// vec2 StartVel = m_Core.m_Vel;
-	// bool StuckBefore = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
-
 	m_Core.Move(m_pPlayer->GetNextTuningParams());
-	// bool StuckAfterMove = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Core.Quantize();
-	// bool StuckAfterQuant = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Pos = m_Core.m_Pos;
-
-	// if(!StuckBefore && (StuckAfterMove || StuckAfterQuant))
-	// {
-	// 	// Hackish solution to get rid of strict-aliasing warning
-	// 	union
-	// 	{
-	// 		float f;
-	// 		unsigned u;
-	// 	}StartPosX, StartPosY, StartVelX, StartVelY;
-
-	// 	StartPosX.f = StartPos.x;
-	// 	StartPosY.f = StartPos.y;
-	// 	StartVelX.f = StartVel.x;
-	// 	StartVelY.f = StartVel.y;
-
-	// 	char aBuf[256];
-	// 	str_format(aBuf, sizeof(aBuf), "STUCK!!! %d %d %d %f %f %f %f %x %x %x %x",
-	// 		StuckBefore,
-	// 		StuckAfterMove,
-	// 		StuckAfterQuant,
-	// 		StartPos.x, StartPos.y,
-	// 		StartVel.x, StartVel.y,
-	// 		StartPosX.u, StartPosY.u,
-	// 		StartVelX.u, StartVelY.u);
-	// 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-	// }
 
 	int Events = m_Core.m_TriggeredEvents;
 	int Mask = CmaskAllExceptOne(m_pPlayer->GetCID());
@@ -664,7 +635,6 @@ void CCharacter::TickDefered()
 	if(Events&COREEVENT_HOOK_ATTACH_PLAYER) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_PLAYER, CmaskAll());
 	if(Events&COREEVENT_HOOK_ATTACH_GROUND) GameServer()->CreateSound(m_Pos, SOUND_HOOK_ATTACH_GROUND, Mask);
 	if(Events&COREEVENT_HOOK_HIT_NOHOOK) GameServer()->CreateSound(m_Pos, SOUND_HOOK_NOATTACH, Mask);
-
 
 	if(m_pPlayer->GetTeam() == TEAM_SPECTATORS)
 	{
@@ -726,7 +696,7 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 	// we got to wait 0.5 secs before respawning
 	// m_pPlayer->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 
-    if(m_pPlayer->PlayerEvent() == m_pPlayer->EVENT_DUEL && Weapon != WEAPON_GAME)// && Weapon != WEAPON_WORLD)
+    if(m_pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL && Weapon != WEAPON_GAME)// && Weapon != WEAPON_WORLD)
 	{
 	    Killer = m_pPlayer->m_DuelPlayer;
 		CPlayer* pDuelPlayer = GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer];
@@ -734,14 +704,13 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
             pDuelPlayer->GetCharacter()->Die(m_pPlayer->m_DuelPlayer, WEAPON_GAME, FLAG_NOKILLMSG);
 	}
 
-
     if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
     {
            Killer = m_Core.m_LastContact;
            Weapon = 5; // replace with ninja
     }
 
-    int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon);
+    int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon, Flags);
 
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "kill killer='%d:%s' victim='%d:%s' weapon=%d special=%d, flags=%d",
@@ -750,7 +719,7 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	// send the kill message
-	if(!Flags&FLAG_NOKILLMSG)
+	if(Flags&&FLAG_NOKILLMSG)
 	{
     	CNetMsg_Sv_KillMsg Msg;
     	Msg.m_Killer = Killer;
@@ -875,28 +844,6 @@ void CCharacter::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 
-	// if(m_Core.m_VTeam < 0 ) {
- //        CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, IDStarter, sizeof(CNetObj_Pickup)));
- //        if(!pP)
- //     		return;
- //        pP->m_X = (int)m_Pos.x;
- //        pP->m_Y = (int)m_Pos.y-48;
- //        pP->m_Type = POWERUP_ARMOR;
-	// };
-	// CNetObj_Pickup *pP1 = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, IDStarter+1, sizeof(CNetObj_Pickup)));
- //    if(!pP1)
- //    	return;
- //    pP1->m_X = (int)m_Pos.x-cos(Server()->Tick()/5.0f)*30;
- //    pP1->m_Y = (int)m_Pos.y-36;
- //    pP1->m_Type = POWERUP_HEALTH;
-
- //    CNetObj_Pickup *pP2 = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, IDStarter+2, sizeof(CNetObj_Pickup)));
- //    if(!pP1)
- //    	return;
- //    pP2->m_X = (int)m_Pos.x+cos(Server()->Tick()/5.0f)*30;
- //    pP2->m_Y = (int)m_Pos.y-36;
- //    pP2->m_Type = POWERUP_HEALTH;
-
 	CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, Id, sizeof(CNetObj_Character)));
 	if(!pCharacter)
 		return;
@@ -922,7 +869,7 @@ void CCharacter::Snap(int SnappingClient)
 	pCharacter->m_Emote = ((pCharacter->m_Emote == EMOTE_NORMAL && (250 - ((Server()->Tick() - m_LastAction)%(250)) < 5)) || m_pPlayer->GetTeam() == TEAM_SPECTATORS) ? EMOTE_BLINK:pCharacter->m_Emote;
 	pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-	pCharacter->m_Weapon = m_Core.m_FreezeTicks ? WEAPON_NINJA : m_ActiveWeapon;
+	pCharacter->m_Weapon = m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE ? m_Core.m_FreezeTicks ? WEAPON_NINJA : m_ActiveWeapon : m_ActiveWeapon;
 	pCharacter->m_AttackTick = m_AttackTick;
 	pCharacter->m_Direction = m_Input.m_Direction;
 
@@ -942,11 +889,35 @@ void CCharacter::Snap(int SnappingClient)
 	pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 
+	if(m_pPlayer->m_Settings&CPlayer::SETTINGS_WEAPONUI)
+	{
+	    if (m_aWeapons[0].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
+    	if (m_aWeapons[1].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN;
+    	if (m_aWeapons[2].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
+        if (m_aWeapons[3].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
+    	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
+	}
+    if(~m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE && m_Core.m_FreezeTicks != 0)
+    {
+       	if(!m_DeepFrozen)
+            pDDNetCharacter->m_FreezeStart = m_FreezeStart;
+        pDDNetCharacter->m_FreezeEnd = /*m_DeepFrozen ? Server()->Tick()+1 : */m_Core.m_FreezeTicks == 0 ? 0 : Server()->Tick() + m_Core.m_FreezeTicks;
+
+    }
+		// pDDNetCharacter->m_Flags |= /*CHARACTERFLAG_IN_FREEZE |*/ CHARACTERFLAG_MOVEMENTS_DISABLED;
+	if(m_pPlayer->m_Settings&CPlayer::SETTINGS_OPAQUEPASSIVE && m_Core.m_VTeam < 0)
+        pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
 }
 
 void CCharacter::Freeze(int Length)
 {
     m_Core.m_FreezeTicks = Length * SERVER_TICK_SPEED;
+    if(Length != 0)
+    {
+        m_FreezeStart = Server()->Tick();
+        m_DeepFrozen = true;
+    }
+
 }
 
 void CCharacter::HandleZones()

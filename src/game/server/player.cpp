@@ -26,6 +26,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 
 	m_Cosmetics = 0;
 
+	m_Settings = 10;
+
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
 	m_Authed = IServer::AUTHED_NO;
@@ -176,7 +178,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = m_ClientID;
 	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = SnappingClient == m_ClientID ? false /* anonymous event */ ? TEAM_BLUE : m_Team : TEAM_RED;
+	pPlayerInfo->m_Team = SnappingClient == m_ClientID ? TEAM_RED : m_Team;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)

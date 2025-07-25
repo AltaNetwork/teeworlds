@@ -916,7 +916,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			char aCmd[VOTE_CMD_LENGTH] = {0};
 			bool m_ChatTarget = false;
 			CNetMsg_Cl_CallVote *pMsg = (CNetMsg_Cl_CallVote *)pRawMsg;
-			const char *pReason = pMsg->m_Reason[0] ? pMsg->m_Reason : "No reason given";
+			const char *pReason = pMsg->m_Reason[0] ? pMsg->m_Reason : " ";//"No reason given";
 
 			if(str_comp_nocase(pMsg->m_Type, "option") == 0)
 			{
@@ -1047,11 +1047,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(!m_VoteCloseTime)
 				return;
 
-			if(pPlayer->m_Vote == 0)
+			if(pPlayer->m_Vote == 0) // this mean player voted already
 			{
 				CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
 				if(!pMsg->m_Vote)
 					return;
+
+				// char aBuf[128];
+				// str_format(aBuf, sizeof(aBuf), "voted %d", pMsg->m_Vote);
+				// SendBroadcast_VL((aBuf), ClientID);
 
 				pPlayer->m_Vote = pMsg->m_Vote;
 				pPlayer->m_VotePos = ++m_VotePos;
@@ -1720,7 +1724,7 @@ void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
 
     if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_DUEL)
     {
-        pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_SELF, FLAG_ENDDUEL);
+        pSelf->m_apPlayers[ClientID]->KillCharacter(WEAPON_SELF, FLAG_ENDDUEL);
         return;
     }
 

@@ -10,7 +10,7 @@
     @everyone
 
 === fixage list:
-
+  fix whispers name detection
   fix laser vteam collision stuff
   spectators respawn
   Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
@@ -23,6 +23,7 @@
     Whispers in logs
 
 ==============CHANGELOG==============
+baby steps towards "settings" player
 duel DOESNT breaks on player disconnect
 Fix tele with reset hook
 Whispers*

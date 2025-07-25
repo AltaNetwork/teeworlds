@@ -12,7 +12,6 @@
 #include "gamecontext.h"
 #include "player.h"
 
-
 IGameController::IGameController(class CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
@@ -607,7 +606,11 @@ void IGameController::Snap(int SnappingClient)
 		return;
 
 	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL |  GAMEINFOFLAG_ALLOW_ZOOM;
-	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE |  GAMEINFOFLAG2_HUD_AMMO |    GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
+	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE;
+	if(GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_OLDUI)
+	    pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_AMMO | GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
+	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_PREDICTVANILLA)
+	    pGameInfoEx->m_Flags2 |= GAMEINFOFLAG_PREDICT_DDRACE;
 	pGameInfoEx->m_Version = 8;
 
 	// This object needs to be snapped alongside pGameInfoObj for that object to work properly
