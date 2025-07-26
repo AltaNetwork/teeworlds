@@ -20,6 +20,7 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, 
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
 
+	m_WTeam = VTeam;
 	m_VTeam = VTeam;
 
 	GameWorld()->InsertEntity(this);
@@ -74,13 +75,13 @@ void CProjectile::Tick()
 			GameServer()->CreateSound(CurPos, m_SoundImpact);
 
 		if(m_Explosive)
-			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false);
+			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false, m_VTeam);
 
 		else if(TargetChr)
 			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Damage, m_Owner, m_Weapon);
 
 		if(m_Type == WEAPON_GUN)
-    		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6);
+    		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6, m_VTeam);
 
         GameServer()->m_World.DestroyEntity(this);
 	}

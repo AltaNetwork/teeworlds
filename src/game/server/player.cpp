@@ -25,8 +25,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_InvitedBy = -1;
 
 	m_Cosmetics = 0;
-
-	m_Settings = 10;
+	m_Settings = SETTINGS_WEAPONUI + SETTINGS_OPAQUEPASSIVE + SETTINGS_BEYONDZOOM;
+	m_WTeam = 0;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -454,8 +454,13 @@ const char* CPlayer::ProccessSkin() const
     str_format(s_aBuf, sizeof(s_aBuf), m_TeeInfos.m_SkinName);
     // if(m_Cosmetics&COSM_RANDOMSKINSANTA)
     //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsSanta[Server()->Tick()/50%15]);
-    if(m_Cosmetics&COSM_RANDOMSKIN)
-        str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
+    //
+    //
+    // if(m_Cosmetics&COSM_RANDOMSKIN)
+    //     str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
+        //
+        //
+        //
     // if(m_Cosmetics&COSM_RANDOMSKINCOALA)
     //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsCoala[Server()->Tick()/50%15]);
     // if(m_Cosmetics&COSM_RANDOMSKINKITTY)

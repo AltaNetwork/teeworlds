@@ -320,9 +320,9 @@ void CCharacter::FireWeapon()
 
 				// set his velocity to fast upward (for now)
 				if(length(pTarget->m_Pos-ProjStartPos) > 0.0f)
-					GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*m_ProximityRadius*0.5f);
+					GameServer()->CreateHammerHit(pTarget->m_Pos-normalize(pTarget->m_Pos-ProjStartPos)*m_ProximityRadius*0.5f, m_Core.m_VTeam);
 				else
-					GameServer()->CreateHammerHit(ProjStartPos);
+					GameServer()->CreateHammerHit(ProjStartPos, m_Core.m_VTeam);
 				vec2 Dir;
 				if (length(pTarget->m_Pos - m_Pos) > 0.0f)
 					Dir = normalize(pTarget->m_Pos - m_Pos);
@@ -370,7 +370,7 @@ void CCharacter::FireWeapon()
 			// 		(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
 			// 		1, 0, 0, -1, WEAPON_SHOTGUN, m_Core.m_VTeam);
 			// }
-			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), 10);
+			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), m_Core.m_VTeam, 10);
 			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 		} break;
 
@@ -389,7 +389,7 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_RIFLE:
 		{
-			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID());
+			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), m_Core.m_VTeam);
 			GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 		} break;
 
@@ -544,6 +544,16 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
+    if(m_Core.m_VTeam < 0)
+    {
+        m_pPlayer->m_WTeam = 0;
+        m_WTeam = 0;
+    }
+    else
+    {
+        m_WTeam = m_Core.m_VTeam;
+        m_pPlayer->m_WTeam = m_Core.m_VTeam;
+    }
 	int Flags = 0;
 	if(m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE && m_Core.m_FreezeTicks != 0)
 	{
@@ -590,8 +600,8 @@ void CCharacter::Tick()
 		ResetInput();
 		m_DeepFrozen = false;//Server()->Tick()-m_Core.m_FreezeTicks == m_FreezeStart ? true : false;
 		m_SentFlags = false;
-		if(Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
-		    GameServer()->CreateDamageInd(m_Pos, 0, m_Core.m_FreezeTicks / SERVER_TICK_SPEED + 1);
+		// if(Server()->Tick()%SERVER_TICK_SPEED == SERVER_TICK_SPEED-1)
+		//     GameServer()->CreateDamageInd(m_Pos, 0, m_Core.m_FreezeTicks / SERVER_TICK_SPEED + 1);
 	}
 
 	m_Core.m_Input = m_Input;
@@ -737,7 +747,7 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 	m_Alive = false;
 	GameServer()->m_World.RemoveEntity(this);
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = 0;
-	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID());
+	GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
 }
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
@@ -889,6 +899,12 @@ void CCharacter::Snap(int SnappingClient)
 	pDDNetCharacter->m_TargetX = m_LatestInput.m_TargetX;
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 
+	if(~m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDUI)
+	{
+        pDDNetCharacter->m_JumpedTotal = m_Core.m_AirJumps - m_Core.m_AirJumped;
+        pDDNetCharacter->m_Jumps = m_Core.m_AirJumps + 1;
+	}
+
 	if(m_pPlayer->m_Settings&CPlayer::SETTINGS_WEAPONUI)
 	{
 	    if (m_aWeapons[0].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
@@ -896,6 +912,7 @@ void CCharacter::Snap(int SnappingClient)
     	if (m_aWeapons[2].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
         if (m_aWeapons[3].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
     	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
+
 	}
     if(~m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE && m_Core.m_FreezeTicks != 0)
     {

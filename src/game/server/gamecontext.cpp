@@ -94,7 +94,7 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	return m_apPlayers[ClientID]->GetCharacter();
 }
 
-void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Mask)
+void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int WTeam, int64_t Mask)
 {
 	float a = 3 * 3.14159f / 2 + Angle;
 	//float a = get_angle(dir);
@@ -103,7 +103,7 @@ void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Ma
 	for(int i = 0; i < Amount; i++)
 	{
 		float f = mix(s, e, float(i+1)/float(Amount+2));
-		CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)m_Events.Create(NETEVENTTYPE_DAMAGEIND, sizeof(CNetEvent_DamageInd), Mask);
+		CNetEvent_DamageInd *pEvent = (CNetEvent_DamageInd *)m_Events.Create(NETEVENTTYPE_DAMAGEIND, sizeof(CNetEvent_DamageInd), WTeam, Mask);
 		if(pEvent)
 		{
 			pEvent->m_X = (int)Pos.x;
@@ -113,10 +113,10 @@ void CGameContext::CreateDamageInd(vec2 Pos, float Angle, int Amount, int64_t Ma
 	}
 }
 
-void CGameContext::CreateHammerHit(vec2 Pos, int64_t Mask)
+void CGameContext::CreateHammerHit(vec2 Pos, int WTeam, int64_t Mask)
 {
 	// create the event
-	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit), Mask);
+	CNetEvent_HammerHit *pEvent = (CNetEvent_HammerHit *)m_Events.Create(NETEVENTTYPE_HAMMERHIT, sizeof(CNetEvent_HammerHit), WTeam, Mask);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -125,10 +125,10 @@ void CGameContext::CreateHammerHit(vec2 Pos, int64_t Mask)
 }
 
 
-void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int64_t Mask)
+void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int WTeam, int64_t Mask)
 {
 	// create the event
-	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), Mask);
+	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), WTeam, Mask);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -157,22 +157,10 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 	}
 }
 
-/*
-void create_smoke(vec2 Pos)
+void CGameContext::CreatePlayerSpawn(vec2 Pos, int WTeam, int64_t Mask)
 {
 	// create the event
-	EV_EXPLOSION *pEvent = (EV_EXPLOSION *)events.create(EVENT_SMOKE, sizeof(EV_EXPLOSION));
-	if(pEvent)
-	{
-		pEvent->x = (int)Pos.x;
-		pEvent->y = (int)Pos.y;
-	}
-}*/
-
-void CGameContext::CreatePlayerSpawn(vec2 Pos, int64_t Mask)
-{
-	// create the event
-	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), Mask);
+	CNetEvent_Spawn *ev = (CNetEvent_Spawn *)m_Events.Create(NETEVENTTYPE_SPAWN, sizeof(CNetEvent_Spawn), WTeam, Mask);
 	if(ev)
 	{
 		ev->m_X = (int)Pos.x;
@@ -180,10 +168,10 @@ void CGameContext::CreatePlayerSpawn(vec2 Pos, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateDeath(vec2 Pos, int ClientID, int64_t Mask)
+void CGameContext::CreateDeath(vec2 Pos, int ClientID, int WTeam, int64_t Mask)
 {
 	// create the event
-	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), Mask);
+	CNetEvent_Death *pEvent = (CNetEvent_Death *)m_Events.Create(NETEVENTTYPE_DEATH, sizeof(CNetEvent_Death), WTeam, Mask);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -192,13 +180,13 @@ void CGameContext::CreateDeath(vec2 Pos, int ClientID, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateSound(vec2 Pos, int Sound, int64_t Mask)
+void CGameContext::CreateSound(vec2 Pos, int Sound, int WTeam, int64_t Mask)
 {
 	if (Sound < 0)
 		return;
 
 	// create a sound
-	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), Mask);
+	CNetEvent_SoundWorld *pEvent = (CNetEvent_SoundWorld *)m_Events.Create(NETEVENTTYPE_SOUNDWORLD, sizeof(CNetEvent_SoundWorld), WTeam, Mask);
 	if(pEvent)
 	{
 		pEvent->m_X = (int)Pos.x;
@@ -1873,6 +1861,17 @@ void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
     str_format(aBuf, sizeof(aBuf), "Value set to %d", Value);
     pSelf->SendChatTarget(ClientID, _(aBuf));
 }
+
+void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    int ClientID = pResult->GetClientID();
+    // int X = pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Input.m_TargetX;
+    // int Y = pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Input.m_TargetY;
+    // pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Pos = vec2(X,Y);
+}
+
 void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -2014,6 +2013,7 @@ void CGameContext::OnConsoleInit()
 	// Console()->Register("login", "?s", CFGFLAG_CHAT, ConLogin, this, "change language");
 
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
+	Console()->Register("tele", "", CFGFLAG_CHAT, ConTele, this, "tele");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
 	Console()->Register("duel", "?s", CFGFLAG_CHAT, ConDuel, this, "send duel");
 	Console()->Register("leave", "?s", CFGFLAG_CHAT, ConLeave, this, "leave event");

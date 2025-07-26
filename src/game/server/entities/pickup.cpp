@@ -10,6 +10,7 @@ CPickup::CPickup(CGameWorld *pGameWorld, int Type, int SubType, vec2 Pivot, vec2
 	m_Type = Type;
 	m_Subtype = SubType;
 	m_ProximityRadius = PickupPhysSize;
+	m_WTeam = -1; // team -1 will always be seen
 
 	Reset();
 

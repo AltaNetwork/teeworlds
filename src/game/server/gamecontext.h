@@ -62,6 +62,7 @@ class CGameContext : public IGameServer
 	static void ConLanguage(IConsole::IResult *pResult, void *pUserData);
 	static void ConSpec(IConsole::IResult *pResult, void *pUserData);
 
+	static void ConTele(IConsole::IResult *pResult, void *pUserData);
 	static void ConAirJumps(IConsole::IResult *pResult, void *pUserData);
 	static void ConValDebug(IConsole::IResult *pResult, void *pUserData);
 	static void ConVTeam(IConsole::IResult *pResult, void *pUserData);
@@ -153,12 +154,12 @@ public:
 	CVoteOptionServer *m_pVoteOptionLast;
 
 	// helper functions
-	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int64_t Mask=-1LL);
-	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int64_t Mask=-1LL);
-	void CreateHammerHit(vec2 Pos, int64_t Mask=-1LL);
-	void CreatePlayerSpawn(vec2 Pos, int64_t Mask=-1LL);
-	void CreateDeath(vec2 Pos, int Who, int64_t Mask=-1LL);
-	void CreateSound(vec2 Pos, int Sound, int64_t Mask=-1LL);
+	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int WTeam = 0, int64_t Mask=-1LL);
+	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int WTeam = 0, int64_t Mask=-1LL);
+	void CreateHammerHit(vec2 Pos, int WTeam = 0, int64_t Mask=-1LL);
+	void CreatePlayerSpawn(vec2 Pos, int WTeam = 0, int64_t Mask=-1LL);
+	void CreateDeath(vec2 Pos, int Who, int WTeam = 0, int64_t Mask=-1LL);
+	void CreateSound(vec2 Pos, int Sound, int WTeam = 0, int64_t Mask=-1LL);
 	void CreateSoundGlobal(int Sound, int Target=-1);
 
 

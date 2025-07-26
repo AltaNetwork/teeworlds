@@ -1,5 +1,6 @@
 #include "entity.h"
 #include "gamecontext.h"
+#include "player.h"
 #include <game/animation.h>
 
 //////////////////////////////////////////////////
@@ -15,6 +16,7 @@ CEntity::CEntity(CGameWorld *pGameWorld, int ObjType)
 
 	m_MarkedForDestroy = false;
 	m_ID = Server()->SnapNewID();
+	m_WTeam = 0;
 
 	m_pPrevTypeEntity = 0;
 	m_pNextTypeEntity = 0;
@@ -36,14 +38,21 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	if(SnappingClient == -1)
 		return 0;
 
-	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
-	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
+	if(m_WTeam >= 0 && m_WTeam != GameServer()->m_apPlayers[SnappingClient]->m_WTeam)
+	    return 1;
 
-	if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
-		return 1;
+	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_BEYONDZOOM)
+	{
+    	float dx = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.x-CheckPos.x;
+    	float dy = GameServer()->m_apPlayers[SnappingClient]->m_ViewPos.y-CheckPos.y;
 
-	if(distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 1100.0f)
+    	if(absolute(dx) > 1000.0f || absolute(dy) > 800.0f)
+    		return 1;
+
+        if(distance(GameServer()->m_apPlayers[SnappingClient]->m_ViewPos, CheckPos) > 1100.0f)
 		return 1;
+	}
+
 	return 0;
 }
 

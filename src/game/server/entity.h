@@ -71,6 +71,8 @@ public:
 	CEntity(CGameWorld *pGameWorld, int Objtype);
 	virtual ~CEntity();
 
+	int m_WTeam;
+
 	class CGameWorld *GameWorld() { return m_pGameWorld; }
 	class CGameContext *GameServer() { return GameWorld()->GameServer(); }
 	class IServer *Server() { return GameWorld()->Server(); }

@@ -61,6 +61,7 @@ public:
 		SETTINGS_OLDFREEZE=4,
 		SETTINGS_OPAQUEPASSIVE=8,
 		SETTINGS_PREDICTVANILLA=16,
+		SETTINGS_BEYONDZOOM=32,
 	};
 	void DuelTick();
 
@@ -110,6 +111,7 @@ public:
 
 	int m_Cosmetics;
 	int m_Settings;
+	int m_WTeam;
 
 	int m_DieTick;
 	int m_Score;
@@ -163,24 +165,24 @@ public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 };
 
-static const char *aSkins[] = {
-	"bluekitty",
-	"bluestripe",
-	"brownbear",
-	"cammo",
-	"cammostripes",
-	"coala",
-	"default",
-	"limekitty",
-	"pinky",
-	"redbopp",
-	"redstripe",
-	"saddo",
-	"toptri",
-	"twinbop",
-	"twintri",
-	"warpaint"
-};
+// static const char *aSkins[] = {
+// 	"bluekitty",
+// 	"bluestripe",
+// 	"brownbear",
+// 	"cammo",
+// 	"cammostripes",
+// 	"coala",
+// 	"default",
+// 	"limekitty",
+// 	"pinky",
+// 	"redbopp",
+// 	"redstripe",
+// 	"saddo",
+// 	"toptri",
+// 	"twinbop",
+// 	"twintri",
+// 	"warpaint"
+// };
 
 // static const char *aSkinsCoala[] = {
 // 	"coala_bluekitty",

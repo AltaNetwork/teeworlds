@@ -610,7 +610,7 @@ void IGameController::Snap(int SnappingClient)
 	if(GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_OLDUI)
 	    pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_AMMO | GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
 	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_PREDICTVANILLA)
-	    pGameInfoEx->m_Flags2 |= GAMEINFOFLAG_PREDICT_DDRACE;
+	    pGameInfoEx->m_Flags |= GAMEINFOFLAG_PREDICT_DDRACE | GAMEINFOFLAG_PREDICT_DDRACE_TILES;
 	pGameInfoEx->m_Version = 8;
 
 	// This object needs to be snapped alongside pGameInfoObj for that object to work properly

@@ -4,7 +4,7 @@
 #include <game/server/gamecontext.h>
 #include "laser.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Strength)
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int VTeam, int Strength)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -15,6 +15,8 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Bounces = 0;
 	m_EvalTick = 0;
 	m_Strength = Strength;
+	m_WTeam = VTeam;
+	m_VTeam = VTeam;
 	GameWorld()->InsertEntity(this);
 	DoBounce();
 }
