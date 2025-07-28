@@ -81,7 +81,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	GameServer()->m_pController->OnCharacterSpawn(this);
 
-	m_PassiveInd = false;
+	m_Indicator = false;
+	m_Hat = false;
 	m_SentFlags = false;
 
 	m_FreezeStart = 0;
@@ -559,25 +560,12 @@ void CCharacter::Tick()
         m_WTeam = m_Core.m_VTeam;
         m_pPlayer->m_WTeam = m_Core.m_VTeam;
     }
-	int Flags = 0;
-	// if(m_pPlayer->m_Settings&CPlayer::SETTINGS_OLDFREEZE && m_Core.m_FreezeTicks != 0)
+	// if(!m_SentFlags)
 	// {
-	//     Flags |= FTUNE_CANTHOOK;
-	// 	Flags |= FTUNE_NOJUMP;
-	// 	Flags |= FTUNE_NOMOVE;
-	// 	m_SentFlags = false;
+	//     GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
+	// 	m_SentFlags = true;
 	// }
-	// if(m_Core.m_VTeam < 0 && ~m_pPlayer->m_Settings&CPlayer::SETTINGS_OPAQUEPASSIVE)
-	// {
-	//     Flags |= FTUNE_NOCOLL;
-	// 	Flags |= FTUNE_NOHOOK;
-	// 	m_SentFlags = false;
-	// }
-	if(!m_SentFlags)
-	{
-	    GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
-		m_SentFlags = true;
-	}
+
 	if(m_PassiveTicks != 0)
 	{
     	if(m_PassiveTicks > 0)
@@ -593,11 +581,18 @@ void CCharacter::Tick()
             m_Core.m_VTeam = -m_pPlayer->GetCID()-1;
 	}
 
-	if(m_Core.m_VTeam < 0 && !m_PassiveInd)
+	if(m_Core.m_VTeam < 0 && !m_Indicator)
 	{
-    	new CPassiveIndicator(GameWorld(),m_Pos,m_pPlayer->GetCID());
-        m_PassiveInd = true;
+    	new CPassiveIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_PASSIVE);
+        m_Indicator = true;
 	}
+
+	if(!m_Hat)
+	{
+    	new CPassiveIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_HAT);
+        m_Hat = true;
+	}
+
 
 	if(IsFrozen())
 	{

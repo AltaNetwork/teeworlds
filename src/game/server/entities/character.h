@@ -21,6 +21,17 @@ enum
 
     FLAG_NOKILLMSG = 1,
     FLAG_ENDDUEL = 2,
+
+    INDFLAG_PASSIVE = 1,
+    INDFLAG_HAT = 2,
+    INDFLAG_FREEZEHIDE = 4,
+    INDFLAG_HAMMER = 8,
+    INDFLAG_GUN = 16,
+    INDFLAG_SHOTGUN = 32,
+    INDFLAG_GRENADE = 64,
+    INDFLAG_LASER = 128,
+    INDFLAG_NINJA = 256,
+
 };
 
 class CCharacter : public CEntity
@@ -81,7 +92,8 @@ public:
 	int m_PassiveTicks;
 	vec2 m_ChrViewPos;
 
-	bool m_PassiveInd;
+	bool m_Indicator;
+	bool m_Hat;
 	bool m_SentFlags;
 
 private:

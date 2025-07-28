@@ -7,7 +7,7 @@
     FlagHunt
     Cusomization*
     Database
-    Muting
+    Muting*
     @everyone
 
 === fixage list:
@@ -21,6 +21,7 @@
     Whispers in logs
 
 ==============CHANGELOG==============
+total rewrite of freeze system
 baby steps towards "settings" player
 duel DOESNT breaks on player disconnect
 Fix tele with reset hook

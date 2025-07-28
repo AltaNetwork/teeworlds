@@ -49,23 +49,22 @@ void CPickup::Tick()
 	{
 		// player picked us up, is someone was hooking us, let them go
 		int RespawnTime = -1;
+        bool Sound = false;
 		switch (m_Type)
 		{
 			case POWERUP_HEALTH:
 			    pChr->Freeze(3);
-				// if(pChr->IncreaseHealth(1))
-				// {
-				// 	GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
-				// 	RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
-				// }
 				break;
 
 			case POWERUP_ARMOR:
-			    if(pChr->TakeWeapon(WEAPON_SHOTGUN) || pChr->TakeWeapon(WEAPON_GRENADE) || pChr->TakeWeapon(WEAPON_RIFLE))
-				{
+			    if(pChr->TakeWeapon(WEAPON_SHOTGUN))
+					Sound = true;
+				if(pChr->TakeWeapon(WEAPON_GRENADE))
+				    Sound = true;
+				if(pChr->TakeWeapon(WEAPON_RIFLE))
+				    Sound = true;
+			    if(Sound)
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
-					RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
-				}
 				break;
 
 			case POWERUP_WEAPON:
@@ -73,7 +72,7 @@ void CPickup::Tick()
 				{
 					if(pChr->GiveWeapon(m_Subtype, 10))
 					{
-						RespawnTime = 1;//g_pData->m_aPickups[m_Type].m_Respawntime;
+						RespawnTime = 1;
 
 						if(m_Subtype == WEAPON_GRENADE)
 							GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE);
