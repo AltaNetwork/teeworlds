@@ -57,13 +57,10 @@ public:
 	void FireWeapon();
 
 	void Die(int Killer, int Weapon, int Flags = 0);
-	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
+	bool TakeDamage(vec2 Force, int From, int Weapon);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
 	bool Remove();
-
-	bool IncreaseHealth(int Amount);
-	bool IncreaseArmor(int Amount);
 
 	bool GiveWeapon(int Weapon, int Ammo);
 	bool TakeWeapon(int Weapon);
@@ -73,10 +70,13 @@ public:
 
 	void SetEmote(int Emote, int Tick);
 
+	void TeleCursor();
+
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	class CCharacterCore& GetCore() { return m_Core; }
 
+	int m_FreezeEnd;
 
 	int m_PassiveTicks;
 	vec2 m_ChrViewPos;
@@ -106,8 +106,6 @@ private:
 	int m_ActiveWeapon;
 	int m_LastWeapon;
 	int m_QueuedWeapon;
-	bool m_TakeDamage;
-	// int m_Zone;
 
 	int m_ReloadTimer;
 	int m_AttackTick;
@@ -133,8 +131,8 @@ private:
 
 	int m_DamageTakenTick;
 
-	int m_Health;
-	int m_Armor;
+	// int m_Health;
+	// int m_Armor;
 
 	int m_CheckPoint;
 

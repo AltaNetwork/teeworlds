@@ -33,7 +33,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 		return false;
 
 
-	if(pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_RIFLE))
+	if(pHit->TakeDamage(vec2(0.f, 0.f), m_Owner, WEAPON_RIFLE))
 	{ // simpler team detection
     	m_From = From;
     	m_Pos = At;

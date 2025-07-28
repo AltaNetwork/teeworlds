@@ -25,7 +25,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_InvitedBy = -1;
 
 	m_Cosmetics = 0;
-	m_Settings = SETTINGS_WEAPONUI + SETTINGS_OPAQUEPASSIVE + SETTINGS_BEYONDZOOM;
+	m_Settings = SETTINGS_BEYONDZOOM;
 	m_WTeam = 0;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));

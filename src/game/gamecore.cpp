@@ -79,7 +79,7 @@ void CCharacterCore::Reset()
 	m_Jumped = 0;
 	m_AirJumped = 1;
 	m_AirJumps = 1;
-	m_FreezeTicks = 0;
+	// m_FreezeTicks = 0;
 	m_TriggeredEvents = 0;
 	m_VTeam = 0;
 }
@@ -116,17 +116,10 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 
 	m_Angle = (int)(a*256.0f);
 
-	if(m_LastContactTicks>0 && m_FreezeTicks==0)
+	if(m_LastContactTicks>0)// && m_FreezeTicks==0)
         m_LastContactTicks--;
 
-	// handle input
-	if(m_FreezeTicks != 0)
-	{
-	    m_Direction = 0;
-    	m_HookedPlayer = -1;
-    	m_HookState = HOOK_IDLE;
-    	m_HookPos = m_Pos;
-	} else if(UseInput)
+    if(UseInput)
 	{
 		m_Direction = m_Input.m_Direction;
 

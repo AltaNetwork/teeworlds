@@ -201,7 +201,7 @@ public:
 	int m_LastContact;
 	int m_LastContactTicks;
 
-	int m_FreezeTicks;
+	// int m_FreezeTicks;
 
 	int m_Direction;
 	int m_Angle;

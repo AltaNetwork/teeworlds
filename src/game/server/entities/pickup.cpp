@@ -53,18 +53,15 @@ void CPickup::Tick()
 		{
 			case POWERUP_HEALTH:
 			    pChr->Freeze(3);
-				if(pChr->IncreaseHealth(1))
-				{
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
-					RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
-				}
+				// if(pChr->IncreaseHealth(1))
+				// {
+				// 	GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH);
+				// 	RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
+				// }
 				break;
 
 			case POWERUP_ARMOR:
-                pChr->TakeWeapon(WEAPON_SHOTGUN);
-                pChr->TakeWeapon(WEAPON_GRENADE);
-                pChr->TakeWeapon(WEAPON_RIFLE);
-				if(pChr->IncreaseArmor(1))
+			    if(pChr->TakeWeapon(WEAPON_SHOTGUN) || pChr->TakeWeapon(WEAPON_GRENADE) || pChr->TakeWeapon(WEAPON_RIFLE))
 				{
 					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR);
 					RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;

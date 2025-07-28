@@ -78,7 +78,7 @@ void CProjectile::Tick()
 			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false, m_VTeam);
 
 		else if(TargetChr)
-			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Damage, m_Owner, m_Weapon);
+			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Owner, m_Weapon);
 
 		if(m_Type == WEAPON_GUN)
     		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6, m_VTeam);

@@ -152,7 +152,7 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 			l = 1-clamp((l-InnerRadius)/(Radius-InnerRadius), 0.0f, 1.0f);
 			float Dmg = 6 * l;
 			if((int)Dmg)
-				apEnts[i]->TakeDamage(ForceDir*Dmg*2, (int)Dmg, Owner, Weapon);
+				apEnts[i]->TakeDamage(ForceDir*Dmg*2, Owner, Weapon);
 		}
 	}
 }
@@ -1865,11 +1865,8 @@ void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
-
-    int ClientID = pResult->GetClientID();
-    // int X = pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Input.m_TargetX;
-    // int Y = pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Input.m_TargetY;
-    // pSelf->m_apPlayers[ClientID]->GetCharacter()->m_Pos = vec2(X,Y);
+    if(pSelf->m_apPlayers[pResult->GetClientID()]->GetCharacter())
+        pSelf->m_apPlayers[pResult->GetClientID()]->GetCharacter()->TeleCursor();
 }
 
 void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
@@ -1880,8 +1877,8 @@ void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
     int Jumps = abs(pResult->GetInteger(0));
     char aBuf[128];
     pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_AirJumps = Jumps;
-    	str_format(aBuf, sizeof(aBuf), "Air jumps set to %d", Jumps);
-        pSelf->SendChatTarget(ClientID, _(aBuf));
+    str_format(aBuf, sizeof(aBuf), "Air jumps set to %d", Jumps);
+    pSelf->SendChatTarget(ClientID, _(aBuf));
 }
 
 void CGameContext::ConLanguage(IConsole::IResult *pResult, void *pUserData)
@@ -2006,6 +2003,8 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("clear_votes", "", CFGFLAG_SERVER, ConClearVotes, this, "Clears the voting options");
 	Console()->Register("vote", "r", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
 
+	Console()->Register("tele", "", CFGFLAG_SERVER, ConTele, this, "tele");
+
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
@@ -2013,7 +2012,6 @@ void CGameContext::OnConsoleInit()
 	// Console()->Register("login", "?s", CFGFLAG_CHAT, ConLogin, this, "change language");
 
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
-	Console()->Register("tele", "", CFGFLAG_CHAT, ConTele, this, "tele");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
 	Console()->Register("duel", "?s", CFGFLAG_CHAT, ConDuel, this, "send duel");
 	Console()->Register("leave", "?s", CFGFLAG_CHAT, ConLeave, this, "leave event");

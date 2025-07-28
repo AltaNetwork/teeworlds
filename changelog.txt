@@ -1,4 +1,5 @@
 === idea list:
+    steal menu from mmotee
     steal uuid howtodo from infclass
     FAST DOWNLOAD
     Tournament
@@ -10,13 +11,10 @@
     @everyone
 
 === fixage list:
+  figure out wierd freeze blinking
   fix whispers name detection
   fix laser vteam collision stuff
-  spectators respawn
   Wierd blinking when spectating occurs it takes you to top left of the screen? wierd af
-2.1MB
-200kb/s
-3kb/s # LOWEST I FOUND
 
 === improvise list:
     Duels

@@ -356,10 +356,6 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 
 void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 {
-	// default health
-	pChr->IncreaseHealth(10);
-	pChr->IncreaseArmor(10);
-
 	// give default weapons
 	pChr->GiveWeapon(WEAPON_HAMMER, -1);
 	pChr->GiveWeapon(WEAPON_GUN, 10);
@@ -607,8 +603,6 @@ void IGameController::Snap(int SnappingClient)
 
 	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL |  GAMEINFOFLAG_ALLOW_ZOOM;
 	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE;
-	if(GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_OLDUI)
-	    pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_AMMO | GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
 	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_PREDICTVANILLA)
 	    pGameInfoEx->m_Flags |= GAMEINFOFLAG_PREDICT_DDRACE | GAMEINFOFLAG_PREDICT_DDRACE_TILES;
 	pGameInfoEx->m_Version = 8;
