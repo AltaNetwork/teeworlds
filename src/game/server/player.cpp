@@ -99,8 +99,20 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-	    if(PlayerEvent() == EVENT_DUEL)
+	    int Event = PlayerEvent();
+	    if(Event == EVENT_DUEL)
 			DuelTick();
+		if(m_Team != TEAM_SPECTATORS)
+		{
+    		if(m_pCharacter)
+    			m_WTeam = m_pCharacter->GetCore().m_VTeam;
+		} else {
+            if(m_SpectatorID != SPEC_FREEVIEW)
+                m_WTeam = GameServer()->m_apPlayers[m_SpectatorID]->m_WTeam;
+            else
+                m_WTeam = -1;
+		}
+
 		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || PlayerEvent() != EVENT_NONE))
 			m_Spawning = true;
 
@@ -321,9 +333,9 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 	if(m_Team == Team)
 		return;
 
-	char aBuf[512];
 	if(DoChatMsg)
 	{
+	    char aBuf[512];
 		if(Team == TEAM_SPECTATORS)
 		{
 			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the spectators"),"Player", Server()->ClientName(m_ClientID));
@@ -344,21 +356,21 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 
 	m_Team = Team;
 	m_LastActionTick = Server()->Tick();
-	m_SpectatorID = SPEC_FREEVIEW;
-	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
-	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+	// m_SpectatorID = SPEC_FREEVIEW;
+	// str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' m_Team=%d", m_ClientID, Server()->ClientName(m_ClientID), m_Team);
+	// GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
-	GameServer()->m_pController->OnPlayerInfoChange(GameServer()->m_apPlayers[m_ClientID]);
+	// GameServer()->m_pController->OnPlayerInfoChange(GameServer()->m_apPlayers[m_ClientID]);
 
-	if(Team == TEAM_SPECTATORS)
-	{
-		// update spectator modes
-		for(int i = 0; i < MAX_CLIENTS; ++i)
-		{
-			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_SpectatorID == m_ClientID)
-				GameServer()->m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
-		}
-	}
+	// if(Team == TEAM_SPECTATORS)
+	// {
+	// 	// update spectator modes
+	// 	for(int i = 0; i < MAX_CLIENTS; ++i)
+	// 	{
+	// 		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_SpectatorID == m_ClientID)
+	// 			GameServer()->m_apPlayers[i]->m_SpectatorID = SPEC_FREEVIEW;
+	// 	}
+	// }
 }
 
 void CPlayer::TryRespawn()
@@ -371,7 +383,7 @@ void CPlayer::TryRespawn()
 	m_Spawning = false;
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 	m_pCharacter->Spawn(this, SpawnPos);
-	GameServer()->CreatePlayerSpawn(SpawnPos);
+	// GameServer()->CreatePlayerSpawn(SpawnPos);
 }
 
 const char* CPlayer::GetLanguage()
@@ -396,10 +408,33 @@ int CPlayer::PlayerEvent()
 
 void CPlayer::DuelTick()
 {
-    if(m_ClientID == m_DuelPlayer && GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelPlayer == m_ClientID)
+    if(m_ClientID == m_DuelPlayer ||
+        GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelPlayer != m_ClientID)
+    {
         m_DuelPlayer = -1;
+        m_SpawnTeam = 0;
+      	char Buf[256];
+		str_format(Buf, sizeof(Buf), "error occured! please report to admins.");
+		GameServer()->SendBroadcast(Buf, m_ClientID);
+        return;
+    }
 
     m_SpawnTeam = 1;
+    SetTeam(TEAM_RED);
+
+    if(GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter() && m_pCharacter)
+    {
+        CCharacter *DuelPlayer = GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter();
+        if(m_pCharacter->m_DeepFrozen && m_pCharacter->IsGrounded()
+           && DuelPlayer->m_DeepFrozen && DuelPlayer->IsGrounded())
+        {
+            KillCharacter(WEAPON_GAME);
+            GameServer()->m_apPlayers[m_DuelPlayer]->KillCharacter(WEAPON_GAME);
+            GameServer()->SendChatTarget(m_DuelPlayer, _("Draw!"));
+            GameServer()->SendChatTarget(GetCID(), _("Draw!"));
+        }
+
+    }
 
     if(Server()->Tick()%SERVER_TICK_SPEED == 1)
 	{
@@ -415,17 +450,8 @@ const char* CPlayer::ProccessName() const
 {
     static char s_aBuf[24]; // Static to avoid returning pointer to local, but not thread-safe if called concurrently for different players
 
-    if (m_PlayerFlags & PLAYERFLAG_IN_MENU) {
-        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 2) + m_ClientID) % 4) {
-            case 3: str_format(s_aBuf, sizeof(s_aBuf), " oᵒ˚"); break;
-            case 2: str_format(s_aBuf, sizeof(s_aBuf), " oᵒ"); break;
-            case 1: str_format(s_aBuf, sizeof(s_aBuf), " o"); break;
-            case 0: str_format(s_aBuf, sizeof(s_aBuf), " "); break;
-            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
-        }
-    } else {
-        str_format(s_aBuf, sizeof(s_aBuf), ""); // No animation
-    }
+    str_format(s_aBuf, sizeof(s_aBuf), "");
+
     return s_aBuf;
 }
 
@@ -439,6 +465,13 @@ const char* CPlayer::ProccessClan() const
             case 2: str_format(s_aBuf, sizeof(s_aBuf), "..✍"); break;
             case 1: str_format(s_aBuf, sizeof(s_aBuf), ".✍"); break;
             case 0: str_format(s_aBuf, sizeof(s_aBuf), "✍"); break;
+            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
+        }
+    } else if (m_PlayerFlags & PLAYERFLAG_IN_MENU) {
+        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 2) + m_ClientID) % 4) {
+            case 3: str_format(s_aBuf, sizeof(s_aBuf), "zzz"); break;
+            case 2: str_format(s_aBuf, sizeof(s_aBuf), "zz"); break;
+            case 1: str_format(s_aBuf, sizeof(s_aBuf), "z"); break;
             default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
         }
     } else {

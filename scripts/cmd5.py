@@ -1,4 +1,6 @@
 import hashlib, sys, re
+from datetime import datetime
+
 
 alphanum = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_".encode()
 
@@ -32,3 +34,6 @@ hash = hashlib.md5(f).hexdigest().lower()[16:]
 if hash == "e42d81cd67b8c7bc":
 	hash = "626fce9a778df4d4"
 print('#define GAME_NETVERSION_HASH "%s"' % hash)
+today = datetime.now()
+date = f"{today.strftime('%B %d, %Y')}"# | Year: {today.year} | Month: {today.strftime('%B')} | Day: {today.day}"
+print('#define GAME_SERVERBUILD_DATE "%s"' % date)

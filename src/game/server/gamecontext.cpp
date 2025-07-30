@@ -1825,6 +1825,11 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, sizeof(aBuf), "Thanks to: %s", MOD_THANKS);
 		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
 	}
+	if(MOD_BUILDDATE[0])
+	{
+    	str_format(aBuf, sizeof(aBuf), "Server's build date: %s", MOD_BUILDDATE);
+    	pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
+	}
 	if(MOD_SOURCES[0])
 	{
 		str_format(aBuf, sizeof(aBuf), "Sources: %s", MOD_SOURCES);

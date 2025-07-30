@@ -68,7 +68,7 @@ public:
 
 	int IsSpeedup(int Index) const;
 	int GetMapIndex(vec2 Pos) const;
-	void GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const;
+	void GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed, int *Type) const;
 	CTeleTile *TeleLayer() { return m_pTele; }
 
 private:

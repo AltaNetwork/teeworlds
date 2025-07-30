@@ -27,7 +27,7 @@ MACRO_CONFIG_INT(SvRainbowSpeed, sv_rainbow_speed, 1, 0, 1000, CFGFLAG_SERVER, "
 MACRO_CONFIG_INT(SvSpectatorSlots, sv_spectator_slots, 0, 0, MAX_CLIENTS, CFGFLAG_SERVER, "Number of slots to reserve for spectators")
 MACRO_CONFIG_INT(SvTeambalanceTime, sv_teambalance_time, 1, 0, 1000, CFGFLAG_SERVER, "How many minutes to wait before autobalancing teams")
 MACRO_CONFIG_INT(SvInactiveKickTime, sv_inactivekick_time, 3, 0, 1000, CFGFLAG_SERVER, "How many minutes to wait before taking care of inactive players")
-MACRO_CONFIG_INT(SvInactiveKick, sv_inactivekick, 1, 0, 2, CFGFLAG_SERVER, "How to deal with inactive players (0=move to spectator, 1=move to free spectator slot/kick, 2=kick)")
+MACRO_CONFIG_INT(SvInactiveKick, sv_inactivekick, 1, -1, 2, CFGFLAG_SERVER, "How to deal with inactive players (-1=off, 0=move to spectator, 1=move to free spectator slot/kick, 2=kick)")
 
 // MACRO_CONFIG_INT(SvStrictSpectateMode, sv_strict_spectate_mode, 0, 0, 1, CFGFLAG_SERVER, "Restricts information in spectator mode")
 MACRO_CONFIG_INT(SvVoteSpectate, sv_vote_spectate, 1, 0, 1, CFGFLAG_SERVER, "Allow voting to move players to spectators")
@@ -37,6 +37,8 @@ MACRO_CONFIG_INT(SvVoteKickMin, sv_vote_kick_min, 0, 0, MAX_CLIENTS, CFGFLAG_SER
 MACRO_CONFIG_INT(SvVoteKickBantime, sv_vote_kick_bantime, 5, 0, 1440, CFGFLAG_SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick")
 
 MACRO_CONFIG_INT(FreezeLength, sv_freeze_length, 3, -1, 30, CFGFLAG_SERVER, "Freeze Length")
+MACRO_CONFIG_INT(SoulSpeed, sv_soul_speed, 7, 0, 50, CFGFLAG_SERVER, "Soul speed")
+
 
 // debug
 MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 5, 1, 100, CFGFLAG_SERVER, "(Tw32) real id <-> vanilla id players map update rate")

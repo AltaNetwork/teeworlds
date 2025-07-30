@@ -88,6 +88,8 @@ public:
 	class CCharacterCore& GetCore() { return m_Core; }
 
 	int m_FreezeEnd;
+	int m_FreezeStart;
+	bool m_DeepFrozen;
 
 	int m_PassiveTicks;
 	vec2 m_ChrViewPos;
@@ -95,6 +97,9 @@ public:
 	bool m_Indicator;
 	bool m_Hat;
 	bool m_SentFlags;
+
+	int m_EmoteType;
+	int m_EmoteStop;
 
 private:
 	// player controlling this character
@@ -124,9 +129,6 @@ private:
 
 	int m_DamageTaken;
 
-	int m_EmoteType;
-	int m_EmoteStop;
-
 	// last tick that the player took any action ie some input
 	int m_LastAction;
 	int m_LastNoAmmoSound;
@@ -147,9 +149,6 @@ private:
 	// int m_Armor;
 
 	int m_CheckPoint;
-
-	int m_FreezeStart;
-	bool m_DeepFrozen;
 
 	// ninja
 	struct

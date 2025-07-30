@@ -8,6 +8,7 @@
 
 #include "entities/character.h"
 #include "entities/pickup.h"
+#include "entities/special/koh.h"
 #include "gamecontroller.h"
 #include "gamecontext.h"
 #include "player.h"
@@ -149,6 +150,13 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 	{
 		CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType, Pivot, Pos - Pivot, PosEnv);
 		pPickup->m_Pos = Pos;
+		return true;
+	}
+
+	if(str_comp(pName, "koh") == 0)
+	{
+		CKoh *pKoh = new CKoh(&GameServer()->m_World, Pos, 0);//Type, SubType, Pivot, Pos - Pivot, PosEnv);
+		pKoh->m_Pos = Pos;
 		return true;
 	}
 
@@ -335,10 +343,13 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
     if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
     {
         pKiller->m_DuelScore++;
+        GameServer()->SendChatTarget(mVictim->GetCID(), _("'{str:Player}' scored!"), "Player" , Server()->ClientName(pKiller->GetCID()));
+        GameServer()->SendChatTarget(pKiller->GetCID(), _("'{str:Player}' scored!"), "Player" , Server()->ClientName(pKiller->GetCID()));
         if(Flags&FLAG_ENDDUEL)
             pKiller->m_DuelScore = 10;
         if(GameServer()->m_apPlayers[pKiller->GetCID()]->m_DuelScore > 9)
         {
+
             char aBuf[256];
             str_format(aBuf, sizeof(aBuf), "'%s' won a duel against '%s' with result of %d:%d",
                 Server()->ClientName(mVictim->m_DuelPlayer), Server()->ClientName(mVictim->GetCID()),

@@ -3,7 +3,7 @@
     steal uuid howtodo from infclass
     FAST DOWNLOAD
     Tournament
-    King of the Hill
+    King of the Hill*
     FlagHunt
     Cusomization*
     Database
@@ -21,6 +21,7 @@
     Whispers in logs
 
 ==============CHANGELOG==============
+king of the hill ground work
 total rewrite of freeze system
 baby steps towards "settings" player
 duel DOESNT breaks on player disconnect

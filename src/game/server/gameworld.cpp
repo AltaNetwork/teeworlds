@@ -1,6 +1,3 @@
-
-
-
 #include "gameworld.h"
 #include "entity.h"
 #include "gamecontext.h"

@@ -38,7 +38,7 @@ int CEntity::NetworkClipped(int SnappingClient, vec2 CheckPos)
 	if(SnappingClient == -1)
 		return 0;
 
-	if(m_WTeam >= 0 && m_WTeam != GameServer()->m_apPlayers[SnappingClient]->m_WTeam)
+	if(m_WTeam > -1 && m_WTeam != GameServer()->m_apPlayers[SnappingClient]->m_WTeam && GameServer()->m_apPlayers[SnappingClient]->m_WTeam > -1)
 	    return 1;
 
 	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_BEYONDZOOM)

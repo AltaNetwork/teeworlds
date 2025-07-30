@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <new>
 #include <optional>
 #include <engine/shared/config.h>
@@ -7,7 +8,9 @@
 #include "character.h"
 #include "laser.h"
 #include "pickup.h"
-#include "special/passive.h"
+#include "special/indicator.h"
+#include "special/soul.h"
+#include "special/hat.h"
 #include "projectile.h"
 
 //input count
@@ -94,6 +97,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
         m_Core.m_VTeam = GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
         Freeze(3);
 	}
+
+	GameServer()->CreatePlayerSpawn(m_Pos, m_Core.m_VTeam);
 
 	return true;
 }
@@ -341,49 +346,29 @@ void CCharacter::FireWeapon()
 
 		case WEAPON_GUN:
 		{
-			//CProjectile *pProj =
 			new CProjectile(GameWorld(), WEAPON_GUN,
 				m_pPlayer->GetCID(),
 				ProjStartPos,
 				Direction,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
 				1, 0, 0, -1, WEAPON_GUN, m_Core.m_VTeam);
-
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 		} break;
 
 		case WEAPON_SHOTGUN:
 		{
-			// int ShotSpread = 2;
-
-			// for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			// {
-			// 	float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-			// 	float a = GetAngle(Direction);
-			// 	a += Spreading[i+2];
-			// 	float v = 1-(absolute(i)/(float)ShotSpread);
-			// 	float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-			// 	new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-			// 		m_pPlayer->GetCID(),
-			// 		ProjStartPos,
-			// 		vec2(cosf(a), sinf(a))*Speed,
-			// 		(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-			// 		1, 0, 0, -1, WEAPON_SHOTGUN, m_Core.m_VTeam);
-			// }
 			new CLaser(GameWorld(), m_Pos, Direction, GameServer()->Tuning()->m_LaserReach, m_pPlayer->GetCID(), m_Core.m_VTeam, 10);
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
+			GameServer()->CreateSound(m_Pos, SOUND_RIFLE_FIRE);
 		} break;
 
 		case WEAPON_GRENADE:
 		{
-			//CProjectile *pProj =
 			new CProjectile(GameWorld(), WEAPON_GRENADE,
 				m_pPlayer->GetCID(),
 				ProjStartPos,
 				Direction,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GrenadeLifetime),
 				1, true, 0, SOUND_GRENADE_EXPLODE, WEAPON_GRENADE, m_Core.m_VTeam);
-
 			GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE);
 		} break;
 
@@ -550,22 +535,7 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
-    if(m_Core.m_VTeam < 0)
-    {
-        m_pPlayer->m_WTeam = 0;
-        m_WTeam = 0;
-    }
-    else
-    {
-        m_WTeam = m_Core.m_VTeam;
-        m_pPlayer->m_WTeam = m_Core.m_VTeam;
-    }
-	// if(!m_SentFlags)
-	// {
-	//     GameServer()->SendTuningParams(m_pPlayer->GetCID(), Flags);
-	// 	m_SentFlags = true;
-	// }
-
+    m_WTeam = m_Core.m_VTeam;
 	if(m_PassiveTicks != 0)
 	{
     	if(m_PassiveTicks > 0)
@@ -583,13 +553,13 @@ void CCharacter::Tick()
 
 	if(m_Core.m_VTeam < 0 && !m_Indicator)
 	{
-    	new CPassiveIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_PASSIVE);
+    	new CIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_PASSIVE);
         m_Indicator = true;
 	}
 
 	if(!m_Hat)
 	{
-    	new CPassiveIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_HAT);
+    	new CHat(GameWorld(), m_Pos, m_pPlayer->GetCID());
         m_Hat = true;
 	}
 
@@ -598,7 +568,6 @@ void CCharacter::Tick()
 	{
 		ResetInput();
 		m_DeepFrozen = false;
-		// m_SentFlags = false;
 	}
 
 	m_Core.m_Input = m_Input;
@@ -685,30 +654,17 @@ void CCharacter::TickPaused()
 void CCharacter::Die(int Killer, int Weapon, int Flags)
 {
 
+    if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
+           Killer = m_Core.m_LastContact;
+
     if(m_pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL && Weapon != WEAPON_GAME)
 	{
 	    Killer = m_pPlayer->m_DuelPlayer;
-		CPlayer* pDuelPlayer = GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer];
-		if(pDuelPlayer->GetCharacter())
-            pDuelPlayer->GetCharacter()->Die(m_pPlayer->m_DuelPlayer, WEAPON_GAME, FLAG_NOKILLMSG);
+        GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer]->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
 	}
 
-    if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
-    {
-           Killer = m_Core.m_LastContact;
-           Weapon = 5; // replace with ninja
-    }
-
-  	// set attacker's face to happy (taunt!)
-	if (Killer >= 0 && Killer != m_pPlayer->GetCID() && GameServer()->m_apPlayers[Killer])
-	{
-		CCharacter *pChr = GameServer()->m_apPlayers[Killer]->GetCharacter();
-		if (pChr)
-		{
-			pChr->m_EmoteType = EMOTE_HAPPY;
-			pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
-		}
-	}
+    if(Killer != m_pPlayer->GetCID())
+        new CSoul(GameWorld(), m_Pos, Killer);
 
     int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon, Flags);
 
@@ -719,7 +675,7 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	// send the kill message
-	if(Flags&&FLAG_NOKILLMSG)
+	if(~Flags&FLAG_NOKILLMSG)
 	{
     	CNetMsg_Sv_KillMsg Msg;
     	Msg.m_Killer = Killer;
@@ -818,7 +774,7 @@ void CCharacter::Snap(int SnappingClient)
     if(IsFrozen())
     {
         pDDNetCharacter->m_FreezeStart = m_DeepFrozen ? -1 : m_FreezeStart;
-        pDDNetCharacter->m_FreezeEnd = m_FreezeEnd;
+        pDDNetCharacter->m_FreezeEnd = m_FreezeEnd+1;
     }
 
 	if (m_aWeapons[0].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
@@ -826,7 +782,9 @@ void CCharacter::Snap(int SnappingClient)
 	if (m_aWeapons[2].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
 	if (m_aWeapons[3].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
 	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
+	if (m_aWeapons[5].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
 	if (m_Core.m_VTeam < 0)     pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
+	pDDNetCharacter->m_NinjaActivationTick = m_Ninja.m_ActivationTick;
 
 	// pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
 }
@@ -845,7 +803,7 @@ void CCharacter::Freeze(int Length)
 void CCharacter::HandleZones()
 {
    	// handle death-tiles and leaving gamelayer
-	if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius)&CCollision::COLFLAG_DEATH || GameLayerClipped(m_Pos)) 	{		Die(m_pPlayer->GetCID(), WEAPON_WORLD); 	}
+	if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f)&CCollision::COLFLAG_DEATH || GameServer()->Collision()->GetCollisionAt(m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius)&CCollision::COLFLAG_DEATH || GameLayerClipped(m_Pos)) 	{		Die(m_pPlayer->GetCID(), WEAPON_SELF); 	}
 	/* DEATH ( GAMELAYER ) */
 	if(GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
 		GameServer()->Collision()->GetCollisionAt(m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f)&CCollision::COLFLAG_UNFREEZE ||
@@ -866,17 +824,12 @@ void CCharacter::HandleZones()
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1)
-    /* DEATH ( #ZONES>DEATH ) */   {    Die(m_pPlayer->GetCID(), WEAPON_WORLD);    }
+    /* DEATH ( #ZONES>DEATH ) */   {    Die(m_pPlayer->GetCID(), WEAPON_SELF);    }
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 )
 	/* DOWNSTOPPER ( #ZONES>TEEWORLDS ) */   {  if(m_Core.m_Vel.y < 0)  m_Core.m_Vel.y = 0;	}
-	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 6 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 6 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 6 )
-    /* DUEL DEATH ( #ZONES>TEEWORLDS ) */  {    if(m_Core.m_VTeam > 0)    Die(m_pPlayer->GetCID(), WEAPON_WORLD); }
 
  // ▒█▀▀▀█ ▒█▀▀█ ▒█▀▀▀ ▒█▀▀▀ ▒█▀▀▄ 　 ▒█░▒█ ▒█▀▀█
  // ░▀▀▀▄▄ ▒█▄▄█ ▒█▀▀▀ ▒█▀▀▀ ▒█░▒█ 　 ▒█░▒█ ▒█▄▄█
@@ -885,59 +838,108 @@ void CCharacter::HandleZones()
    	if(GameServer()->Collision()->IsSpeedup(Index))
 	{
 		vec2 Direction, TempVel = m_Core.m_Vel;
-		int Force, MaxSpeed = 0;
+		int Force, MaxSpeed, Type = 0;
 		float TeeAngle, SpeederAngle, DiffAngle, SpeedLeft, TeeSpeed;
-		GameServer()->Collision()->GetSpeedup(Index, &Direction, &Force, &MaxSpeed);
-		if(Force == 255 && MaxSpeed)
+		GameServer()->Collision()->GetSpeedup(Index, &Direction, &Force, &MaxSpeed, &Type);
+		if(Type == 1) // PASSIVE CONTROL //
 		{
-			m_Core.m_Vel = Direction * (MaxSpeed / 5);
+		    if(MaxSpeed == 0) // SET PASSIVE TO ANY SECOUND
+                m_PassiveTicks = Force*SERVER_TICK_SPEED;
+            else if(MaxSpeed == 1 && m_PassiveTicks == -1) // SET PASSIVE TO ANY SECOUND IF HAD BEFORE
+                m_PassiveTicks = Force*SERVER_TICK_SPEED;
+            else if(MaxSpeed == 2) // DISABLE PASSIVE WHENEVER
+                m_PassiveTicks = 1;
+            else if(MaxSpeed == 3) // SET PASSIVE INFINITE
+                m_PassiveTicks = -1;
 		}
-		else
+		else if (Type == 3 && m_pPlayer->PlayerEvent() != CPlayer::EVENT_NONE)
 		{
-			if(MaxSpeed > 0 && MaxSpeed < 5)
-				MaxSpeed = 5;
-			if(MaxSpeed > 0)
-			{
-				if(Direction.x > 0.0000001f)
-					SpeederAngle = -std::atan(Direction.y / Direction.x);
-				else if(Direction.x < 0.0000001f)
-					SpeederAngle = std::atan(Direction.y / Direction.x) + 2.0f * std::asin(1.0f);
-				else if(Direction.y > 0.0000001f)
-					SpeederAngle = std::asin(1.0f);
-				else
-					SpeederAngle = std::asin(-1.0f);
-
-				if(SpeederAngle < 0)
-					SpeederAngle = 4.0f * std::asin(1.0f) + SpeederAngle;
-
-				if(TempVel.x > 0.0000001f)
-					TeeAngle = -std::atan(TempVel.y / TempVel.x);
-				else if(TempVel.x < 0.0000001f)
-					TeeAngle = std::atan(TempVel.y / TempVel.x) + 2.0f * std::asin(1.0f);
-				else if(TempVel.y > 0.0000001f)
-					TeeAngle = std::asin(1.0f);
-				else
-					TeeAngle = std::asin(-1.0f);
-
-				if(TeeAngle < 0)
-					TeeAngle = 4.0f * std::asin(1.0f) + TeeAngle;
-
-				TeeSpeed = std::sqrt(std::pow(TempVel.x, 2) + std::pow(TempVel.y, 2));
-
-				DiffAngle = SpeederAngle - TeeAngle;
-				SpeedLeft = MaxSpeed / 5.0f - std::cos(DiffAngle) * TeeSpeed;
-				if(absolute((int)SpeedLeft) > Force && SpeedLeft > 0.0000001f)
-					TempVel += Direction * Force;
-				else if(absolute((int)SpeedLeft) > Force)
-					TempVel += Direction * -Force;
-				else
-					TempVel += Direction * SpeedLeft;
-			}
-			else
-				TempVel += Direction * Force;
-
-			m_Core.m_Vel = TempVel;
+				Die(m_pPlayer->GetCID(), WEAPON_SELF); // DEATH IN ANY EVENT //
 		}
+        // Blocks movement based on angle //
+        else if (Type == 30)
+        {
+            float DirLen = std::sqrt(Direction.x * Direction.x + Direction.y * Direction.y);
+            if (DirLen < 0.000001f) // Avoid division by zero if Direction is (0,0)
+                return; // Or handle as an error/do nothing
+
+            vec2 NormalizedDirection = Direction / DirLen;
+
+            SpeederAngle = std::atan2(NormalizedDirection.y, NormalizedDirection.x);
+            if (std::abs(TempVel.x) < 0.000001f && std::abs(TempVel.y) < 0.000001f)
+                return;
+
+            TeeAngle = std::atan2(TempVel.y, TempVel.x);
+
+            DiffAngle = SpeederAngle - TeeAngle;
+
+            while (DiffAngle <= -std::asin(1.0f) * 2.0f) DiffAngle += std::asin(1.0f) * 4.0f; // Add 2*PI
+            while (DiffAngle > std::asin(1.0f) * 2.0f) DiffAngle -= std::asin(1.0f) * 4.0f;  // Subtract 2*PI
+            float DotProduct = TempVel.x * NormalizedDirection.x + TempVel.y * NormalizedDirection.y;
+
+            // Define a small epsilon for comparison
+            const float EPSILON = 0.0001f;
+
+            if (DotProduct > EPSILON)
+                m_Core.m_Vel -= NormalizedDirection * DotProduct;
+
+        }
+
+        //### CLASSIC SPEEDUP###//
+
+        else if(Type == 29 || Type == 28)
+        {
+    		if(Force == 255 && MaxSpeed)
+    		{
+    			m_Core.m_Vel = Direction * (MaxSpeed / 5);
+    		}
+    		else
+    		{
+    			if(MaxSpeed > 0 && MaxSpeed < 5)
+    				MaxSpeed = 5;
+    			if(MaxSpeed > 0)
+    			{
+    				if(Direction.x > 0.0000001f)
+    					SpeederAngle = -std::atan(Direction.y / Direction.x);
+    				else if(Direction.x < 0.0000001f)
+    					SpeederAngle = std::atan(Direction.y / Direction.x) + 2.0f * std::asin(1.0f);
+    				else if(Direction.y > 0.0000001f)
+    					SpeederAngle = std::asin(1.0f);
+    				else
+    					SpeederAngle = std::asin(-1.0f);
+
+    				if(SpeederAngle < 0)
+    					SpeederAngle = 4.0f * std::asin(1.0f) + SpeederAngle;
+
+    				if(TempVel.x > 0.0000001f)
+    					TeeAngle = -std::atan(TempVel.y / TempVel.x);
+    				else if(TempVel.x < 0.0000001f)
+    					TeeAngle = std::atan(TempVel.y / TempVel.x) + 2.0f * std::asin(1.0f);
+    				else if(TempVel.y > 0.0000001f)
+    					TeeAngle = std::asin(1.0f);
+    				else
+    					TeeAngle = std::asin(-1.0f);
+
+    				if(TeeAngle < 0)
+    					TeeAngle = 4.0f * std::asin(1.0f) + TeeAngle;
+
+    				TeeSpeed = std::sqrt(std::pow(TempVel.x, 2) + std::pow(TempVel.y, 2));
+
+    				DiffAngle = SpeederAngle - TeeAngle;
+    				SpeedLeft = MaxSpeed / 5.0f - std::cos(DiffAngle) * TeeSpeed;
+    				if(absolute((int)SpeedLeft) > Force && SpeedLeft > 0.0000001f)
+    					TempVel += Direction * Force;
+    				else if(absolute((int)SpeedLeft) > Force)
+    					TempVel += Direction * -Force;
+    				else
+    					TempVel += Direction * SpeedLeft;
+    			}
+    			else
+    				TempVel += Direction * Force;
+
+    			m_Core.m_Vel = TempVel;
+    		}
+        }
 	}
 
 // ▀▀█▀▀ ▒█▀▀▀ ▒█░░░ ▒█▀▀▀ ▒█▀▀█ ▒█▀▀▀█ ▒█▀▀█ ▀▀█▀▀
@@ -993,22 +995,11 @@ void CCharacter::HandleZones()
 
     //### CUSTOM TELEPORT ITEMS###//
 
-    int NumberXTick = SERVER_TICK_SPEED*(TeleNumber);
     if(TeleType > 64)
     {
         switch(TeleType)
         {
-            case 197:
-                if(TeleNumber == 1)
-                    m_PassiveTicks = 1;
-                else if (TeleNumber == 255)
-                    m_PassiveTicks = -1;
-                else
-                    m_PassiveTicks = NumberXTick-SERVER_TICK_SPEED;
-                break;
             case 198:
-                if(m_PassiveTicks != 0 &&(m_PassiveTicks > NumberXTick || m_PassiveTicks == -1))
-                    m_PassiveTicks = NumberXTick;
                 break;
         }
     }

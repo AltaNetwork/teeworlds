@@ -283,7 +283,7 @@ int CCollision::IsSpeedup(int Index) const
 	return 0;
 }
 
-void CCollision::GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) const
+void CCollision::GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed, int *Type) const
 {
 	if(!m_pSpeedup || Index < 0 )
 		return;
@@ -292,6 +292,7 @@ void CCollision::GetSpeedup(int Index, vec2 *Dir, int *Force, int *MaxSpeed) con
 	*Dir = vec2(cos(Angle), sin(Angle));
 	if(MaxSpeed)
 		*MaxSpeed = m_pSpeedup[Index].m_MaxSpeed;
+	*Type = m_pSpeedup[Index].m_Type;
 }
 
 
