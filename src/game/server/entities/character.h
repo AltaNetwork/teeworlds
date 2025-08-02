@@ -101,6 +101,8 @@ public:
 	int m_EmoteType;
 	int m_EmoteStop;
 
+	int m_RaceTick;
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;

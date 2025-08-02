@@ -62,6 +62,9 @@ class CGameContext : public IGameServer
 	static void ConLanguage(IConsole::IResult *pResult, void *pUserData);
 	static void ConSpec(IConsole::IResult *pResult, void *pUserData);
 
+	static void ConSubscribe(IConsole::IResult *pResult, void *pUserData);
+	static void ConLmb(IConsole::IResult *pResult, void *pUserData);
+
 	static void ConTele(IConsole::IResult *pResult, void *pUserData);
 	static void ConAirJumps(IConsole::IResult *pResult, void *pUserData);
 	static void ConValDebug(IConsole::IResult *pResult, void *pUserData);
@@ -143,11 +146,19 @@ public:
 	char m_aVoteReason[VOTE_REASON_LENGTH];
 	int m_NumVoteOptions;
 	int m_VoteEnforce;
+
+	int m_LastLMB;
+	int m_LMBState;
 	enum
 	{
 		VOTE_ENFORCE_UNKNOWN=0,
 		VOTE_ENFORCE_NO,
 		VOTE_ENFORCE_YES,
+
+		LMB_NAN=0,
+        LMB_REG,
+        LMB_IN,
+        LMB_POST,
 	};
 	CHeap *m_pVoteOptionHeap;
 	CVoteOptionServer *m_pVoteOptionFirst;

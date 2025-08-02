@@ -9,6 +9,7 @@
 #include "entities/character.h"
 #include "entities/pickup.h"
 #include "entities/special/koh.h"
+#include "entities/lmb.h"
 #include "gamecontroller.h"
 #include "gamecontext.h"
 #include "player.h"
@@ -155,8 +156,14 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 
 	if(str_comp(pName, "koh") == 0)
 	{
-		CKoh *pKoh = new CKoh(&GameServer()->m_World, Pos, 0);//Type, SubType, Pivot, Pos - Pivot, PosEnv);
+		CKoh *pKoh = new CKoh(&GameServer()->m_World, Pos, 0);
 		pKoh->m_Pos = Pos;
+		return true;
+	}
+
+	if(str_comp(pName, "lmb") == 0)
+	{
+		new CLmb(&GameServer()->m_World);
 		return true;
 	}
 
@@ -333,17 +340,24 @@ void IGameController::OnPlayerInfoChange(class CPlayer *pP)
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon, int Flags)
 {
+    CPlayer *m_pVictim = pVictim->GetPlayer();
+    if(m_pVictim->m_LMBState == CPlayer::LMB_PLAYING)
+    {
+        m_pVictim->m_LMBState = CPlayer::LMB_STANDBY;
+        m_pVictim->m_SpawnTeam = 0;
+        GameServer()->SendChatTarget(m_pVictim->GetCID(), _("You are eliminated"));
+    }
+
     // do scoreing
 	if(!pKiller || pKiller == pVictim->GetPlayer() || Weapon == WEAPON_GAME)
 		return 0;
 
     pKiller->m_Score++;
-    CPlayer *mVictim = pVictim->GetPlayer();
 
     if(pKiller->PlayerEvent() == CPlayer::EVENT_DUEL)
     {
         pKiller->m_DuelScore++;
-        GameServer()->SendChatTarget(mVictim->GetCID(), _("'{str:Player}' scored!"), "Player" , Server()->ClientName(pKiller->GetCID()));
+        GameServer()->SendChatTarget(m_pVictim->GetCID(), _("'{str:Player}' scored!"), "Player" , Server()->ClientName(pKiller->GetCID()));
         GameServer()->SendChatTarget(pKiller->GetCID(), _("'{str:Player}' scored!"), "Player" , Server()->ClientName(pKiller->GetCID()));
         if(Flags&FLAG_ENDDUEL)
             pKiller->m_DuelScore = 10;
@@ -352,14 +366,14 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 
             char aBuf[256];
             str_format(aBuf, sizeof(aBuf), "'%s' won a duel against '%s' with result of %d:%d",
-                Server()->ClientName(mVictim->m_DuelPlayer), Server()->ClientName(mVictim->GetCID()),
-                GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_DuelScore, mVictim->m_DuelScore);
+                Server()->ClientName(m_pVictim->m_DuelPlayer), Server()->ClientName(m_pVictim->GetCID()),
+                GameServer()->m_apPlayers[m_pVictim->m_DuelPlayer]->m_DuelScore, m_pVictim->m_DuelScore);
             GameServer()->SendChatTarget(-1, _(aBuf));
 
-            GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_SpawnTeam = 0;
-            mVictim->m_SpawnTeam = 0;
-            GameServer()->m_apPlayers[mVictim->m_DuelPlayer]->m_DuelPlayer = -1;
-            mVictim->m_DuelPlayer = -1;
+            GameServer()->m_apPlayers[m_pVictim->m_DuelPlayer]->m_SpawnTeam = 0;
+            m_pVictim->m_SpawnTeam = 0;
+            GameServer()->m_apPlayers[m_pVictim->m_DuelPlayer]->m_DuelPlayer = -1;
+            m_pVictim->m_DuelPlayer = -1;
         }
     }
 	return 0;

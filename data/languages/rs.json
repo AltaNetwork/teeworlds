@@ -167,6 +167,14 @@
     {
       "key": "Passive will be disabled in 3 secs",
       "value": "Пасивни мод се искључује за 3 секунде"
+    },
+    {
+      "key": "«« Welcome {str:Player} »»",
+      "value": "«« Добро дошао {str:Player} »»"
+    },
+    {
+      "key": "{str:PlayerName} finished race in {str:Time}",
+      "value": "{str:PlayerName} је прешао трку за {str:Time}"
     }
   ]
 }

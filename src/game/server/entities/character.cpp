@@ -92,6 +92,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_FreezeEnd = 0;
 	m_DeepFrozen = false;
 
+	m_RaceTick = -1;
+
 	if(pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL)
 	{
         m_Core.m_VTeam = GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
@@ -486,6 +488,8 @@ void CCharacter::TeleCursor()
 {
     m_Core.m_Pos.x = m_Pos.x + m_Input.m_TargetX;
     m_Core.m_Pos.y = m_Pos.y + m_Input.m_TargetY;
+    m_Core.m_Vel = vec2(0,0);
+    Freeze(0);
 }
 
 void CCharacter::OnPredictedInput(CNetObj_PlayerInput *pNewInput)
@@ -705,13 +709,6 @@ bool CCharacter::TakeDamage(vec2 Force, int From, int Weapon)
 
 	if(Weapon == WEAPON_HAMMER || Weapon == WEAPON_RIFLE)
         Freeze(0);
-	// if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
-	// 	return false;
-
-	// if (Dmg > 2)
-	// 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
-	// else
-	// 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
 
 	m_EmoteType = EMOTE_PAIN;
 	m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
@@ -961,7 +958,7 @@ void CCharacter::HandleZones()
         return;
 	}
 
-	int DestTeleNumber = 0;
+	int DestTeleNumber = -1;
 	vec2 DestPosition;
 
 	if(TeleType == 63 || TeleType == 32) // CFRM
@@ -982,10 +979,9 @@ void CCharacter::HandleZones()
         if(TeleType == 14 && (m_ActiveWeapon != WEAPON_HAMMER || m_AttackTick != Server()->Tick()-SERVER_TICK_SPEED/8))
             DestPosition = vec2(0,0);
     }
-    if(TeleType < 64)
+    if(DestTeleNumber != -1)
     {
-        if(DestPosition != vec2(0,0))
-            m_Core.m_Pos = DestPosition;
+        m_Core.m_Pos = DestPosition;
         if((TeleType == 63) || (TeleType == 10))
         {
            	m_Core.m_Vel = vec2(0, 0);
@@ -995,12 +991,25 @@ void CCharacter::HandleZones()
 
     //### CUSTOM TELEPORT ITEMS###//
 
-    if(TeleType > 64)
+    switch(TeleType)
     {
-        switch(TeleType)
-        {
-            case 198:
-                break;
-        }
+        case 198:
+            break;
+        case 33:
+            m_RaceTick = Server()->Tick();
+            break;
+        case 34:
+            if(m_RaceTick != -1)
+            {
+            	int Time = (Server()->Tick()-m_RaceTick)/SERVER_TICK_SPEED;
+				char aTime[128];
+				str_format(aTime, sizeof(aTime), "%02d:%02d", Time/60, Time%60);
+                GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
+                GameServer()->SendChatTarget(-1, _("{str:PlayerName} finished race in {str:Time}"), "PlayerName", Server()->ClientName(m_pPlayer->GetCID()), "Time", aTime);
+                m_RaceTick = -1;
+            }
+            break;
+        case 69:
+            break;
     }
 }

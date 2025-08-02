@@ -39,6 +39,9 @@ MACRO_CONFIG_INT(SvVoteKickBantime, sv_vote_kick_bantime, 5, 0, 1440, CFGFLAG_SE
 MACRO_CONFIG_INT(FreezeLength, sv_freeze_length, 3, -1, 30, CFGFLAG_SERVER, "Freeze Length")
 MACRO_CONFIG_INT(SoulSpeed, sv_soul_speed, 7, 0, 50, CFGFLAG_SERVER, "Soul speed")
 
+MACRO_CONFIG_INT(SvLMBRegTime, sv_lmb_reg, 25, 0, 50, CFGFLAG_SERVER, "Register duration")
+MACRO_CONFIG_INT(SvLMBTime, sv_lmb_length, 120, 0, 50, CFGFLAG_SERVER, "Tournament duration")
+
 
 // debug
 MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 5, 1, 100, CFGFLAG_SERVER, "(Tw32) real id <-> vanilla id players map update rate")

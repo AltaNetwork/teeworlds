@@ -10,6 +10,7 @@
 #include <game/collision.h>
 #include <game/gamecore.h>
 #include "entities/character.h"
+#include "entities/lmb.h"
 #include "gamemodes/mod.h"
 #include "gameworld.h"
 #include "player.h"
@@ -37,6 +38,7 @@ void CGameContext::Construct(int Resetting)
 	m_NumVoteOptions = 0;
 	m_LockTeams = 0;
 	m_ChatResponseTargetID = -1;
+	m_LastLMB = 0;
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
@@ -685,6 +687,8 @@ void CGameContext::OnClientEnter(int ClientID)
 
 	str_format(aBuf, sizeof(aBuf), "team_join player='%d:%s' team=%d", ClientID, Server()->ClientName(ClientID), m_apPlayers[ClientID]->GetTeam());
 	Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+
+	SendBroadcast_VL(_("«« Welcome {str:Player} »»"), ClientID, "Player", Server()->ClientName(ClientID));
 
 	m_VoteUpdate = true;
 }
@@ -1874,6 +1878,38 @@ void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
         pSelf->m_apPlayers[pResult->GetClientID()]->GetCharacter()->TeleCursor();
 }
 
+void CGameContext::ConSubscribe(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int State = pSelf->m_apPlayers[pResult->GetClientID()]->m_LMBState;
+    char aBuf[128];
+    str_format(aBuf, sizeof(aBuf), "Nothing to subscribe to subscribe now");
+    if(State != CPlayer::LMB_PLAYING)
+    {
+        if(State == CPlayer::LMB_REG)
+        {
+            State = CPlayer::LMB_STANDBY;
+            str_format(aBuf, sizeof(aBuf), "Succesfully unsubscribed");
+        }
+        else
+        {
+            State = CPlayer::LMB_REG;
+            str_format(aBuf, sizeof(aBuf), "Succesfully subscribed");
+        }
+    }
+    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
+    pSelf->m_apPlayers[pResult->GetClientID()]->m_LMBState = State;
+}
+
+void CGameContext::ConLmb(IConsole::IResult* pResult, void* pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    if (pSelf)
+    {
+        new CLmb(&pSelf->m_World);
+    }
+}
+
 void CGameContext::ConAirJumps(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -2010,6 +2046,8 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("tele", "", CFGFLAG_SERVER, ConTele, this, "tele");
 
+	Console()->Register("lmb", "", CFGFLAG_SERVER, ConLmb, this, "open lmb");
+	Console()->Register("sub", "", CFGFLAG_CHAT, ConSubscribe, this, "sub to lmb");
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 

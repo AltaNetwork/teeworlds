@@ -62,6 +62,10 @@ public:
 		MENU_VOTES=1,
 		MENU_MAIN=2,
 		MENU_SETTINGS=4,
+
+		LMB_STANDBY=0,
+		LMB_REG,
+		LMB_PLAYING,
 	};
 	void DuelTick();
 
@@ -81,6 +85,7 @@ public:
 	bool m_IsReady;
 	bool m_Mute = false; // muted on entering
 
+	int m_LMBState;
 	//
 	int m_Vote;
 	int m_VotePos;

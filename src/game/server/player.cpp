@@ -2,6 +2,7 @@
 #include <engine/shared/config.h>
 #include "player.h"
 #include "entities/character.h"
+#include "tournament.h"
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -27,6 +28,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_Cosmetics = 0;
 	m_Settings = SETTINGS_BEYONDZOOM;
 	m_WTeam = 0;
+
+	m_LMBState = LMB_STANDBY;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -333,23 +336,23 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 	if(m_Team == Team)
 		return;
 
-	if(DoChatMsg)
-	{
-	    char aBuf[512];
-		if(Team == TEAM_SPECTATORS)
-		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the spectators"),"Player", Server()->ClientName(m_ClientID));
-		// }else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
-		// {
-		// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the redteam"),"Player", Server()->ClientName(m_ClientID));
-		// }else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
-		// {
-		// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the blueteam"),"Player", Server()->ClientName(m_ClientID));
-		}else
-		{
-			GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the game"),"Player", Server()->ClientName(m_ClientID));
-		}
-	}
+	// if(DoChatMsg)
+	// {
+	//     char aBuf[512];
+	// 	if(Team == TEAM_SPECTATORS)
+	// 	{
+	// 		GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the spectators"),"Player", Server()->ClientName(m_ClientID));
+	// 	// }else if(Team == TEAM_RED && GameServer()->m_pController->IsTeamplay())
+	// 	// {
+	// 	// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the redteam"),"Player", Server()->ClientName(m_ClientID));
+	// 	// }else if(Team == TEAM_BLUE && GameServer()->m_pController->IsTeamplay())
+	// 	// {
+	// 	// 	GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the blueteam"),"Player", Server()->ClientName(m_ClientID));
+	// 	}else
+	// 	{
+	// 		GameServer()->SendChatTarget(-1, _("'{str:Player}' joined the game"),"Player", Server()->ClientName(m_ClientID));
+	// 	}
+	// }
 
 	// if(KillChr)
 	//     KillCharacter();
