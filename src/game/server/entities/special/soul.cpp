@@ -13,7 +13,7 @@ CSoul::CSoul(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	if(!pOwnerChar || !pOwnerChar->IsAlive())
     {
-        // m_WTeam = pOwnerChar->GetCore().m_VTeam;
+        // m_WTeam = pOwnerChar->GetVTeam();
     }
 
   	GameWorld()->InsertEntity(this);
@@ -55,7 +55,7 @@ void CSoul::Tick()
 	else
 	    m_Pos.y-=Y/g_Config.m_SoulSpeed;
 
-	m_WTeam = pOwnerChar->GetCore().m_VTeam;
+	m_WTeam = pOwnerChar->GetVTeam();
 }
 
 void CSoul::Snap(int SnappingClient)

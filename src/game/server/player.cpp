@@ -2,7 +2,7 @@
 #include <engine/shared/config.h>
 #include "player.h"
 #include "entities/character.h"
-#include "tournament.h"
+// #include "tournament.h"
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -30,6 +30,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_WTeam = 0;
 
 	m_LMBState = LMB_STANDBY;
+	m_DuelFlags = 0;
+	m_SpawnVTeam = 0;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -102,13 +104,13 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-	    int Event = PlayerEvent();
-	    if(Event == EVENT_DUEL)
-			DuelTick();
+	    // int Event = PlayerEvent();
+	  //   if(Event == EVENT_DUEL)
+			// DuelTick();
 		if(m_Team != TEAM_SPECTATORS)
 		{
     		if(m_pCharacter)
-    			m_WTeam = m_pCharacter->GetCore().m_VTeam;
+    			m_WTeam = m_pCharacter->GetVTeam();
 		} else {
             if(m_SpectatorID != SPEC_FREEVIEW)
                 m_WTeam = GameServer()->m_apPlayers[m_SpectatorID]->m_WTeam;
@@ -116,7 +118,7 @@ void CPlayer::Tick()
                 m_WTeam = -1;
 		}
 
-		if(!m_pCharacter && (m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick() || PlayerEvent() != EVENT_NONE))
+		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
 			m_Spawning = true;
 
 		if(m_pCharacter)
@@ -401,11 +403,11 @@ void CPlayer::SetLanguage(const char* pLanguage)
 
 int CPlayer::PlayerEvent()
 {
-    if(m_DuelPlayer != -1 && GameServer()->m_apPlayers[m_DuelPlayer])
-    {
-        if(m_DuelPlayer != -1)
-            return EVENT_DUEL;
-    }
+    // if(m_DuelPlayer != -1 && GameServer()->m_apPlayers[m_DuelPlayer])
+    // {
+    //     if(m_DuelPlayer != -1)
+    //         return EVENT_DUEL;
+    // }
     return EVENT_NONE;
 }
 

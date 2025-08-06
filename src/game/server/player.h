@@ -45,7 +45,7 @@ public:
 	enum
 	{
 		EVENT_NONE=0,
-		EVENT_DUEL,
+		// EVENT_DUEL,
 		EVENT_TOURNAMENT,
 
 		COSM_RAINBOW=1,
@@ -66,6 +66,12 @@ public:
 		LMB_STANDBY=0,
 		LMB_REG,
 		LMB_PLAYING,
+
+		DUEL_ACCEPT = 1,
+		DUEL_DENY = 2,
+		DUEL_INDUEL = 4,
+		DUEL_LEAVE = 8,
+		DUEL_GETPOINT = 16,
 	};
 	void DuelTick();
 
@@ -86,6 +92,9 @@ public:
 	bool m_Mute = false; // muted on entering
 
 	int m_LMBState;
+	int m_DuelFlags;
+
+	int m_SpawnVTeam;
 	//
 	int m_Vote;
 	int m_VotePos;

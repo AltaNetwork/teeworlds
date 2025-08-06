@@ -11,9 +11,11 @@
 #include <game/gamecore.h>
 #include "entities/character.h"
 #include "entities/lmb.h"
+#include "entities/events/duel.h"
 #include "gamemodes/mod.h"
 #include "gameworld.h"
 #include "player.h"
+
 
 #include <engine/server/localization.h>
 
@@ -1707,20 +1709,20 @@ void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
 
     int ClientID = pResult->GetClientID();
     char aBuf[128];
-    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_NONE)
+
+    if(pSelf->m_apPlayers[ClientID]->m_LMBState&CPlayer::LMB_PLAYING)
     {
-        str_format(aBuf, sizeof(aBuf), "Nothing to leave");
-        pSelf->SendChatTarget(ClientID, _(aBuf));
+        pSelf->m_apPlayers[ClientID]->KillCharacter(WEAPON_SELF);
         return;
     }
 
-    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_DUEL)
+    if(pSelf->m_apPlayers[ClientID]->m_DuelFlags&CPlayer::DUEL_INDUEL)
     {
-        pSelf->m_apPlayers[ClientID]->KillCharacter(WEAPON_SELF, FLAG_ENDDUEL);
+        pSelf->m_apPlayers[ClientID]->m_DuelFlags |= CPlayer::DUEL_LEAVE;
         return;
     }
 
-    str_format(aBuf, sizeof(aBuf), "Cannot leave at the moment");
+    str_format(aBuf, sizeof(aBuf), "Nothing to leave");
     pSelf->SendChatTarget(ClientID, _(aBuf));
     return;
 }
@@ -1730,14 +1732,13 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
     CGameContext *pSelf = (CGameContext *)pUserData;
 
     const char *pName = pResult->GetString(0);
-    int pWager = pResult->GetInteger(0);
+    int Wager = pResult->GetInteger(1);
     int Inviter = pResult->GetClientID();
     int Invited = -1;
-    char aBuf[128];
+
     if(!str_comp(pName, ""))
    	{
-	    str_format(aBuf, sizeof(aBuf), "Duels are a thing yk. and you call them by doing /duel <player name>... also you can add a number which is a basically a bet");
-        pSelf->SendChatTarget(Inviter, _(aBuf));
+        pSelf->SendChatTarget(Inviter, _("Matches oh matches"));
 		return;
 	}
 
@@ -1752,21 +1753,23 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
 
 	if(Invited < 0)
 	{
-	    str_format(aBuf, sizeof(aBuf), "Couldnt find player '%s'", pName);
-        pSelf->SendChatTarget(Inviter, _(aBuf));
+        pSelf->SendChatTarget(Inviter, _("Couldnt find player '{str:Player}'"), "Player", pName);
 		return;
 	}
 	if(Invited == Inviter)
 	{
-	    str_format(aBuf, sizeof(aBuf), "You cannot invite your self");
-        pSelf->SendChatTarget(Inviter, _(aBuf));
+        pSelf->SendChatTarget(Inviter, _("You cannot invite your self to a match"));
 		return;
 	}
-    str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s of %d wager", pSelf->Server()->ClientName(Invited), pWager);
-    pSelf->SendChatTarget(Inviter, _(aBuf));
-    pSelf->m_apPlayers[Invited]->m_InvitedBy = Inviter;
-    str_format(aBuf, sizeof(aBuf), "%s invited you to a duel with %d wager. Type /accept to fight", pSelf->Server()->ClientName(Inviter), pWager);
-    pSelf->SendChatTarget(Invited, _(aBuf));
+	if(pSelf)
+    {
+        new CDuel(&pSelf->m_World, Invited, Inviter, Wager);
+    }
+    // str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s of %d wager", pSelf->Server()->ClientName(Invited), pWager);
+    // pSelf->SendChatTarget(Inviter, _(aBuf));
+    // pSelf->m_apPlayers[Invited]->m_InvitedBy = Inviter;
+    // str_format(aBuf, sizeof(aBuf), "%s invited you to a duel with %d wager. Type /accept to fight", pSelf->Server()->ClientName(Inviter), pWager);
+    // pSelf->SendChatTarget(Invited, _(aBuf));
 }
 
 void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
@@ -1774,41 +1777,44 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
     CGameContext *pSelf = (CGameContext *)pUserData;
 
     int ClientID = pResult->GetClientID();
-    char aBuf[128];
-    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() != CPlayer::EVENT_NONE)
-    {
-        str_format(aBuf, sizeof(aBuf), "You cant accept duels at this moment");
-        pSelf->SendChatTarget(ClientID, _(aBuf));
-        return;
-    }
-    int Inviter = -1;
-    Inviter = pSelf->m_apPlayers[ClientID]->m_InvitedBy;
-    pSelf->m_apPlayers[ClientID]->m_InvitedBy = -1;
-    if(Inviter == -1)
-    {
-        str_format(aBuf, sizeof(aBuf), "No duel invites found");
-        pSelf->SendChatTarget(ClientID, _(aBuf));
-        return;
-    }
-    if(pSelf->m_apPlayers[Inviter]->PlayerEvent() != CPlayer::EVENT_NONE)
-    {
-        str_format(aBuf, sizeof(aBuf), "Inviter cannot accept the duel at this moment");
-        pSelf->SendChatTarget(ClientID, _(aBuf));
-        return;
-    }
+    // char aBuf[128];
+    // if(pSelf->m_apPlayers[ClientID]->PlayerEvent() != CPlayer::EVENT_NONE)
+    // {
+    //     str_format(aBuf, sizeof(aBuf), "You cant accept duels at this moment");
+    //     pSelf->SendChatTarget(ClientID, _(aBuf));
+    //     return;
+    // }
+    // int Inviter = -1;
+    // Inviter = pSelf->m_apPlayers[ClientID]->m_InvitedBy;
+    // pSelf->m_apPlayers[ClientID]->m_InvitedBy = -1;
 
-    str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
-    pSelf->SendChatTarget(ClientID, _(aBuf));
+    if(pSelf->m_apPlayers[ClientID]->m_DuelFlags == 0)
+        pSelf->m_apPlayers[ClientID]->m_DuelFlags = CPlayer::DUEL_ACCEPT;
+    // if(Inviter == -1)
+    // {
+    //     str_format(aBuf, sizeof(aBuf), "No duel invites found");
+    //     pSelf->SendChatTarget(ClientID, _(aBuf));
+    //     return;
+    // }
+    // if(pSelf->m_apPlayers[Inviter]->PlayerEvent() != CPlayer::EVENT_NONE)
+    // {
+    //     str_format(aBuf, sizeof(aBuf), "Inviter cannot accept the duel at this moment");
+    //     pSelf->SendChatTarget(ClientID, _(aBuf));
+    //     return;
+    // }
 
-    pSelf->m_apPlayers[Inviter]->m_DuelPlayer = ClientID;
-    pSelf->m_apPlayers[ClientID]->m_DuelPlayer = Inviter;
-    pSelf->m_apPlayers[Inviter]->m_DuelScore = 0;
-    pSelf->m_apPlayers[ClientID]->m_DuelScore = 0;
+    // str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
+    // pSelf->SendChatTarget(ClientID, _(aBuf));
 
-    if(pSelf->m_apPlayers[Inviter]->GetCharacter())
-        pSelf->m_apPlayers[Inviter]->GetCharacter()->Die(Inviter, WEAPON_GAME);
-    if(pSelf->m_apPlayers[ClientID]->GetCharacter())
-        pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_GAME);
+    // pSelf->m_apPlayers[Inviter]->m_DuelPlayer = ClientID;
+    // pSelf->m_apPlayers[ClientID]->m_DuelPlayer = Inviter;
+    // pSelf->m_apPlayers[Inviter]->m_DuelScore = 0;
+    // pSelf->m_apPlayers[ClientID]->m_DuelScore = 0;
+
+    // if(pSelf->m_apPlayers[Inviter]->GetCharacter())
+    //     pSelf->m_apPlayers[Inviter]->GetCharacter()->Die(Inviter, WEAPON_GAME);
+    // if(pSelf->m_apPlayers[ClientID]->GetCharacter())
+    //     pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_GAME);
 }
 
 void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
@@ -1853,10 +1859,17 @@ void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
 
     int ClientID = pResult->GetClientID();
     int WantedTeam = pResult->GetInteger(0);
-    char aBuf[128];
-    pSelf->m_apPlayers[ClientID]->GetCharacter()->GetCore().m_VTeam = WantedTeam;
-    	str_format(aBuf, sizeof(aBuf), "'%s' joined team %d", pSelf->Server()->ClientName(ClientID), WantedTeam);
-    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
+    if(!pSelf->m_apPlayers[ClientID]->GetCharacter())
+        return;
+    char aBuf[32];
+    str_format(aBuf, sizeof(aBuf), "%d", pResult->NumArguments() == 0 ? pSelf->m_apPlayers[ClientID]->GetCharacter()->GetVTeam() : WantedTeam);
+    if(pResult->NumArguments() != 0)
+    {
+        pSelf->SendChatTarget(-1, _("{str:Player} joined team {str:Team}"), "Player", pSelf->Server()->ClientName(ClientID), "Team", aBuf);
+        pSelf->m_apPlayers[ClientID]->GetCharacter()->SetVTeam(WantedTeam);
+    }
+    else
+        pSelf->SendChatTarget(-1, _("{str:Player} is team {str:Team}"), "Player", pSelf->Server()->ClientName(ClientID), "Team", aBuf);
 
 }
 void CGameContext::ConValDebug(IConsole::IResult *pResult, void *pUserData)
@@ -2056,10 +2069,16 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
-	Console()->Register("duel", "?s", CFGFLAG_CHAT, ConDuel, this, "send duel");
-	Console()->Register("leave", "?s", CFGFLAG_CHAT, ConLeave, this, "leave event");
+
+	Console()->Register("duel" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1vs1" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1on1" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1v1"  , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("match", "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+
+	Console()->Register("leave", "", CFGFLAG_CHAT, ConLeave, this, "leave event");
 	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");
-	Console()->Register("team", "?s", CFGFLAG_CHAT, ConVTeam, this, "change team");
+	Console()->Register("team", "?i", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 

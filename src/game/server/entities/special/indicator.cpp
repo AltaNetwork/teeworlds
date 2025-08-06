@@ -26,7 +26,7 @@ void CIndicator::Tick()
 {
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-	if(!pOwnerChar || !pOwnerChar->IsAlive() || pOwnerChar->GetCore().m_VTeam > -1)
+	if(!pOwnerChar || !pOwnerChar->IsAlive() || pOwnerChar->GetVTeam() > -1)
 	{
 		Reset();
 		return;

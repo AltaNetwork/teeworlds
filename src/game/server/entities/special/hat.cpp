@@ -12,7 +12,7 @@ CHat::CHat(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
 	if(pOwnerChar && pOwnerChar->IsAlive())
-	    m_WTeam = pOwnerChar->GetCore().m_VTeam;
+	    m_WTeam = pOwnerChar->GetVTeam();
 
   	GameWorld()->InsertEntity(this);
 }
@@ -38,7 +38,7 @@ void CHat::Tick()
 	}
 
 	m_Pos = vec2(pOwnerChar->m_Pos.x, pOwnerChar->m_Pos.y - 48);
-	m_WTeam = pOwnerChar->GetCore().m_VTeam;
+	m_WTeam = pOwnerChar->GetVTeam();
 
 }
 

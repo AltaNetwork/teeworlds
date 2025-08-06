@@ -175,6 +175,10 @@
     {
       "key": "{str:PlayerName} finished race in {str:Time}",
       "value": "{str:PlayerName} је прешао трку за {str:Time}"
+    },
+    {
+      "key": "No such command: rank.",
+      "value": "Skibidi"
     }
   ]
 }

@@ -69,7 +69,7 @@ void CProjectile::Tick()
 	CCharacter *TargetChr = GameServer()->m_World.IntersectCharacter(PrevPos, CurPos, 6.0f, CurPos, OwnerChar);
 	m_LifeSpan--;
 
-	if((TargetChr && TargetChr->GetCore().m_VTeam == m_VTeam) || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
+	if((TargetChr && TargetChr->GetVTeam() == m_VTeam) || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
 			GameServer()->CreateSound(CurPos, m_SoundImpact);

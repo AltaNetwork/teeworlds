@@ -86,6 +86,8 @@ public:
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	class CCharacterCore& GetCore() { return m_Core; }
+	int GetVTeam() { return m_Core.m_VTeam; }
+	void SetVTeam(int VTeam) { m_Core.m_VTeam = VTeam; }
 
 	int m_FreezeEnd;
 	int m_FreezeStart;

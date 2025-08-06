@@ -37,7 +37,7 @@ MACRO_CONFIG_INT(SvVoteKickMin, sv_vote_kick_min, 0, 0, MAX_CLIENTS, CFGFLAG_SER
 MACRO_CONFIG_INT(SvVoteKickBantime, sv_vote_kick_bantime, 5, 0, 1440, CFGFLAG_SERVER, "The time to ban a player if kicked by vote. 0 makes it just use kick")
 
 MACRO_CONFIG_INT(FreezeLength, sv_freeze_length, 3, -1, 30, CFGFLAG_SERVER, "Freeze Length")
-MACRO_CONFIG_INT(SoulSpeed, sv_soul_speed, 7, 0, 50, CFGFLAG_SERVER, "Soul speed")
+MACRO_CONFIG_INT(SoulSpeed, sv_soul_speed, 7, 1, 24, CFGFLAG_SERVER, "Soul speed ( 24 max, 1 min, higher=slower )")
 
 MACRO_CONFIG_INT(SvLMBRegTime, sv_lmb_reg, 25, 0, 50, CFGFLAG_SERVER, "Register duration")
 MACRO_CONFIG_INT(SvLMBTime, sv_lmb_length, 120, 0, 50, CFGFLAG_SERVER, "Tournament duration")

@@ -62,8 +62,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_ActiveWeapon = WEAPON_GUN;
 	m_LastWeapon = WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
-	if(pPlayer->PlayerEvent() == CPlayer::EVENT_NONE)
-	    m_PassiveTicks = SERVER_TICK_SPEED * g_Config.m_SvSpawnPassive;
 
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
@@ -91,12 +89,14 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_FreezeStart = 0;
 	m_FreezeEnd = 0;
 	m_DeepFrozen = false;
-
 	m_RaceTick = -1;
 
-	if(pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL)
+	m_PassiveTicks = SERVER_TICK_SPEED * g_Config.m_SvSpawnPassive;
+
+	if(pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL || pPlayer->m_LMBState&CPlayer::LMB_PLAYING)
 	{
-        m_Core.m_VTeam = GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
+        m_Core.m_VTeam = 0;//GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
+        m_PassiveTicks = 0;
         Freeze(3);
 	}
 
@@ -322,7 +322,7 @@ void CCharacter::FireWeapon()
 														MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 			for (int i = 0; i < Num; ++i)    {
 			    CCharacter *pTarget = apEnts[i];
-				if ((pTarget == this) /*|| GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL)*/ || (pTarget->GetCore().m_VTeam != m_Core.m_VTeam))
+				if ((pTarget == this) /*|| GameServer()->Collision()->IntersectLine(ProjStartPos, pTarget->m_Pos, NULL, NULL)*/ || (pTarget->GetVTeam() != m_Core.m_VTeam))
 					continue;
 
 				// set his velocity to fast upward (for now)
@@ -661,11 +661,11 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
     if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
            Killer = m_Core.m_LastContact;
 
-    if(m_pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL && Weapon != WEAPON_GAME)
-	{
-	    Killer = m_pPlayer->m_DuelPlayer;
-        GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer]->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
-	}
+ //    if(m_pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL && Weapon != WEAPON_GAME)
+	// {
+	//     Killer = m_pPlayer->m_DuelPlayer;
+ //        GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer]->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
+	// }
 
     if(Killer != m_pPlayer->GetCID())
         new CSoul(GameWorld(), m_Pos, Killer);
@@ -702,7 +702,7 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 
 bool CCharacter::TakeDamage(vec2 Force, int From, int Weapon)
 {
-    if((GameServer()->m_apPlayers[From]->GetCharacter()->GetCore().m_VTeam != m_Core.m_VTeam))
+    if((GameServer()->m_apPlayers[From]->GetCharacter()->GetVTeam() != m_Core.m_VTeam))
         return false;
 
     m_Core.m_Vel += Force;
@@ -849,7 +849,7 @@ void CCharacter::HandleZones()
             else if(MaxSpeed == 3) // SET PASSIVE INFINITE
                 m_PassiveTicks = -1;
 		}
-		else if (Type == 3 && m_pPlayer->PlayerEvent() != CPlayer::EVENT_NONE)
+		else if (Type == 3 && (m_pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL || m_pPlayer->m_LMBState&CPlayer::LMB_PLAYING))
 		{
 				Die(m_pPlayer->GetCID(), WEAPON_SELF); // DEATH IN ANY EVENT //
 		}
