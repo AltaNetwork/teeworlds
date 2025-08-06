@@ -24,6 +24,7 @@ public:
 		ENTTYPE_FLAG,
 		ENTTYPE_CHARACTER,
 		ENTTYPE_DUEL,
+		ENTTYPE_LMB,
 		NUM_ENTTYPES
 	};
 
@@ -51,6 +52,14 @@ public:
 	~CGameWorld();
 
 	void SetGameServer(CGameContext *pGameServer);
+
+	void PurgeEntityType(int Type);
+	/*
+	    Function: resets all entities of a type
+
+		Arguments:
+		    int - Type
+	 */
 
 	CEntity *FindFirst(int Type);
 

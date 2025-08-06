@@ -177,8 +177,12 @@
       "value": "{str:PlayerName} је прешао трку за {str:Time}"
     },
     {
-      "key": "No such command: rank.",
-      "value": "Skibidi"
+      "key": "(use /sub to subscribe)",
+      "value": "(користи /sub да се претплатиш)"
+    },
+    {
+      "key": "Tournament is starting in {str:Time}s\n{str:Amnt} subscribed {str:Sug}{str:BL}",
+      "value": "Турнир почиње за {str:Time}с\n{str:Amnt} особа се се пријави {str:Sug}{str:BL}"
     }
   ]
 }

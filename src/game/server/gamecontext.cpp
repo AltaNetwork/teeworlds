@@ -10,7 +10,7 @@
 #include <game/collision.h>
 #include <game/gamecore.h>
 #include "entities/character.h"
-#include "entities/lmb.h"
+#include "entities/events/lmb.h"
 #include "entities/events/duel.h"
 #include "gamemodes/mod.h"
 #include "gameworld.h"
@@ -1722,7 +1722,7 @@ void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
         return;
     }
 
-    str_format(aBuf, sizeof(aBuf), "Nothing to leave");
+    str_format(aBuf, sizeof(aBuf), "No event to leave from");
     pSelf->SendChatTarget(ClientID, _(aBuf));
     return;
 }
@@ -1734,6 +1734,7 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
     const char *pName = pResult->GetString(0);
     int Wager = pResult->GetInteger(1);
     int Inviter = pResult->GetClientID();
+    CPlayer *m_Player = pSelf->m_apPlayers[Inviter];
     int Invited = -1;
 
     if(!str_comp(pName, ""))
@@ -1743,13 +1744,7 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
 	}
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
-	{
-		if(!str_comp(pName, pSelf->Server()->ClientName(i)))
-		{
-			Invited = i;
-			break;
-		}
-	}
+	{if(!str_comp(pName, pSelf->Server()->ClientName(i))){Invited = i;break;}}
 
 	if(Invited < 0)
 	{
@@ -1761,15 +1756,15 @@ void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
         pSelf->SendChatTarget(Inviter, _("You cannot invite your self to a match"));
 		return;
 	}
+    if(m_Player->m_DuelFlags&CPlayer::DUEL_INDUEL || m_Player->m_LMBState != CPlayer::LMB_STANDBY)
+    {
+        pSelf->SendChatTarget(Inviter, _("Cannot send duels at the moment"));
+        return;
+    }
 	if(pSelf)
     {
         new CDuel(&pSelf->m_World, Invited, Inviter, Wager);
     }
-    // str_format(aBuf, sizeof(aBuf), "Duel invite sent to %s of %d wager", pSelf->Server()->ClientName(Invited), pWager);
-    // pSelf->SendChatTarget(Inviter, _(aBuf));
-    // pSelf->m_apPlayers[Invited]->m_InvitedBy = Inviter;
-    // str_format(aBuf, sizeof(aBuf), "%s invited you to a duel with %d wager. Type /accept to fight", pSelf->Server()->ClientName(Inviter), pWager);
-    // pSelf->SendChatTarget(Invited, _(aBuf));
 }
 
 void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
@@ -1777,44 +1772,18 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
     CGameContext *pSelf = (CGameContext *)pUserData;
 
     int ClientID = pResult->GetClientID();
-    // char aBuf[128];
-    // if(pSelf->m_apPlayers[ClientID]->PlayerEvent() != CPlayer::EVENT_NONE)
-    // {
-    //     str_format(aBuf, sizeof(aBuf), "You cant accept duels at this moment");
-    //     pSelf->SendChatTarget(ClientID, _(aBuf));
-    //     return;
-    // }
-    // int Inviter = -1;
-    // Inviter = pSelf->m_apPlayers[ClientID]->m_InvitedBy;
-    // pSelf->m_apPlayers[ClientID]->m_InvitedBy = -1;
+    CPlayer *m_Player = pSelf->m_apPlayers[ClientID];
 
-    if(pSelf->m_apPlayers[ClientID]->m_DuelFlags == 0)
-        pSelf->m_apPlayers[ClientID]->m_DuelFlags = CPlayer::DUEL_ACCEPT;
-    // if(Inviter == -1)
-    // {
-    //     str_format(aBuf, sizeof(aBuf), "No duel invites found");
-    //     pSelf->SendChatTarget(ClientID, _(aBuf));
-    //     return;
-    // }
-    // if(pSelf->m_apPlayers[Inviter]->PlayerEvent() != CPlayer::EVENT_NONE)
-    // {
-    //     str_format(aBuf, sizeof(aBuf), "Inviter cannot accept the duel at this moment");
-    //     pSelf->SendChatTarget(ClientID, _(aBuf));
-    //     return;
-    // }
-
-    // str_format(aBuf, sizeof(aBuf), "Duel accepted from %s", pSelf->Server()->ClientName(Inviter));
-    // pSelf->SendChatTarget(ClientID, _(aBuf));
-
-    // pSelf->m_apPlayers[Inviter]->m_DuelPlayer = ClientID;
-    // pSelf->m_apPlayers[ClientID]->m_DuelPlayer = Inviter;
-    // pSelf->m_apPlayers[Inviter]->m_DuelScore = 0;
-    // pSelf->m_apPlayers[ClientID]->m_DuelScore = 0;
-
-    // if(pSelf->m_apPlayers[Inviter]->GetCharacter())
-    //     pSelf->m_apPlayers[Inviter]->GetCharacter()->Die(Inviter, WEAPON_GAME);
-    // if(pSelf->m_apPlayers[ClientID]->GetCharacter())
-    //     pSelf->m_apPlayers[ClientID]->GetCharacter()->Die(ClientID, WEAPON_GAME);
+    if(m_Player->m_DuelFlags&CPlayer::DUEL_INDUEL || m_Player->m_LMBState != CPlayer::LMB_STANDBY)
+    {
+        pSelf->SendChatTarget(ClientID, _("Cannot accept at this moment"));
+    }
+    if(m_Player->m_DuelFlags&CPlayer::DUEL_INVITED)
+    {
+        m_Player->m_DuelFlags = CPlayer::DUEL_ACCEPT;
+        pSelf->SendChatTarget(ClientID, _("Accepted match request"));
+    }
+    pSelf->SendChatTarget(ClientID, _("You dont have a match request to accept"));
 }
 
 void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
@@ -1894,23 +1863,28 @@ void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConSubscribe(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
-    int State = pSelf->m_apPlayers[pResult->GetClientID()]->m_LMBState;
-    char aBuf[128];
-    str_format(aBuf, sizeof(aBuf), "Nothing to subscribe to subscribe now");
-    if(State != CPlayer::LMB_PLAYING)
+    int m_PlID = pResult->GetClientID();
+    int State = pSelf->m_apPlayers[m_PlID]->m_LMBState;
+    if(pSelf->m_LMBState != CPlayer::LMB_REG)
+    {
+        pSelf->SendChatTarget(m_PlID, _("Nothing to subscribe at"));
+        return;
+    }
+    if(State != CPlayer::LMB_PLAYING &&  ~pSelf->m_apPlayers[m_PlID]->m_DuelFlags&CPlayer::DUEL_INDUEL)
     {
         if(State == CPlayer::LMB_REG)
         {
             State = CPlayer::LMB_STANDBY;
-            str_format(aBuf, sizeof(aBuf), "Succesfully unsubscribed");
+            pSelf->SendChatTarget(m_PlID, _("Succesfully unsubscribed"));
         }
         else
         {
             State = CPlayer::LMB_REG;
-            str_format(aBuf, sizeof(aBuf), "Succesfully subscribed");
+            pSelf->SendChatTarget(m_PlID, _("Succesfully subscribed"));
         }
+    } else {
+        pSelf->SendChatTarget(m_PlID, _("Cannot subscribe at the moment"));
     }
-    pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
     pSelf->m_apPlayers[pResult->GetClientID()]->m_LMBState = State;
 }
 

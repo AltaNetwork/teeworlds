@@ -45,8 +45,6 @@ public:
 	enum
 	{
 		EVENT_NONE=0,
-		// EVENT_DUEL,
-		EVENT_TOURNAMENT,
 
 		COSM_RAINBOW=1,
 		COSM_RAINBOWFEET=2,
@@ -66,14 +64,15 @@ public:
 		LMB_STANDBY=0,
 		LMB_REG,
 		LMB_PLAYING,
+		LMB_WON,
 
 		DUEL_ACCEPT = 1,
 		DUEL_DENY = 2,
 		DUEL_INDUEL = 4,
 		DUEL_LEAVE = 8,
-		DUEL_GETPOINT = 16,
+		DUEL_DIED = 16,
+		DUEL_INVITED = 32,
 	};
-	void DuelTick();
 
 	//---------------------------------------------------------
 	// this is used for snapping so we know how we can clip the view for the player
@@ -117,11 +116,7 @@ public:
 		int m_ColorFeet;
 	} m_TeeInfos;
 
-	// int m_RespawnTick;
 	int	m_SpawnTeam;
-	int m_DuelPlayer;
-	int m_DuelScore;
-	int m_InvitedBy;
 
 	int m_Cosmetics;
 	int m_Settings;

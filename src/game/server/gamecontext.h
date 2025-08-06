@@ -159,6 +159,7 @@ public:
         LMB_REG,
         LMB_IN,
         LMB_POST,
+        LMB_CANCEL,
 	};
 	CHeap *m_pVoteOptionHeap;
 	CVoteOptionServer *m_pVoteOptionFirst;

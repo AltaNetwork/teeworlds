@@ -93,9 +93,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_PassiveTicks = SERVER_TICK_SPEED * g_Config.m_SvSpawnPassive;
 
+	SetVTeam(pPlayer->m_SpawnVTeam);
+
 	if(pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL || pPlayer->m_LMBState&CPlayer::LMB_PLAYING)
 	{
-        m_Core.m_VTeam = 0;//GameServer()->m_pController->VTeamDuel(m_pPlayer->GetCID(),m_pPlayer->m_DuelPlayer);
         m_PassiveTicks = 0;
         Freeze(3);
 	}
@@ -660,12 +661,6 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 
     if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
            Killer = m_Core.m_LastContact;
-
- //    if(m_pPlayer->PlayerEvent() == CPlayer::EVENT_DUEL && Weapon != WEAPON_GAME)
-	// {
-	//     Killer = m_pPlayer->m_DuelPlayer;
- //        GameServer()->m_apPlayers[m_pPlayer->m_DuelPlayer]->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
-	// }
 
     if(Killer != m_pPlayer->GetCID())
         new CSoul(GameWorld(), m_Pos, Killer);

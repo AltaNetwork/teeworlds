@@ -12,6 +12,8 @@ public:
     int m_Opponent;
     int m_Wager;
 
+    int m_VTeamSpawn;
+
     char BufPlayer[24];
     char BufOpponent[24];
 
@@ -30,7 +32,7 @@ public:
 
 	virtual void Reset();
 	virtual void Tick();
-	virtual void Snap(int SnappingClient);
+	// virtual void Snap(int SnappingClient);
 };
 
 #endif

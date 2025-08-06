@@ -21,9 +21,6 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_TeamChangeTick = Server()->Tick();
 
 	m_SpawnTeam = 0;
-	m_DuelPlayer = -1;
-	m_DuelScore = 0;
-	m_InvitedBy = -1;
 
 	m_Cosmetics = 0;
 	m_Settings = SETTINGS_BEYONDZOOM;
@@ -104,9 +101,6 @@ void CPlayer::Tick()
 
 	if(!GameServer()->m_World.m_Paused)
 	{
-	    // int Event = PlayerEvent();
-	  //   if(Event == EVENT_DUEL)
-			// DuelTick();
 		if(m_Team != TEAM_SPECTATORS)
 		{
     		if(m_pCharacter)
@@ -403,53 +397,21 @@ void CPlayer::SetLanguage(const char* pLanguage)
 
 int CPlayer::PlayerEvent()
 {
-    // if(m_DuelPlayer != -1 && GameServer()->m_apPlayers[m_DuelPlayer])
-    // {
-    //     if(m_DuelPlayer != -1)
-    //         return EVENT_DUEL;
-    // }
     return EVENT_NONE;
 }
 
-void CPlayer::DuelTick()
-{
-    if(m_ClientID == m_DuelPlayer ||
-        GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelPlayer != m_ClientID)
-    {
-        m_DuelPlayer = -1;
-        m_SpawnTeam = 0;
-      	char Buf[256];
-		str_format(Buf, sizeof(Buf), "error occured! please report to admins.");
-		GameServer()->SendBroadcast(Buf, m_ClientID);
-        return;
-    }
-
-    m_SpawnTeam = 1;
-    SetTeam(TEAM_RED);
-
-    if(GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter() && m_pCharacter)
-    {
-        CCharacter *DuelPlayer = GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter();
-        if(m_pCharacter->m_DeepFrozen && m_pCharacter->IsGrounded()
-           && DuelPlayer->m_DeepFrozen && DuelPlayer->IsGrounded())
-        {
-            KillCharacter(WEAPON_GAME);
-            GameServer()->m_apPlayers[m_DuelPlayer]->KillCharacter(WEAPON_GAME);
-            GameServer()->SendChatTarget(m_DuelPlayer, _("Draw!"));
-            GameServer()->SendChatTarget(GetCID(), _("Draw!"));
-        }
-
-    }
-
-    if(Server()->Tick()%SERVER_TICK_SPEED == 1)
-	{
-		char Buf[256];
-		str_format(Buf, sizeof(Buf), "%s: %d\n%s: %d                                                  ",
-            Server()->ClientName(m_ClientID), m_DuelScore,
-            Server()->ClientName(m_DuelPlayer), GameServer()->m_apPlayers[m_DuelPlayer]->m_DuelScore);
-		GameServer()->SendBroadcast(Buf, m_ClientID);
-	}
-}
+    // if(GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter() && m_pCharacter)
+    // {
+    //     CCharacter *DuelPlayer = GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter();
+    //     if(m_pCharacter->m_DeepFrozen && m_pCharacter->IsGrounded()
+    //        && DuelPlayer->m_DeepFrozen && DuelPlayer->IsGrounded())
+    //     {
+    //         KillCharacter(WEAPON_GAME);
+    //         GameServer()->m_apPlayers[m_DuelPlayer]->KillCharacter(WEAPON_GAME);
+    //         GameServer()->SendChatTarget(m_DuelPlayer, _("Draw!"));
+    //         GameServer()->SendChatTarget(GetCID(), _("Draw!"));
+    //     }
+    // }
 
 const char* CPlayer::ProccessName() const
 {
