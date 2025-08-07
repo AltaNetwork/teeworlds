@@ -34,6 +34,20 @@ enum
 
 };
 
+static const char *aStoreNames[] = {
+	"Weapons Kit",
+	"Passive Mode 2 Hours",
+	"Deathnote Page",
+	"VIP+ Room access",
+};
+
+static const int aStorePrices[] = {
+	25,
+	30,
+	15,
+	50,
+};
+
 class CCharacter : public CEntity
 {
 	MACRO_ALLOC_POOL_ID()
@@ -62,6 +76,8 @@ public:
 	void HandleWeapons();
 	void HandleNinja();
 
+	void HandleHouse();
+
 	void OnPredictedInput(CNetObj_PlayerInput *pNewInput);
 	void OnDirectInput(CNetObj_PlayerInput *pNewInput);
 	void ResetInput();
@@ -82,6 +98,8 @@ public:
 	void SetEmote(int Emote, int Tick);
 
 	void TeleCursor();
+
+	bool OnVote(int Vote);
 
 	bool IsAlive() const { return m_Alive; }
 	class CPlayer *GetPlayer() { return m_pPlayer; }
@@ -105,9 +123,13 @@ public:
 
 	int m_RaceTick;
 
+	int m_House;
+
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
+
+	int m_StoreItem;
 
 	bool m_Alive;
 

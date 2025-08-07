@@ -62,6 +62,9 @@ class CGameContext : public IGameServer
 	static void ConLanguage(IConsole::IResult *pResult, void *pUserData);
 	static void ConSpec(IConsole::IResult *pResult, void *pUserData);
 
+	static void ConWeapons(IConsole::IResult *pResult, void *pUserData);
+	static void ConDeathnote(IConsole::IResult *pResult, void *pUserData);
+
 	static void ConSubscribe(IConsole::IResult *pResult, void *pUserData);
 	static void ConLmb(IConsole::IResult *pResult, void *pUserData);
 

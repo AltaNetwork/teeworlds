@@ -1038,19 +1038,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if(MsgID == NETMSGTYPE_CL_VOTE)
 		{
+    		CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
+    		if(!pMsg->m_Vote)
+    			return;
+
+            if(pPlayer->OnVote(pMsg->m_Vote))
+                return;
+
 			if(!m_VoteCloseTime)
 				return;
 
 			if(pPlayer->m_Vote == 0) // this mean player voted already
 			{
-				CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
-				if(!pMsg->m_Vote)
-					return;
-
-				// char aBuf[128];
-				// str_format(aBuf, sizeof(aBuf), "voted %d", pMsg->m_Vote);
-				// SendBroadcast_VL((aBuf), ClientID);
-
 				pPlayer->m_Vote = pMsg->m_Vote;
 				pPlayer->m_VotePos = ++m_VotePos;
 				m_VoteUpdate = true;
@@ -1815,13 +1814,83 @@ void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
 	}
 }
+
 void CGameContext::ConSpec(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
     int ClientID = pResult->GetClientID();
-    if(pSelf->m_apPlayers[ClientID]->PlayerEvent() == CPlayer::EVENT_NONE)
-        pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+    pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
 }
+
+void CGameContext::ConDeathnote(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+
+    const char *pName = pResult->GetString(0);
+    int ClientID = pResult->GetClientID();
+    CPlayer *m_Player = pSelf->m_apPlayers[ClientID];
+    int Rip = -1;
+
+    if(m_Player->m_DeathNotes < 1)
+   	{
+        pSelf->SendChatTarget(ClientID, _("You do not have a deathnote"));
+		return;
+	}
+
+    char aBuf[128];
+    str_format(aBuf, sizeof(aBuf), "%d", m_Player->m_DeathNotes);
+
+    if(pResult->NumArguments() == 0)
+   	{
+        pSelf->SendChatTarget(ClientID, _("You have {str:Num} pages left in your deathnote"), "Num", aBuf);
+		return;
+	}
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{if(!str_comp(pName, pSelf->Server()->ClientName(i))){Rip = i;break;}}
+
+	if(Rip < 0)
+	{
+        pSelf->SendChatTarget(ClientID, _("Couldnt think of '{str:DeathNoteVictim}' to write"), "DeathNoteVictim", pName);
+		return;
+	}
+
+	m_Player->m_DeathNotes--;
+	str_format(aBuf, sizeof(aBuf), "%d", m_Player->m_DeathNotes);
+
+	if(Rip == ClientID)
+	{
+	    pSelf->SendChatTarget(Rip, _("You are suicidal"));
+	} else {
+    	pSelf->SendChatTarget(ClientID, _("You wrote '{str:Player}' in your deathnote"), "Player", pName);
+        pSelf->SendChatTarget(ClientID, _("You have {str:Num} pages left in your deathnote"), "Num", aBuf);
+    	pSelf->SendChatTarget(Rip, _("Someone wrote you in their deathnote"));
+	}
+	pSelf->m_apPlayers[Rip]->KillCharacter(WEAPON_SELF);
+}
+
+void CGameContext::ConWeapons(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int ClientID = pResult->GetClientID();
+    if(pSelf->m_apPlayers[ClientID]->m_WeaponKits > 0)
+    {
+        pSelf->m_apPlayers[ClientID]->m_WeaponKits--;
+        char aBuf[128];
+        str_format(aBuf, sizeof(aBuf),"%d", pSelf->m_apPlayers[ClientID]->m_WeaponKits);
+        pSelf->SendChatTarget(ClientID, _("Used a weapon kit. You have {str:Num} weapon kits left."), "Num", aBuf);
+        CCharacter *pChr = pSelf->m_apPlayers[ClientID]->GetCharacter();
+        if(pChr)
+        {
+            pChr->GiveWeapon(3,-1);
+            pChr->GiveWeapon(4,-1);
+            pChr->GiveWeapon(5,-1);
+        }
+        return;
+    }
+    pSelf->SendChatTarget(ClientID, _("You have no weapon kits to use"));
+}
+
 void CGameContext::ConVTeam(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -2045,17 +2114,21 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
 
-	Console()->Register("duel" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
-	Console()->Register("1vs1" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
-	Console()->Register("1on1" , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
-	Console()->Register("1v1"  , "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
-	Console()->Register("match", "s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("duel" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1vs1" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1on1" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("1v1"  , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+	Console()->Register("match", "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
 
 	Console()->Register("leave", "", CFGFLAG_CHAT, ConLeave, this, "leave event");
 	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");
 	Console()->Register("team", "?i", CFGFLAG_CHAT, ConVTeam, this, "change team");
 	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
+
+	Console()->Register("weapons", "", CFGFLAG_CHAT, ConWeapons, this, "weapons kit");
+	Console()->Register("deathnote", "?s", CFGFLAG_CHAT, ConDeathnote, this, "deathnote");
+	Console()->Register("pages", "", CFGFLAG_CHAT, ConDeathnote, this, "list deathnote pages");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 }

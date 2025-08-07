@@ -42,6 +42,7 @@ public:
 	void SetLanguage(const char* pLanguage);
 
 	int PlayerEvent(); // Returns
+	bool OnVote(int Vote);
 	enum
 	{
 		EVENT_NONE=0,
@@ -111,6 +112,15 @@ public:
 	int m_LastEmote;
 	int m_LastKill;
 
+	// ITEMS
+
+	int m_WeaponKits;
+
+	int m_DeathNotes;
+	int m_LastDeathNote;
+
+	// ITEMS END
+
 	// TODO: clean this up
 	struct
 	{
@@ -178,24 +188,24 @@ public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 };
 
-// static const char *aSkins[] = {
-// 	"bluekitty",
-// 	"bluestripe",
-// 	"brownbear",
-// 	"cammo",
-// 	"cammostripes",
-// 	"coala",
-// 	"default",
-// 	"limekitty",
-// 	"pinky",
-// 	"redbopp",
-// 	"redstripe",
-// 	"saddo",
-// 	"toptri",
-// 	"twinbop",
-// 	"twintri",
-// 	"warpaint"
-// };
+static const char *aSkins[] = {
+	"bluekitty",
+	"bluestripe",
+	"brownbear",
+	"cammo",
+	"cammostripes",
+	"coala",
+	"default",
+	"limekitty",
+	"pinky",
+	"redbopp",
+	"redstripe",
+	"saddo",
+	"toptri",
+	"twinbop",
+	"twintri",
+	"warpaint"
+};
 
 // static const char *aSkinsCoala[] = {
 // 	"coala_bluekitty",

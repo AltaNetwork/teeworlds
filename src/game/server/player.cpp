@@ -32,6 +32,13 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 
 	m_Effects = 0;
 
+	m_WeaponKits = 0;
+
+	m_DeathNotes = 0;
+	m_LastDeathNote = 0;
+
+	m_Score = 150; // TEST!
+
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
 	m_Authed = IServer::AUTHED_NO;
@@ -479,4 +486,15 @@ const char* CPlayer::ProccessSkin() const
 	// if(m_Cosmetics&COSM_PULSEREDFEET)
  //        pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
     return s_aBuf;
+}
+
+bool CPlayer::OnVote(int Vote)
+{
+    if(GetCharacter())
+    {
+        CCharacter *pChr = GetCharacter();
+        if(pChr->OnVote(Vote))
+            return true;
+    }
+    return false;
 }

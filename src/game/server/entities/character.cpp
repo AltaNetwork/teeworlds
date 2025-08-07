@@ -91,6 +91,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_DeepFrozen = false;
 	m_RaceTick = -1;
 
+	m_House = -1;
+	m_StoreItem = -1;
+
 	m_PassiveTicks = SERVER_TICK_SPEED * g_Config.m_SvSpawnPassive;
 
 	SetVTeam(pPlayer->m_SpawnVTeam);
@@ -579,6 +582,11 @@ void CCharacter::Tick()
 	HandleZones();
 	HandleWeapons();
 
+	if(m_House != 1)
+	{
+	    HandleHouse();
+	}
+
 	if(m_Core.m_HookedPlayer != -1 && GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
 	{
     	GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->GetCore().m_LastContact = m_pPlayer->GetCID();
@@ -814,10 +822,10 @@ void CCharacter::HandleZones()
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
     GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1)
     /* DEATH ( #ZONES>DEATH ) */   {    Die(m_pPlayer->GetCID(), WEAPON_SELF);    }
-	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/2.f) == 4 ||
-		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/2.f) == 4 )
+	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/1.6f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/1.6f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/1.6f) == 4 ||
+		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/1.6f) == 4 )
 	/* DOWNSTOPPER ( #ZONES>TEEWORLDS ) */   {  if(m_Core.m_Vel.y < 0)  m_Core.m_Vel.y = 0;	}
 
  // ▒█▀▀▀█ ▒█▀▀█ ▒█▀▀▀ ▒█▀▀▀ ▒█▀▀▄ 　 ▒█░▒█ ▒█▀▀█
@@ -845,6 +853,12 @@ void CCharacter::HandleZones()
 		{
 				Die(m_pPlayer->GetCID(), WEAPON_SELF); // DEATH IN ANY EVENT //
 		}
+		else if (Type == 4)
+    	{
+            if(Force == 1 && m_House != 1)
+                GameServer()->SendBroadcast_VL(" ", m_pPlayer->GetCID());
+            m_House = Force;
+    	}
         // Blocks movement based on angle //
         else if (Type == 30)
         {
@@ -974,14 +988,17 @@ void CCharacter::HandleZones()
         DestTeleNumber = clamp(static_cast<int>(random()), 0, static_cast<int>(Outs.size()) - 1);
         DestPosition = Outs.at(DestTeleNumber);
         if(TeleType == 14 && (m_ActiveWeapon != WEAPON_HAMMER || m_AttackTick != Server()->Tick()-SERVER_TICK_SPEED/8))
+        {
             DestPosition = vec2(0,0);
+            DestTeleNumber = -1;
+        }
     }
     if(DestTeleNumber != -1)
     {
         m_Core.m_Pos = DestPosition;
         if((TeleType == 63) || (TeleType == 10))
         {
-           	m_Core.m_Vel = vec2(0, 0);
+           	m_Core.m_Vel = vec2(0,0);
             m_Core.ResetHook();
     	}
     }
@@ -991,6 +1008,15 @@ void CCharacter::HandleZones()
     switch(TeleType)
     {
         case 198:
+            break;
+        case 2:
+            if(TeleNumber == 255)
+                m_StoreItem = -1;
+            else if (m_StoreItem == -1)
+            {
+                m_StoreItem = TeleNumber-1;
+                GameServer()->CreatePlayerSpawn(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
+            }
             break;
         case 33:
             m_RaceTick = Server()->Tick();
@@ -1009,4 +1035,89 @@ void CCharacter::HandleZones()
         case 69:
             break;
     }
+}
+
+void CCharacter::HandleHouse()
+{
+    if(m_pPlayer->m_LMBState&CPlayer::LMB_PLAYING || m_pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL)
+    {
+        m_House = 0;
+        return;
+    }
+    switch (m_House) {
+        case 2:
+            if(Server()->Tick()%(SERVER_TICK_SPEED/2) == 0)
+            {
+                char aPoint[256];
+                str_format(aPoint, sizeof(aPoint), "%d", m_pPlayer->m_Score);
+                if(m_StoreItem > -1)
+                {
+                    char aPrice[256];
+                    str_format(aPrice, sizeof(aPrice), "%d", aStorePrices[m_StoreItem]);
+                    GameServer()->SendBroadcast_VL("Wager: {str:Pts}\nItem: {str:Item}\nCost: {str:Cost}\n"
+                        "f3 ➤ ✔️\nf4 ➤ ⊘{str:BLK}", m_pPlayer->GetCID(), "Pts", aPoint,
+                        "Item", aStoreNames[m_StoreItem%sizeof(aStoreNames)], "Cost", aPrice ,
+                        "BLK","                                                       ");
+                } else
+                {
+                GameServer()->SendBroadcast_VL("Wager: {str:Pts}{str:BLK}", m_pPlayer->GetCID(), "Pts", aPoint, "BLK","                                                       ");
+                }
+            }
+            break;
+        case 69:
+            break;
+    }
+}
+
+bool CCharacter::OnVote(int Vote)
+{
+    if(Vote == -1) // F4 ↩️ ➡️
+    {
+        if(m_House == 2)
+        {
+            if(m_StoreItem == -1)
+                return false;
+            GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
+            GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("Canceled the order sucessfully"));
+            m_StoreItem = -1;
+            return true;
+        }
+    }
+    if(Vote == 1) // F3
+    {
+        if(m_House == 2)
+        {
+            if(m_StoreItem == -1)
+                return false;
+
+            if(m_pPlayer->m_Score < aStorePrices[m_StoreItem])
+            {
+                GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("You do not have enough wager for this item"));
+                return true;
+            }
+            bool Bought = false;
+            switch (m_StoreItem) {
+                case 0:
+                    m_pPlayer->m_WeaponKits++;
+                    Bought = true;
+                    break;
+                case 2:
+                    m_pPlayer->m_DeathNotes++;
+                    Bought = true;
+                    break;
+                case 3:
+                    Bought = true;
+                    break;
+            }
+            if(Bought)
+            {
+                GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("Sucessfully bought the '{str:Item}'"), "Item", aStoreNames[m_StoreItem%sizeof(aStoreNames)]);
+                GameServer()->CreatePlayerSpawn(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
+                m_pPlayer->m_Score-= aStorePrices[m_StoreItem];
+                m_StoreItem = -1;
+            }
+            return true;
+        }
+    }
+    return false;
 }
