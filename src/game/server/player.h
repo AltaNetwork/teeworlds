@@ -72,6 +72,8 @@ public:
 		DUEL_LEAVE = 8,
 		DUEL_DIED = 16,
 		DUEL_INVITED = 32,
+
+		EFFECT_BLIND = 1,
 	};
 
 	//---------------------------------------------------------
@@ -92,6 +94,8 @@ public:
 
 	int m_LMBState;
 	int m_DuelFlags;
+
+	int m_Effects;
 
 	int m_SpawnVTeam;
 	//

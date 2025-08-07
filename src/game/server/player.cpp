@@ -30,6 +30,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_DuelFlags = 0;
 	m_SpawnVTeam = 0;
 
+	m_Effects = 0;
+
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
 	m_Authed = IServer::AUTHED_NO;
@@ -167,29 +169,33 @@ void CPlayer::Snap(int SnappingClient)
 	if(!pClientInfo)
 		return;
 
-    char aBufName[16];
-    snprintf(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), ProccessName());
-    StrToInts(&pClientInfo->m_Name0, 4, aBufName);
+	int Effects = GameServer()->m_apPlayers[SnappingClient]->m_Effects;
+
+    // char aBufName[16];
+    // snprintf(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), ProccessName());
+    StrToInts(&pClientInfo->m_Name0, 4, Effects&EFFECT_BLIND ? " " : Server()->ClientName(m_ClientID));
 
     char aBufClan[12];
-    snprintf(aBufClan, sizeof(aBufClan), "%s", ProccessClan());
+    snprintf(aBufClan, sizeof(aBufClan), "%s", Effects&EFFECT_BLIND ? " " : ProccessClan());
     StrToInts(&pClientInfo->m_Clan0, 4, aBufClan);
 
-    int Colour = 0xff32 + GameServer()->m_pController->m_RainbowColor * 0x010000; // rainbow colour
-	StrToInts(&pClientInfo->m_Skin0, 6, ProccessSkin());
-	pClientInfo->m_UseCustomColor = m_Cosmetics < 5 && m_Cosmetics > 0 ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
-	pClientInfo->m_ColorBody = m_Cosmetics&COSM_RAINBOW ? Colour : m_TeeInfos.m_ColorBody;
-	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
+	StrToInts(&pClientInfo->m_Skin0, 6, Effects&EFFECT_BLIND ? "default" : ProccessSkin());
+	if(~Effects&EFFECT_BLIND)
+	{
+	    int Colour = 0xff32 + GameServer()->m_pController->m_RainbowColor * 0x010000;
+    	pClientInfo->m_UseCustomColor = m_Cosmetics < 5 && m_Cosmetics > 0 ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
+    	pClientInfo->m_ColorBody = m_Cosmetics&COSM_RAINBOW ? Colour : m_TeeInfos.m_ColorBody;
+    	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
+    }
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
 		return;
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
-	pPlayerInfo->m_Local = 0;
 	pPlayerInfo->m_ClientID = m_ClientID;
-	pPlayerInfo->m_Score = m_Score;
-	pPlayerInfo->m_Team = SnappingClient == m_ClientID ? TEAM_RED : m_Team;
+	pPlayerInfo->m_Score = m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
+	pPlayerInfo->m_Team =  Effects&EFFECT_BLIND ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
 	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)

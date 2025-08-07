@@ -40,54 +40,53 @@ void CLayers::Init(class IKernel *pKernel)
 
 				if(pLayer->m_Type == LAYERTYPE_TILES)
 				{
-				CMapItemLayerTilemap *pTilemap = reinterpret_cast<CMapItemLayerTilemap *>(pLayer);
+    				CMapItemLayerTilemap *pTilemap = reinterpret_cast<CMapItemLayerTilemap *>(pLayer);
 
-				if(pTilemap->m_Flags & TILESLAYERFLAG_GAME)
-				{
-					m_pGameLayer = pTilemap;
-					m_pGameGroup = pGroup;
+    				if(pTilemap->m_Flags & TILESLAYERFLAG_GAME)
+    				{
+    					m_pGameLayer = pTilemap;
+    					m_pGameGroup = pGroup;
 
-					// make sure the game group has standard settings
-					m_pGameGroup->m_OffsetX = 0;
-					m_pGameGroup->m_OffsetY = 0;
-					m_pGameGroup->m_ParallaxX = 100;
-					m_pGameGroup->m_ParallaxY = 100;
+    					// make sure the game group has standard settings
+    					m_pGameGroup->m_OffsetX = 0;
+    					m_pGameGroup->m_OffsetY = 0;
+    					m_pGameGroup->m_ParallaxX = 100;
+    					m_pGameGroup->m_ParallaxY = 100;
 
-					if(m_pGameGroup->m_Version >= 2)
-					{
-						m_pGameGroup->m_UseClipping = 0;
-						m_pGameGroup->m_ClipX = 0;
-						m_pGameGroup->m_ClipY = 0;
-						m_pGameGroup->m_ClipW = 0;
-						m_pGameGroup->m_ClipH = 0;
-					}
+    					if(m_pGameGroup->m_Version >= 2)
+    					{
+    						m_pGameGroup->m_UseClipping = 0;
+    						m_pGameGroup->m_ClipX = 0;
+    						m_pGameGroup->m_ClipY = 0;
+    						m_pGameGroup->m_ClipW = 0;
+    						m_pGameGroup->m_ClipH = 0;
+    					}
+    				}
+    				if(pTilemap->m_Flags & TILESLAYERFLAG_TELE)
+    				{
+    					if(pTilemap->m_Version <= 2)
+    					{
+    						pTilemap->m_Tele = *((int *)(pTilemap) + 15);
+    					}
+    					m_pTeleLayer = pTilemap;
+    				}
+    				if(pTilemap->m_Flags & TILESLAYERFLAG_SPEEDUP)
+    				{
+    					if(pTilemap->m_Version <= 2)
+    					{
+    						pTilemap->m_Speedup = *((int *)(pTilemap) + 16);
+    					}
+    					m_pSpeedupLayer = pTilemap;
+    				}
+    				if(pTilemap->m_Flags & TILESLAYERFLAG_FRONT)
+    				{
+    					if(pTilemap->m_Version <= 2)
+    					{
+    						pTilemap->m_Front = *((int *)(pTilemap) + 17);
+    					}
+    					m_pFrontLayer = pTilemap;
+    				}
 				}
-				if(pTilemap->m_Flags & TILESLAYERFLAG_TELE)
-				{
-					if(pTilemap->m_Version <= 2)
-					{
-						pTilemap->m_Tele = *((int *)(pTilemap) + 15);
-					}
-					m_pTeleLayer = pTilemap;
-				}
-				if(pTilemap->m_Flags & TILESLAYERFLAG_FRONT)
-				{
-					if(pTilemap->m_Version <= 2)
-					{
-						pTilemap->m_Front = *((int *)(pTilemap) + 17);
-					}
-					m_pFrontLayer = pTilemap;
-				}
-				if(pTilemap->m_Flags & TILESLAYERFLAG_SPEEDUP)
-				{
-					if(pTilemap->m_Version <= 2)
-					{
-						pTilemap->m_Speedup = *((int *)(pTilemap) + 16);
-					}
-					m_pSpeedupLayer = pTilemap;
-				}
-				}
-
 			}
 		}
 	}

@@ -347,6 +347,8 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
         m_pVictim->m_SpawnTeam = 0;
         if(m_pVictim->m_LMBState == CPlayer::LMB_PLAYING)
             GameServer()->SendChatTarget(m_pVictim->GetCID(), _("You are eliminated"));
+        if(m_pVictim->m_Effects&CPlayer::EFFECT_BLIND)
+            m_pVictim->m_Effects-=CPlayer::EFFECT_BLIND;
     }
 
     if(Weapon == WEAPON_GAME)

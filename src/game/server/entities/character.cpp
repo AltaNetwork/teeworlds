@@ -259,9 +259,6 @@ void CCharacter::HandleWeaponSwitch()
 	// Direct Weapon selection
 	if(m_LatestInput.m_WantedWeapon)
 		WantedWeapon = m_Input.m_WantedWeapon-1;
-	// char aBuf[256];
-	// str_format(aBuf, sizeof(aBuf), "                         \nINPUT: %d\nTICK:%d",m_LatestInput.m_WantedWeapon ,Server()->Tick(), aBuf);
-	// GameServer()->SendBroadcast(aBuf, m_pPlayer->GetCID());
 
 	// check for insane values
 	if(WantedWeapon >= 0 && WantedWeapon < NUM_WEAPONS && WantedWeapon != m_ActiveWeapon && m_aWeapons[WantedWeapon].m_Got)
@@ -934,6 +931,10 @@ void CCharacter::HandleZones()
         }
 	}
 
+   	// char aBuf[256];
+	// str_format(aBuf, sizeof(aBuf), "                         \nINPUT: %d\nTICK:%d",m_LatestInput.m_WantedWeapon ,Server()->Tick(), aBuf);
+	// GameServer()->SendBroadcast(aBuf, m_pPlayer->GetCID());
+
 // ▀▀█▀▀ ▒█▀▀▀ ▒█░░░ ▒█▀▀▀ ▒█▀▀█ ▒█▀▀▀█ ▒█▀▀█ ▀▀█▀▀
 // ░▒█░░ ▒█▀▀▀ ▒█░░░ ▒█▀▀▀ ▒█▄▄█ ▒█░░▒█ ▒█▄▄▀ ░▒█░░
 // ░▒█░░ ▒█▄▄▄ ▒█▄▄█ ▒█▄▄▄ ▒█░░░ ▒█▄▄▄█ ▒█░▒█ ░▒█░░
@@ -941,6 +942,7 @@ void CCharacter::HandleZones()
 	const CTeleTile *pTeleLayer = GameServer()->Collision()->TeleLayer();
 	if(!pTeleLayer)
 		return;
+
 	int TeleNumber = pTeleLayer[Index].m_Number;
 	int TeleType = pTeleLayer[Index].m_Type;
 
