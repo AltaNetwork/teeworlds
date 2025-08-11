@@ -1,8 +1,10 @@
+#include <cstdint>
 #include <new>
 #include <engine/shared/config.h>
 #include "player.h"
 #include "entities/character.h"
 // #include "tournament.h"
+#include <cstring>
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -21,6 +23,10 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_TeamChangeTick = Server()->Tick();
 
 	m_SpawnTeam = 0;
+	m_SavePos = vec2(0,0);
+
+	m_ToSendVoteMenu = true;
+	m_VoteMenu = MENU_MAIN;
 
 	m_Cosmetics = 0;
 	m_Settings = SETTINGS_BEYONDZOOM;
@@ -86,6 +92,12 @@ void CPlayer::Tick()
 
 	Server()->SetClientScore(m_ClientID, m_Score);
 	Server()->SetClientLanguage(m_ClientID, m_aLanguage);
+
+	if(m_PlayerFlags&PLAYERFLAG_IN_MENU && m_ToSendVoteMenu)
+	{
+    	m_ToSendVoteMenu = false;
+        SendVoteMenu();
+	}
 
 	// do latency stuff
 	{
@@ -178,19 +190,17 @@ void CPlayer::Snap(int SnappingClient)
 
 	int Effects = GameServer()->m_apPlayers[SnappingClient]->m_Effects;
 
-    // char aBufName[16];
-    // snprintf(aBufName, sizeof(aBufName), "%s%s", Server()->ClientName(m_ClientID), ProccessName());
     StrToInts(&pClientInfo->m_Name0, 4, Effects&EFFECT_BLIND ? " " : Server()->ClientName(m_ClientID));
 
     char aBufClan[12];
     snprintf(aBufClan, sizeof(aBufClan), "%s", Effects&EFFECT_BLIND ? " " : ProccessClan());
     StrToInts(&pClientInfo->m_Clan0, 4, aBufClan);
 
-	StrToInts(&pClientInfo->m_Skin0, 6, Effects&EFFECT_BLIND ? "default" : ProccessSkin());
+	StrToInts(&pClientInfo->m_Skin0, 6, Effects&EFFECT_BLIND ? "default" : m_Cosmetics&COSM_RANDOMSKIN ? aSkins[Server()->Tick()/50%15] : m_TeeInfos.m_SkinName);//ProccessSkin());
 	if(~Effects&EFFECT_BLIND)
 	{
 	    int Colour = 0xff32 + GameServer()->m_pController->m_RainbowColor * 0x010000;
-    	pClientInfo->m_UseCustomColor = m_Cosmetics < 5 && m_Cosmetics > 0 ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
+    	pClientInfo->m_UseCustomColor = m_Cosmetics&COSM_RAINBOW || m_Cosmetics&COSM_RAINBOWFEET ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
     	pClientInfo->m_ColorBody = m_Cosmetics&COSM_RAINBOW ? Colour : m_TeeInfos.m_ColorBody;
     	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
     }
@@ -393,9 +403,13 @@ void CPlayer::TryRespawn()
 		return;
 
 	m_Spawning = false;
+	if(m_SavePos != vec2(0,0))
+	{
+        SpawnPos = m_SavePos;
+        m_SavePos = vec2(0,0);
+	}
 	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
 	m_pCharacter->Spawn(this, SpawnPos);
-	// GameServer()->CreatePlayerSpawn(SpawnPos);
 }
 
 const char* CPlayer::GetLanguage()
@@ -497,4 +511,132 @@ bool CPlayer::OnVote(int Vote)
             return true;
     }
     return false;
+}
+
+bool CPlayer::OnCallVote(const char* pVote, const char* pReason)
+{
+    bool IsVote = true;
+    if(str_comp_num("", pVote, 1) == 0 || str_comp_num("≡", pVote, 4) == 0)
+    {
+        IsVote = false;
+    }// ☐ ☑︎ ☒
+    if(strstr(pVote, "☐") || strstr(pVote, "☑︎") || strstr(pVote, "☒"))
+    {
+        IsVote = false;
+        if(strstr(pVote, "Rᴀɪɴʙᴏᴡ Fᴇᴇᴛ"))
+            m_Cosmetics = m_Cosmetics&COSM_RAINBOWFEET ? m_Cosmetics&= ~COSM_RAINBOWFEET : m_Cosmetics |= COSM_RAINBOWFEET;
+        if(strstr(pVote, "Rᴀɪɴʙᴏᴡ Bᴏᴅʏ"))
+            m_Cosmetics = m_Cosmetics&COSM_RAINBOW ? m_Cosmetics&= ~COSM_RAINBOW : m_Cosmetics |= COSM_RAINBOW;
+        if(strstr(pVote, "Rᴀɴᴅᴏᴍ Sᴋɪɴ"))
+            m_Cosmetics = m_Cosmetics&COSM_RANDOMSKIN ? m_Cosmetics&= ~COSM_RANDOMSKIN : m_Cosmetics |= COSM_RANDOMSKIN;
+        if(strstr(pVote, "Sᴛᴀʀ Tʀᴀɪʟ"))
+            m_Cosmetics = m_Cosmetics&COSM_STARTRAIL ? m_Cosmetics&= ~COSM_STARTRAIL : m_Cosmetics |= COSM_STARTRAIL;
+        if(strstr(pVote, "Sᴛᴀʀ Gʟᴏᴡ"))
+            m_Cosmetics = m_Cosmetics&COSM_STARGLOW ? m_Cosmetics&= ~COSM_STARGLOW : m_Cosmetics |= COSM_STARGLOW;
+    }
+    if(IsVote)
+    {
+        return false;
+    } else {
+        m_ToSendVoteMenu = true;
+        return true;
+    }
+}
+
+void CPlayer::SendVoteMenu()
+{
+   	CNetMsg_Sv_VoteClearOptions ClearMsg;
+   	CNetMsg_Sv_VoteOptionAdd AddMsg;
+    int NumOptions = 0;
+    CVoteOptionServer *pCurrent = GameServer()->m_pVoteOptionFirst;
+	Server()->SendPackMsg(&ClearMsg, MSGFLAG_VITAL, m_ClientID);
+	CNetMsg_Sv_VoteOptionListAdd OptionMsg;
+	OptionMsg.m_pDescription0 = "";
+	OptionMsg.m_pDescription1 = "";
+	OptionMsg.m_pDescription2 = "";
+	OptionMsg.m_pDescription3 = "";
+	OptionMsg.m_pDescription4 = "";
+	OptionMsg.m_pDescription5 = "";
+	OptionMsg.m_pDescription6 = "";
+	OptionMsg.m_pDescription7 = "";
+	OptionMsg.m_pDescription8 = "";
+	OptionMsg.m_pDescription9 = "";
+	OptionMsg.m_pDescription10 = "";
+	OptionMsg.m_pDescription11 = "";
+	OptionMsg.m_pDescription12 = "";
+	OptionMsg.m_pDescription13 = "";
+	OptionMsg.m_pDescription14 = "";
+	while(pCurrent)
+	{
+	switch(NumOptions++)
+	{
+	case 0: OptionMsg.m_pDescription0 = pCurrent->m_aDescription; break;
+	case 1: OptionMsg.m_pDescription1 = pCurrent->m_aDescription; break;
+	case 2: OptionMsg.m_pDescription2 = pCurrent->m_aDescription; break;
+	case 3: OptionMsg.m_pDescription3 = pCurrent->m_aDescription; break;
+	case 4: OptionMsg.m_pDescription4 = pCurrent->m_aDescription; break;
+	case 5: OptionMsg.m_pDescription5 = pCurrent->m_aDescription; break;
+	case 6: OptionMsg.m_pDescription6 = pCurrent->m_aDescription; break;
+	case 7: OptionMsg.m_pDescription7 = pCurrent->m_aDescription; break;
+	case 8: OptionMsg.m_pDescription8 = pCurrent->m_aDescription; break;
+	case 9: OptionMsg.m_pDescription9 = pCurrent->m_aDescription; break;
+	case 10: OptionMsg.m_pDescription10 = pCurrent->m_aDescription; break;
+	case 11: OptionMsg.m_pDescription11 = pCurrent->m_aDescription; break;
+	case 12: OptionMsg.m_pDescription12 = pCurrent->m_aDescription; break;
+	case 13: OptionMsg.m_pDescription13 = pCurrent->m_aDescription; break;
+	case 14:
+		{
+			OptionMsg.m_pDescription14 = pCurrent->m_aDescription;
+			OptionMsg.m_NumOptions = NumOptions;
+			Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, m_ClientID);
+			OptionMsg = CNetMsg_Sv_VoteOptionListAdd();
+			NumOptions = 0;
+			OptionMsg.m_pDescription1 = "";
+			OptionMsg.m_pDescription2 = "";
+			OptionMsg.m_pDescription3 = "";
+			OptionMsg.m_pDescription4 = "";
+			OptionMsg.m_pDescription5 = "";
+			OptionMsg.m_pDescription6 = "";
+			OptionMsg.m_pDescription7 = "";
+			OptionMsg.m_pDescription8 = "";
+			OptionMsg.m_pDescription9 = "";
+			OptionMsg.m_pDescription10 = "";
+			OptionMsg.m_pDescription11 = "";
+			OptionMsg.m_pDescription12 = "";
+			OptionMsg.m_pDescription13 = "";
+			OptionMsg.m_pDescription14 = "";
+		}
+	}
+	pCurrent = pCurrent->m_pNext;
+	}
+	if(NumOptions > 0)
+	{
+	OptionMsg.m_NumOptions = NumOptions;
+	Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, m_ClientID);
+	}
+	char aBuf[128];
+	AddMsg.m_pDescription = " ";
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+	AddMsg.m_pDescription = "≡ Cᴏsᴍᴇᴛɪᴄs";
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Rᴀɪɴʙᴏᴡ Fᴇᴇᴛ", m_Cosmetics&COSM_RAINBOWFEET ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Rᴀɪɴʙᴏᴡ Bᴏᴅʏ", m_Cosmetics&COSM_RAINBOW ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Rᴀɴᴅᴏᴍ Sᴋɪɴ", m_Cosmetics&COSM_RANDOMSKIN ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Sᴛᴀʀ Tʀᴀɪʟ", m_Cosmetics&COSM_STARTRAIL ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Sᴛᴀʀ Gʟᴏᴡ", m_Cosmetics&COSM_STARGLOW ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 }

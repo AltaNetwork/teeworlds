@@ -42,18 +42,23 @@ public:
 	void SetLanguage(const char* pLanguage);
 
 	int PlayerEvent(); // Returns
+
 	bool OnVote(int Vote);
+	bool OnCallVote(const char* pVote, const char* pReason);
+	void SendVoteMenu();
+
+	bool m_ToSendVoteMenu;
+	int m_VoteMenu;
+
 	enum
 	{
 		EVENT_NONE=0,
 
 		COSM_RAINBOW=1,
 		COSM_RAINBOWFEET=2,
-		COSM_PULSEREDFEET=4,
-		COSM_RANDOMSKIN=8,
-		COSM_RANDOMSKINCOALA=16,
-		COSM_RANDOMSKINSANTA=32,
-		COSM_RANDOMSKINKITTY=64,
+		COSM_RANDOMSKIN=4,
+		COSM_STARTRAIL=8,
+		COSM_STARGLOW=16,
 
 		SETTINGS_PREDICTVANILLA=16,
 		SETTINGS_BEYONDZOOM=32,
@@ -75,6 +80,8 @@ public:
 		DUEL_INVITED = 32,
 
 		EFFECT_BLIND = 1,
+
+		INVENTORY_VIP = 1,
 	};
 
 	//---------------------------------------------------------
@@ -118,6 +125,10 @@ public:
 
 	int m_DeathNotes;
 	int m_LastDeathNote;
+
+	int m_Inventory;
+
+	vec2 m_SavePos;
 
 	// ITEMS END
 

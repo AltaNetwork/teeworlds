@@ -878,22 +878,17 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		}
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
 		{
-			if(g_Config.m_SvSpamprotection && pPlayer->m_LastVoteTry && pPlayer->m_LastVoteTry+Server()->TickSpeed()*3 > Server()->Tick())
+			if(g_Config.m_SvSpamprotection && pPlayer->m_LastVoteTry && pPlayer->m_LastVoteTry+Server()->TickSpeed()*1 > Server()->Tick())
 				return;
+
+			// if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+			// {
+			// 	SendChatTarget(ClientID, _("Spectators aren't allowed to start a vote."));
+			// 	return;
+			// }
 
 			int64 Now = Server()->Tick();
 			pPlayer->m_LastVoteTry = Now;
-			if(pPlayer->GetTeam() == TEAM_SPECTATORS)
-			{
-				SendChatTarget(ClientID, _("Spectators aren't allowed to start a vote."));
-				return;
-			}
-
-			if(m_VoteCloseTime)
-			{
-				SendChatTarget(ClientID, _("Wait for current vote to end before calling a new one."));
-				return;
-			}
 
 			int Timeleft = pPlayer->m_LastVoteCall + Server()->TickSpeed()*60 - Now;
 			if(pPlayer->m_LastVoteCall && Timeleft > 0)
@@ -910,7 +905,17 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			char aCmd[VOTE_CMD_LENGTH] = {0};
 			bool m_ChatTarget = false;
 			CNetMsg_Cl_CallVote *pMsg = (CNetMsg_Cl_CallVote *)pRawMsg;
-			const char *pReason = pMsg->m_Reason[0] ? pMsg->m_Reason : " ";//"No reason given";
+
+			if(str_comp_nocase(pMsg->m_Type, "option") == 0 && pPlayer->OnCallVote(pMsg->m_Value, pMsg->m_Reason))
+			    return;
+
+			const char *pReason = pMsg->m_Reason[0] ? pMsg->m_Reason : "No reason given";
+
+			if(m_VoteCloseTime)
+			{
+				SendChatTarget(ClientID, _("Wait for current vote to end before calling a new one."));
+				return;
+			}
 
 			if(str_comp_nocase(pMsg->m_Type, "option") == 0)
 			{
@@ -1190,73 +1195,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			// send vote options
 			CNetMsg_Sv_VoteClearOptions ClearMsg;
 			Server()->SendPackMsg(&ClearMsg, MSGFLAG_VITAL, ClientID);
-
-			CNetMsg_Sv_VoteOptionListAdd OptionMsg;
-			int NumOptions = 0;
-			OptionMsg.m_pDescription0 = "";
-			OptionMsg.m_pDescription1 = "";
-			OptionMsg.m_pDescription2 = "";
-			OptionMsg.m_pDescription3 = "";
-			OptionMsg.m_pDescription4 = "";
-			OptionMsg.m_pDescription5 = "";
-			OptionMsg.m_pDescription6 = "";
-			OptionMsg.m_pDescription7 = "";
-			OptionMsg.m_pDescription8 = "";
-			OptionMsg.m_pDescription9 = "";
-			OptionMsg.m_pDescription10 = "";
-			OptionMsg.m_pDescription11 = "";
-			OptionMsg.m_pDescription12 = "";
-			OptionMsg.m_pDescription13 = "";
-			OptionMsg.m_pDescription14 = "";
-			CVoteOptionServer *pCurrent = m_pVoteOptionFirst;
-			while(pCurrent)
-			{
-				switch(NumOptions++)
-				{
-				case 0: OptionMsg.m_pDescription0 = pCurrent->m_aDescription; break;
-				case 1: OptionMsg.m_pDescription1 = pCurrent->m_aDescription; break;
-				case 2: OptionMsg.m_pDescription2 = pCurrent->m_aDescription; break;
-				case 3: OptionMsg.m_pDescription3 = pCurrent->m_aDescription; break;
-				case 4: OptionMsg.m_pDescription4 = pCurrent->m_aDescription; break;
-				case 5: OptionMsg.m_pDescription5 = pCurrent->m_aDescription; break;
-				case 6: OptionMsg.m_pDescription6 = pCurrent->m_aDescription; break;
-				case 7: OptionMsg.m_pDescription7 = pCurrent->m_aDescription; break;
-				case 8: OptionMsg.m_pDescription8 = pCurrent->m_aDescription; break;
-				case 9: OptionMsg.m_pDescription9 = pCurrent->m_aDescription; break;
-				case 10: OptionMsg.m_pDescription10 = pCurrent->m_aDescription; break;
-				case 11: OptionMsg.m_pDescription11 = pCurrent->m_aDescription; break;
-				case 12: OptionMsg.m_pDescription12 = pCurrent->m_aDescription; break;
-				case 13: OptionMsg.m_pDescription13 = pCurrent->m_aDescription; break;
-				case 14:
-					{
-						OptionMsg.m_pDescription14 = pCurrent->m_aDescription;
-						OptionMsg.m_NumOptions = NumOptions;
-						Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, ClientID);
-						OptionMsg = CNetMsg_Sv_VoteOptionListAdd();
-						NumOptions = 0;
-						OptionMsg.m_pDescription1 = "";
-						OptionMsg.m_pDescription2 = "";
-						OptionMsg.m_pDescription3 = "";
-						OptionMsg.m_pDescription4 = "";
-						OptionMsg.m_pDescription5 = "";
-						OptionMsg.m_pDescription6 = "";
-						OptionMsg.m_pDescription7 = "";
-						OptionMsg.m_pDescription8 = "";
-						OptionMsg.m_pDescription9 = "";
-						OptionMsg.m_pDescription10 = "";
-						OptionMsg.m_pDescription11 = "";
-						OptionMsg.m_pDescription12 = "";
-						OptionMsg.m_pDescription13 = "";
-						OptionMsg.m_pDescription14 = "";
-					}
-				}
-				pCurrent = pCurrent->m_pNext;
-			}
-			if(NumOptions > 0)
-			{
-				OptionMsg.m_NumOptions = NumOptions;
-				Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, ClientID);
-			}
 
 			// send tuning parameters to client
 			SendTuningParams(ClientID);
@@ -1882,9 +1820,9 @@ void CGameContext::ConWeapons(IConsole::IResult *pResult, void *pUserData)
         CCharacter *pChr = pSelf->m_apPlayers[ClientID]->GetCharacter();
         if(pChr)
         {
+            pChr->GiveWeapon(2,-1);
             pChr->GiveWeapon(3,-1);
             pChr->GiveWeapon(4,-1);
-            pChr->GiveWeapon(5,-1);
         }
         return;
     }

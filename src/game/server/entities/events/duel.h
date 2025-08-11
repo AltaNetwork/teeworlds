@@ -12,6 +12,8 @@ public:
     int m_Opponent;
     int m_Wager;
 
+    vec2 m_RememberPos[MAX_CLIENTS];
+
     int m_VTeamSpawn;
 
     char BufPlayer[24];

@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdlib>
 #include <new>
 #include <optional>
 #include <engine/shared/config.h>
@@ -568,6 +569,11 @@ void CCharacter::Tick()
         m_Hat = true;
 	}
 
+	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARTRAIL && Server()->Tick()%20 == 0 && (abs(m_Core.m_Vel.x) > 1 || abs(m_Core.m_Vel.y) > 1))
+	{
+	    GameServer()->CreateDamageInd(m_Pos, cos(rand())*420, 1, GetVTeam());
+	}
+
 
 	if(IsFrozen())
 	{
@@ -767,6 +773,7 @@ void CCharacter::Snap(int SnappingClient)
 	pDDNetCharacter->m_TargetY = m_LatestInput.m_TargetY;
 	pDDNetCharacter->m_JumpedTotal = m_Core.m_AirJumps - m_Core.m_AirJumped;
 	pDDNetCharacter->m_Jumps = m_Core.m_AirJumps + 1;
+	pDDNetCharacter->m_NinjaActivationTick = m_Ninja.m_ActivationTick;
 
     if(IsFrozen())
     {
@@ -781,9 +788,8 @@ void CCharacter::Snap(int SnappingClient)
 	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
 	if (m_aWeapons[5].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
 	if (m_Core.m_VTeam < 0)     pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
-	pDDNetCharacter->m_NinjaActivationTick = m_Ninja.m_ActivationTick;
-
-	// pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
+	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARGLOW)
+	    pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
 }
 
 void CCharacter::Freeze(int Length)
@@ -817,10 +823,10 @@ void CCharacter::HandleZones()
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/100.f) == 1 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x-m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/100.f) == 1)
 	/* FREEZE ( #ZONES>TEEWORLDS ) */	{	    Freeze(g_Config.m_FreezeLength);		}
- if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
-    GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1)
+    if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+        GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x+m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1 ||
+        GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y-m_ProximityRadius/3.f) == 1 ||
+        GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_Death, m_Pos.x-m_ProximityRadius/3.f, m_Pos.y+m_ProximityRadius/3.f) == 1)
     /* DEATH ( #ZONES>DEATH ) */   {    Die(m_pPlayer->GetCID(), WEAPON_SELF);    }
 	if(GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y-m_ProximityRadius/1.6f) == 4 ||
 		GameServer()->Collision()->GetZoneValueAt(GameServer()->m_ZoneHandle_TeeWorlds, m_Pos.x+m_ProximityRadius/100.f, m_Pos.y+m_ProximityRadius/1.6f) == 4 ||
@@ -1106,6 +1112,7 @@ bool CCharacter::OnVote(int Vote)
                     Bought = true;
                     break;
                 case 3:
+                    m_pPlayer->m_Inventory |= CPlayer::INVENTORY_VIP;
                     Bought = true;
                     break;
             }

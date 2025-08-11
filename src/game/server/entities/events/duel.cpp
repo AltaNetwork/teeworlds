@@ -13,6 +13,8 @@ CDuel::CDuel(CGameWorld *pGameWorld, int Opponent, int Inviter, int Wager)
     m_OpponentPoints = 0;
     m_Wager = Wager;
 
+    m_RememberPos[Inviter] = vec2(0,0);
+
     m_Started = false;
     m_AutoCancelTick = SERVER_TICK_SPEED * 7;
 
@@ -49,6 +51,8 @@ void CDuel::ResetPlayer(int p_ID)
     CPlayer *m_pPlayer = GameServer()->m_apPlayers[p_ID];
     if (m_pPlayer)
     {
+        if(m_RememberPos[p_ID])
+            m_pPlayer->m_SavePos = m_RememberPos[p_ID];
         m_pPlayer->m_SpawnTeam = 0;
         m_pPlayer->m_SpawnVTeam = 0;
         m_pPlayer->m_DuelFlags = 0;
@@ -65,6 +69,8 @@ void CDuel::PreparePlayer(int p_ID)
         m_pPlayer->m_SpawnTeam = 1;
         m_pPlayer->m_SpawnVTeam = m_VTeamSpawn;
         m_pPlayer->m_DuelFlags = CPlayer::DUEL_INDUEL;
+        if(m_pPlayer->GetCharacter())
+            m_RememberPos[p_ID] = m_pPlayer->GetCharacter()->m_Pos;
         m_pPlayer->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
         m_pPlayer->m_DieTick = 0;
     }
@@ -115,7 +121,10 @@ void CDuel::EndDuel()
     char Buf[32];
     str_format(Buf, sizeof(Buf), "%d - %d", m_PlayerPoints, m_OpponentPoints);
     GameServer()->SendChatTarget(-1 , _("Match '{str:Player}' - '{str:Opponent}' ended with results of {str:Result}"),
-        "Player", Server()->ClientName(m_Player), "Opponent", Server()->ClientName(m_Opponent), "Result", Buf);
+        "Player", BufPlayer, "Opponent", BufOpponent, "Result", Buf);
+
+    if(m_Wager < 1)
+        return;
 
     if(Winner > -1 && GameServer()->m_apPlayers[Winner])
     {
