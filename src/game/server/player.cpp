@@ -26,7 +26,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_SavePos = vec2(0,0);
 
 	m_ToSendVoteMenu = true;
-	m_VoteMenu = MENU_MAIN;
+	// m_VoteMenu = MENU_MAIN;
 
 	m_Cosmetics = 0;
 	m_Settings = SETTINGS_BEYONDZOOM;
@@ -43,7 +43,9 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_DeathNotes = 0;
 	m_LastDeathNote = 0;
 
-	m_Score = 150; // TEST!
+	m_Score = 0;
+
+	m_Hat = -1;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -256,22 +258,19 @@ void CPlayer::FakeSnap(int SnappingClient)
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
-	KillCharacter(WEAPON_SELF, FLAG_ENDDUEL);
+	KillCharacter(WEAPON_SELF);
 
 	if(Server()->ClientIngame(m_ClientID))
 	{
-		char aBuf[512];
 		if(pReason && *pReason)
 		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game (%s)", Server()->ClientName(m_ClientID), pReason);
 			GameServer()->SendChatTarget(-1, _("'%s' has left the game ({str:Reason})"), "PlayerName", Server()->ClientName(m_ClientID), "Reason", pReason);
 		}
 		else
 		{
-			str_format(aBuf, sizeof(aBuf), "'%s' has left the game", Server()->ClientName(m_ClientID));
 			GameServer()->SendChatTarget(-1, _("'{str:PlayerName}' has left the game"), "PlayerName", Server()->ClientName(m_ClientID));
 		}
-
+		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "leave player='%d:%s'", m_ClientID, Server()->ClientName(m_ClientID));
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "game", aBuf);
 	}
@@ -524,15 +523,110 @@ bool CPlayer::OnCallVote(const char* pVote, const char* pReason)
     {
         IsVote = false;
         if(strstr(pVote, "Rᴀɪɴʙᴏᴡ Fᴇᴇᴛ"))
-            m_Cosmetics = m_Cosmetics&COSM_RAINBOWFEET ? m_Cosmetics&= ~COSM_RAINBOWFEET : m_Cosmetics |= COSM_RAINBOWFEET;
+        {
+            if(m_Cosmetics&COSM_RAINBOWFEET)
+            {
+                m_Cosmetics&= ~COSM_RAINBOWFEET;
+            } else {
+                m_Cosmetics |= COSM_RAINBOWFEET;
+            }
+        }
         if(strstr(pVote, "Rᴀɪɴʙᴏᴡ Bᴏᴅʏ"))
-            m_Cosmetics = m_Cosmetics&COSM_RAINBOW ? m_Cosmetics&= ~COSM_RAINBOW : m_Cosmetics |= COSM_RAINBOW;
+        {
+            if(m_Cosmetics&COSM_RAINBOW)
+            {
+                m_Cosmetics&= ~COSM_RAINBOW;
+            } else {
+                m_Cosmetics |= COSM_RAINBOW;
+            }
+        }
         if(strstr(pVote, "Rᴀɴᴅᴏᴍ Sᴋɪɴ"))
-            m_Cosmetics = m_Cosmetics&COSM_RANDOMSKIN ? m_Cosmetics&= ~COSM_RANDOMSKIN : m_Cosmetics |= COSM_RANDOMSKIN;
+        {
+            if(m_Cosmetics&COSM_RANDOMSKIN)
+            {
+                m_Cosmetics&= ~COSM_RANDOMSKIN;
+            } else {
+                m_Cosmetics |= COSM_RANDOMSKIN;
+            }
+        }
         if(strstr(pVote, "Sᴛᴀʀ Tʀᴀɪʟ"))
-            m_Cosmetics = m_Cosmetics&COSM_STARTRAIL ? m_Cosmetics&= ~COSM_STARTRAIL : m_Cosmetics |= COSM_STARTRAIL;
+        {
+            if(m_Cosmetics&COSM_STARTRAIL)
+            {
+                m_Cosmetics&= ~COSM_STARTRAIL;
+            } else {
+                m_Cosmetics |= COSM_STARTRAIL;
+            }
+        }
         if(strstr(pVote, "Sᴛᴀʀ Gʟᴏᴡ"))
-            m_Cosmetics = m_Cosmetics&COSM_STARGLOW ? m_Cosmetics&= ~COSM_STARGLOW : m_Cosmetics |= COSM_STARGLOW;
+        {
+            if(m_Cosmetics&COSM_STARGLOW)
+            {
+                m_Cosmetics&= ~COSM_STARGLOW;
+            } else {
+                m_Cosmetics |= COSM_STARGLOW;
+            }
+        }
+        if(strstr(pVote, "Hᴀᴛs"))
+        {
+            m_Hat = m_Hat == -1 ? 0 : -1;
+        }
+        if(strstr(pVote, "Hᴀᴍᴍᴇʀ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 0;
+        }
+        if(strstr(pVote, "Gᴜɴ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 1;
+        }
+        if(strstr(pVote, "Sʜᴏᴛɢᴜɴ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 2;
+        }
+        if(strstr(pVote, "Gʀᴇɴᴀᴅᴇ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 3;
+        }
+        if(strstr(pVote, "Lᴀsᴇʀ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 4;
+        }
+        if(strstr(pVote, "Nɪɴᴊᴀ Hᴀᴛ"))
+        {
+            m_Hat = m_Hat == -1 ? m_Hat : 5;
+        }
+
+        if(strstr(pVote, "Nᴀᴛᴜʀᴀʟ Pʀᴇᴅɪᴄᴛɪᴏɴ"))
+        {
+            if(m_Settings&SETTINGS_PREDICTVANILLA)
+            {
+                m_Settings&= ~SETTINGS_PREDICTVANILLA;
+            } else {
+                m_Settings |= SETTINGS_PREDICTVANILLA;
+            }
+        }
+        if(strstr(pVote, "Sʜᴏᴡ Pʟᴀʏᴇʀs Bᴇʏᴏɴᴅ Zᴏᴏᴍ"))
+        {
+            if(m_Settings&SETTINGS_BEYONDZOOM)
+            {
+                m_Settings&= ~SETTINGS_BEYONDZOOM;
+            } else {
+                m_Settings |= SETTINGS_BEYONDZOOM;
+            }
+        }
+        if(strstr(pVote, "Tʀᴀɴsᴘᴀʀᴇɴᴛ Pᴀssɪᴠᴇ"))
+        {
+            if(m_Settings&SETTINGS_TRANSPARENTPASSIVE)
+            {
+                m_Settings&= ~SETTINGS_TRANSPARENTPASSIVE;
+            } else {
+                m_Settings |= SETTINGS_TRANSPARENTPASSIVE;
+            }
+        }
+        if(strstr(pVote, "Eɴɢʟɪsʜ"))
+            GameServer()->Console()->ExecuteLineFlag("language en", m_ClientID, CFGFLAG_CHAT);
+        if(strstr(pVote, "Cᴘᴄᴋи"))
+            GameServer()->Console()->ExecuteLineFlag("language rs", m_ClientID, CFGFLAG_CHAT);
     }
     if(IsVote)
     {
@@ -611,13 +705,29 @@ void CPlayer::SendVoteMenu()
 	}
 	if(NumOptions > 0)
 	{
-	OptionMsg.m_NumOptions = NumOptions;
-	Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, m_ClientID);
+    	OptionMsg.m_NumOptions = NumOptions;
+    	Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, m_ClientID);
 	}
 	char aBuf[128];
+	if(true)
+	{
+    	AddMsg.m_pDescription = " ";
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+    	AddMsg.m_pDescription = "≡ Iɴᴠᴇɴᴛᴏʀʏ"; // m_Inventory
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+    	str_format(aBuf, sizeof(aBuf), "─ %d Wᴇᴀᴘᴏɴ Kɪᴛs", m_WeaponKits);
+    	AddMsg.m_pDescription = aBuf;
+    	if(m_WeaponKits > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
+
+    	str_format(aBuf, sizeof(aBuf), "─ %d Dᴇᴀᴛʜɴᴏᴛᴇ Pᴀɢᴇs", m_DeathNotes);
+    	AddMsg.m_pDescription = aBuf;
+    	if(m_DeathNotes > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
+	}
+
 	AddMsg.m_pDescription = " ";
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
-	AddMsg.m_pDescription = "≡ Cᴏsᴍᴇᴛɪᴄs";
+	AddMsg.m_pDescription = "≡ Cᴏsᴍᴇᴛɪᴄs"; // m_Cosmetics
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
 	str_format(aBuf, sizeof(aBuf), "%s Rᴀɪɴʙᴏᴡ Fᴇᴇᴛ", m_Cosmetics&COSM_RAINBOWFEET ? "☑︎" : "☐");
@@ -637,6 +747,69 @@ void CPlayer::SendVoteMenu()
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
 	str_format(aBuf, sizeof(aBuf), "%s Sᴛᴀʀ Gʟᴏᴡ", m_Cosmetics&COSM_STARGLOW ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s %s Hᴀᴛs", m_Hat < 0 ? "" : "╭──" , m_Hat < 0 ? "☐" : "☑︎");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	if(m_Hat > -1) // │╎┆┊ ┃╏┇┋ ║ ╭╰
+	{
+	    str_format(aBuf, sizeof(aBuf), "│ %s Hᴀᴍᴍᴇʀ Hᴀᴛ", m_Hat == 0 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Gᴜɴ Hᴀᴛ", m_Hat == 1 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Sʜᴏᴛɢᴜɴ Hᴀᴛ", m_Hat == 2 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Gʀᴇɴᴀᴅᴇ Hᴀᴛ", m_Hat == 3 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Lᴀsᴇʀ Hᴀᴛ", m_Hat == 4 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Nɪɴᴊᴀ Hᴀᴛ", m_Hat == 5 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+    	AddMsg.m_pDescription = "╰──";
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+    }
+	AddMsg.m_pDescription = " ";
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+	AddMsg.m_pDescription = "≡ Sᴇᴛᴛɪɴɢs"; // m_Settings
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Nᴀᴛᴜʀᴀʟ Pʀᴇᴅɪᴄᴛɪᴏɴ", m_Settings&SETTINGS_PREDICTVANILLA ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Sʜᴏᴡ Pʟᴀʏᴇʀs Bᴇʏᴏɴᴅ Zᴏᴏᴍ", m_Settings&SETTINGS_BEYONDZOOM ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Tʀᴀɴsᴘᴀʀᴇɴᴛ Pᴀssɪᴠᴇ", m_Settings&SETTINGS_TRANSPARENTPASSIVE ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	AddMsg.m_pDescription = " ";
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+	AddMsg.m_pDescription = "≡ Lᴀɴɢᴜᴀɢᴇ"; // Language
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Eɴɢʟɪsʜ", strstr(GetLanguage(),"en") ? "☒" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Cᴘᴄᴋи", strstr(GetLanguage(),"rs") ? "☒" : "☐");
 	AddMsg.m_pDescription = aBuf;
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 }

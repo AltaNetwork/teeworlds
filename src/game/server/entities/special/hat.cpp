@@ -8,6 +8,7 @@ CHat::CHat(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 	m_Owner = Owner;
 	m_Pos = Pos;
 	m_WTeam = 0;
+	m_Weapon = 0;
 
 	CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
@@ -22,7 +23,7 @@ void CHat::Reset()
     CCharacter* pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
     if(pOwnerChar)
     {
-        pOwnerChar->m_Hat = -1;
+        pOwnerChar->m_Hat = false;
     }
     GameServer()->m_World.DestroyEntity(this);
 }
@@ -39,6 +40,12 @@ void CHat::Tick()
 
 	m_Pos = vec2(pOwnerChar->m_Pos.x, pOwnerChar->m_Pos.y - 48);
 	m_WTeam = pOwnerChar->GetVTeam();
+	m_Weapon = pOwnerChar->GetPlayer()->m_Hat;
+
+	if(m_Weapon == -1)
+	{
+	    Reset();
+	}
 
 }
 
@@ -66,6 +73,6 @@ void CHat::Snap(int SnappingClient)
 		pObj->m_X = m_Pos.x+Velocity.x*Intensifier;
 		pObj->m_Y = m_Pos.y+Velocity.y*Intensifier;
 		pObj->m_Type = POWERUP_WEAPON;
-		pObj->m_Subtype = WEAPON_NINJA;
+		pObj->m_Subtype = m_Weapon;
 	}
 }

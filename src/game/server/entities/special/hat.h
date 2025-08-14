@@ -12,6 +12,7 @@ public:
 
 private:
 	int m_Owner;
+	int m_Weapon;
 };
 
 #endif

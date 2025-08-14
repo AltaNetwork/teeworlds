@@ -13,14 +13,14 @@ enum
 	WEAPON_SELF = -2, // console kill command
 	WEAPON_WORLD = -1, // death tiles etc
 
-    FTUNE_NOMOVE = 1, // All 3 used by "freeze"; flag "0" is used on connection
-    FTUNE_NOHOOK = 2,
-    FTUNE_NOJUMP = 4,
-    FTUNE_NOCOLL = 8,
-    FTUNE_CANTHOOK = 16,
+    // FTUNE_NOMOVE = 1, // All 3 used by "freeze"; flag "0" is used on connection
+    // FTUNE_NOHOOK = 2,
+    // FTUNE_NOJUMP = 4,
+    // FTUNE_NOCOLL = 8,
+    // FTUNE_CANTHOOK = 16,
 
     FLAG_NOKILLMSG = 1,
-    FLAG_ENDDUEL = 2,
+    // FLAG_ENDDUEL = 2,
 
     INDFLAG_PASSIVE = 1,
     INDFLAG_HAT = 2,
@@ -34,6 +34,7 @@ enum
 
 };
 
+[[maybe_unused]]
 static const char *aStoreNames[] = {
 	"Weapons Kit",
 	"Passive Mode 2 Hours",
@@ -41,6 +42,7 @@ static const char *aStoreNames[] = {
 	"VIP+ Room access",
 };
 
+[[maybe_unused]]
 static const int aStorePrices[] = {
 	25,
 	30,

@@ -48,7 +48,7 @@ public:
 	void SendVoteMenu();
 
 	bool m_ToSendVoteMenu;
-	int m_VoteMenu;
+	// int m_VoteMenu;
 
 	enum
 	{
@@ -60,12 +60,13 @@ public:
 		COSM_STARTRAIL=8,
 		COSM_STARGLOW=16,
 
-		SETTINGS_PREDICTVANILLA=16,
-		SETTINGS_BEYONDZOOM=32,
+		SETTINGS_PREDICTVANILLA=1,
+		SETTINGS_BEYONDZOOM=2,
+		SETTINGS_TRANSPARENTPASSIVE=4,
 
-		MENU_VOTES=1,
-		MENU_MAIN=2,
-		MENU_SETTINGS=4,
+		// MENU_VOTES=1,
+		// MENU_MAIN=2,
+		// MENU_SETTINGS=4,
 
 		LMB_STANDBY=0,
 		LMB_REG,
@@ -127,6 +128,7 @@ public:
 	int m_LastDeathNote;
 
 	int m_Inventory;
+	int m_Hat;
 
 	vec2 m_SavePos;
 
@@ -199,6 +201,7 @@ public:
 	CTuningParams* GetNextTuningParams() { return &m_NextTuningParams; };
 };
 
+[[maybe_unused]]
 static const char *aSkins[] = {
 	"bluekitty",
 	"bluestripe",

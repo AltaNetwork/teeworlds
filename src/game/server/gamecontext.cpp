@@ -507,37 +507,37 @@ void CGameContext::SendTuningParams(int ClientID, int Flags)
 	CTuningParams FakeTuning;
 	mem_comp(&FakeTuning, &m_Tuning, sizeof(CTuningParams));
 
-	CPlayer *pPlayer = m_apPlayers[ClientID];
+	// CPlayer *pPlayer = m_apPlayers[ClientID];
 
-	if(pPlayer && Flags != 0) {
-	    if(Flags&FTUNE_NOCOLL)
-		{
-			FakeTuning.m_PlayerCollision = 0;
-		}
-		if(Flags&FTUNE_NOHOOK)
-		{
-            FakeTuning.m_PlayerHooking = 0;
-		}
-        if(Flags&FTUNE_NOMOVE)
-		{
-        FakeTuning.m_GroundControlAccel = 0;
-        FakeTuning.m_GroundControlSpeed = 0;
-        FakeTuning.m_AirControlSpeed = 0;
-        FakeTuning.m_AirControlAccel = 0;
-		}
-		if(Flags&FTUNE_NOJUMP)
-		{
-        FakeTuning.m_GroundJumpImpulse = 0;
-        FakeTuning.m_AirJumpImpulse = 0;
-		}
-		if(Flags&FTUNE_CANTHOOK)
-		{
-        FakeTuning.m_HookLength = 0;
-        FakeTuning.m_HookFireSpeed = 0;
-        FakeTuning.m_HookDragAccel = 0;
-        FakeTuning.m_HookDragSpeed = 0;
-		}
-	}
+	// if(pPlayer && Flags != 0) {
+	//     if(Flags&FTUNE_NOCOLL)
+	// 	{
+	// 		FakeTuning.m_PlayerCollision = 0;
+	// 	}
+	// 	if(Flags&FTUNE_NOHOOK)
+	// 	{
+ //            FakeTuning.m_PlayerHooking = 0;
+	// 	}
+ //        if(Flags&FTUNE_NOMOVE)
+	// 	{
+ //        FakeTuning.m_GroundControlAccel = 0;
+ //        FakeTuning.m_GroundControlSpeed = 0;
+ //        FakeTuning.m_AirControlSpeed = 0;
+ //        FakeTuning.m_AirControlAccel = 0;
+	// 	}
+	// 	if(Flags&FTUNE_NOJUMP)
+	// 	{
+ //        FakeTuning.m_GroundJumpImpulse = 0;
+ //        FakeTuning.m_AirJumpImpulse = 0;
+	// 	}
+	// 	if(Flags&FTUNE_CANTHOOK)
+	// 	{
+ //        FakeTuning.m_HookLength = 0;
+ //        FakeTuning.m_HookFireSpeed = 0;
+ //        FakeTuning.m_HookDragAccel = 0;
+ //        FakeTuning.m_HookDragSpeed = 0;
+	// 	}
+	// }
 
 	CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
 	int *pParams = (int *)&FakeTuning;

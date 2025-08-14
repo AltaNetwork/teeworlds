@@ -1239,7 +1239,14 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int Type, bool Sen
 
 	if(Type != SERVERINFO_VANILLA)
 	{
-		p.AddString(aBuf, 256);
+		if(g_Config.m_SvAddMapName)
+		{
+    		char aNameBuf[64];
+		    str_format(aNameBuf, sizeof(aNameBuf), "%s%s", aBuf, pMapName);
+		    p.AddString(aNameBuf, 256);
+		} else {
+		    p.AddString(aBuf, 256);
+		}
 	}
 	else
 	{
@@ -1383,7 +1390,7 @@ void CServer::SendServerInfo(const NETADDR *pAddr, int Token, int Type, bool Sen
 
 			ADD_INT(pp, m_aClients[i].m_Country); // client country
 			ADD_INT(pp, m_aClients[i].m_Score); // client score
-			ADD_INT(pp, GameServer()->IsClientPlayer(i) ? 1 : 0); // is player?
+			ADD_INT(pp, 1/*GameServer()->IsClientPlayer(i) ? 1 : 0*/); // is player?
 			if(Type == SERVERINFO_EXTENDED)
 				pp.AddString("", 0); // extra info, reserved
 

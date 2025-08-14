@@ -563,7 +563,7 @@ void CCharacter::Tick()
         m_Indicator = true;
 	}
 
-	if(!m_Hat)
+	if(m_pPlayer->m_Hat != -1 && !m_Hat)
 	{
     	new CHat(GameWorld(), m_Pos, m_pPlayer->GetCID());
         m_Hat = true;
@@ -787,7 +787,13 @@ void CCharacter::Snap(int SnappingClient)
 	if (m_aWeapons[3].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
 	if (m_aWeapons[4].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
 	if (m_aWeapons[5].m_Got)    pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
-	if (m_Core.m_VTeam < 0)     pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO;
+	if (m_Core.m_VTeam < 0)
+	{
+	    if(GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_TRANSPARENTPASSIVE)
+	        pDDNetCharacter->m_Flags |= CHARACTERFLAG_SOLO; // COLLISION_DISABLED   HOOK_HIT_DISABLED
+	    else
+			pDDNetCharacter->m_Flags |= CHARACTERFLAG_COLLISION_DISABLED + CHARACTERFLAG_HOOK_HIT_DISABLED;
+    }
 	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARGLOW)
 	    pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
 }
