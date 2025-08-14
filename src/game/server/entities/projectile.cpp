@@ -5,7 +5,7 @@
 #include "projectile.h"
 
 CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
-		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int VTeam)
+		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int VTeam, int SubType)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_Type = Type;
@@ -19,6 +19,8 @@ CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, 
 	m_Weapon = Weapon;
 	m_StartTick = Server()->Tick();
 	m_Explosive = Explosive;
+
+	m_SubType = SubType;
 
 	m_WTeam = VTeam;
 	m_VTeam = VTeam;
@@ -49,8 +51,21 @@ vec2 CProjectile::GetPos(float Time)
 			break;
 
 		case WEAPON_GUN:
-			Curvature = GameServer()->Tuning()->m_GunCurvature;
-			Speed = GameServer()->Tuning()->m_GunSpeed;
+		    switch(m_SubType)
+           	{
+           	    case 0:
+                case 5:
+             		Curvature = GameServer()->Tuning()->m_GunCurvature;
+                    Speed = GameServer()->Tuning()->m_GunSpeed;
+          		break;
+                case 1:
+                case 2:
+                case 3:
+                case 4:
+              		Curvature = 0;
+                    Speed = 750;
+                break;
+           	}
 			break;
 	}
 
@@ -80,7 +95,7 @@ void CProjectile::Tick()
 		else if(TargetChr)
 			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), m_Owner, m_Weapon);
 
-		if(m_Type == WEAPON_GUN)
+		if(m_SubType == 0 && m_Type == WEAPON_GUN)
     		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6, m_VTeam);
 
         GameServer()->m_World.DestroyEntity(this);
@@ -105,11 +120,43 @@ void CProjectile::FillInfo(CNetObj_Projectile *pProj)
 void CProjectile::Snap(int SnappingClient)
 {
 	float Ct = (Server()->Tick()-m_StartTick)/(float)Server()->TickSpeed();
+	vec2 Position = GetPos(Ct);
 
-	if(NetworkClipped(SnappingClient, GetPos(Ct)))
+	if(NetworkClipped(SnappingClient, Position))
 		return;
 
-	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
-	if(pProj)
-		FillInfo(pProj);
+	if(m_SubType == 0)
+	{
+	    CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
+    	if(pProj)
+            FillInfo(pProj);
+	} else if (m_SubType == 1)
+    {
+        CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+        if(pObj)
+        {
+      		pObj->m_X = (int)Position.x;
+      		pObj->m_Y = (int)Position.y;
+      		pObj->m_FromX = (int)(Position.x);
+      		pObj->m_FromY = (int)(Position.y);
+      		pObj->m_StartTick = Server()->Tick();
+        }
+    } else if (m_SubType > 1 && m_SubType < 5)
+	{
+	    CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, m_ID, sizeof(CNetObj_Pickup)));
+		if(pP)
+		{
+            pP->m_X = (int)Position.x;
+           	pP->m_Y = (int)Position.y;
+           	pP->m_Type = m_SubType < 4 ? m_SubType == 3 ? POWERUP_HEALTH : POWERUP_ARMOR : POWERUP_WEAPON;
+           	pP->m_Subtype = m_SubType > 2 ? 1 : 0;
+		}
+	}
+
+	// 0 = NORMAL
+	// 1 = PLASMA
+	// 2 = GHOST
+	// 3 = LOVE
+	// 4 = GUNGUN
+	// 5 = STAR
 }

@@ -10,6 +10,7 @@
 #include "laser.h"
 #include "pickup.h"
 #include "special/indicator.h"
+#include "special/lovely.h"
 #include "special/soul.h"
 #include "special/hat.h"
 #include "projectile.h"
@@ -355,7 +356,7 @@ void CCharacter::FireWeapon()
 				ProjStartPos,
 				Direction,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_GunLifetime),
-				1, 0, 0, -1, WEAPON_GUN, m_Core.m_VTeam);
+				1, 0, 0, -1, WEAPON_GUN, m_Core.m_VTeam, m_pPlayer->m_GunDesign < 0 ? 0 : m_pPlayer->m_GunDesign);
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE);
 		} break;
 
@@ -559,7 +560,7 @@ void CCharacter::Tick()
 
 	if(m_Core.m_VTeam < 0 && !m_Indicator)
 	{
-    	new CIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID(), INDFLAG_PASSIVE);
+    	new CIndicator(GameWorld(), m_Pos, m_pPlayer->GetCID());
         m_Indicator = true;
 	}
 
@@ -569,16 +570,19 @@ void CCharacter::Tick()
         m_Hat = true;
 	}
 
-	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARTRAIL && Server()->Tick()%20 == 0 && (abs(m_Core.m_Vel.x) > 1 || abs(m_Core.m_Vel.y) > 1))
-	{
-	    GameServer()->CreateDamageInd(m_Pos, cos(rand())*420, 1, GetVTeam());
-	}
-
-
 	if(IsFrozen())
 	{
 		ResetInput();
 		m_DeepFrozen = false;
+	} else {
+    	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARTRAIL && Server()->Tick()%20 == 0 && (abs(m_Core.m_Vel.x) > 1 || abs(m_Core.m_Vel.y) > 1))
+    	{
+    	    GameServer()->CreateDamageInd(m_Pos, cos(rand())*420, 1, GetVTeam());
+    	}
+    	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_LOVELY && Server()->Tick()%(SERVER_TICK_SPEED/3) == 0)
+        {
+       	new CLovely(GameWorld(), m_Pos, GetVTeam());
+        }
 	}
 
 	m_Core.m_Input = m_Input;
@@ -794,7 +798,7 @@ void CCharacter::Snap(int SnappingClient)
 	    else
 			pDDNetCharacter->m_Flags |= CHARACTERFLAG_COLLISION_DISABLED + CHARACTERFLAG_HOOK_HIT_DISABLED;
     }
-	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARGLOW)
+	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARGLOW && !IsFrozen())
 	    pDDNetCharacter->m_Flags |= CHARACTERFLAG_INVINCIBLE;
 }
 

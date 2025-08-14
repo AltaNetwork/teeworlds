@@ -4,7 +4,7 @@
 class CIndicator : public CEntity
 {
 public:
-	CIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Flags);
+	CIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner);
 
 	virtual void Reset();
 	virtual void Tick();

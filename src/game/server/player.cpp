@@ -29,7 +29,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	// m_VoteMenu = MENU_MAIN;
 
 	m_Cosmetics = 0;
-	m_Settings = SETTINGS_BEYONDZOOM;
+	m_Settings = 0;
 	m_WTeam = 0;
 
 	m_LMBState = LMB_STANDBY;
@@ -46,6 +46,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_Score = 0;
 
 	m_Hat = -1;
+	m_GunDesign = -1;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -567,6 +568,16 @@ bool CPlayer::OnCallVote(const char* pVote, const char* pReason)
                 m_Cosmetics |= COSM_STARGLOW;
             }
         }
+        if(strstr(pVote, "Lᴏᴠᴇʟʏ"))
+        {
+            if(m_Cosmetics&COSM_LOVELY)
+            {
+                m_Cosmetics&= ~COSM_LOVELY;
+            } else {
+                m_Cosmetics |= COSM_LOVELY;
+            }
+        }
+
         if(strstr(pVote, "Hᴀᴛs"))
         {
             m_Hat = m_Hat == -1 ? 0 : -1;
@@ -594,6 +605,31 @@ bool CPlayer::OnCallVote(const char* pVote, const char* pReason)
         if(strstr(pVote, "Nɪɴᴊᴀ Hᴀᴛ"))
         {
             m_Hat = m_Hat == -1 ? m_Hat : 5;
+        }
+
+        if(strstr(pVote, "Gᴜɴ Dᴇsɪɢɴ"))
+        {
+            m_GunDesign = m_GunDesign == -1 ? 0 : -1;
+        }
+        if(strstr(pVote, "Sɪx Sᴛᴀʀ Bᴜʟʟᴇᴛ"))
+        {
+            m_GunDesign = 0;
+        }
+        if(strstr(pVote, "Pʟᴀsᴍᴀ Pɪsᴛᴏʟ"))
+        {
+            m_GunDesign = 1;
+        }
+        if(strstr(pVote, "Gʜᴏsᴛ Dɪsᴘᴇɴsᴇʀ"))
+        {
+            m_GunDesign = 2;
+        }
+        if(strstr(pVote, "Lᴏᴠᴇ Bᴜʟʟᴇᴛ"))
+        {
+            m_GunDesign = 3;
+        }
+        if(strstr(pVote, "Gᴜɴ Bᴜʟʟᴇᴛ"))
+        {
+            m_GunDesign = 4;
         }
 
         if(strstr(pVote, "Nᴀᴛᴜʀᴀʟ Pʀᴇᴅɪᴄᴛɪᴏɴ"))
@@ -750,6 +786,10 @@ void CPlayer::SendVoteMenu()
 	AddMsg.m_pDescription = aBuf;
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
+	str_format(aBuf, sizeof(aBuf), "%s Lᴏᴠᴇʟʏ", m_Cosmetics&COSM_LOVELY ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
 	str_format(aBuf, sizeof(aBuf), "%s %s Hᴀᴛs", m_Hat < 0 ? "" : "╭──" , m_Hat < 0 ? "☐" : "☑︎");
 	AddMsg.m_pDescription = aBuf;
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
@@ -783,6 +823,37 @@ void CPlayer::SendVoteMenu()
     	AddMsg.m_pDescription = "╰──";
     	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
     }
+
+	str_format(aBuf, sizeof(aBuf), "%s %s Gᴜɴ Dᴇsɪɢɴ", m_GunDesign < 0 ? "" : "╭──" , m_GunDesign < 0 ? "☐" : "☑︎");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	if(m_GunDesign > -1) // │╎┆┊ ┃╏┇┋ ║ ╭╰
+	{
+	    str_format(aBuf, sizeof(aBuf), "│ %s Sɪx Sᴛᴀʀ Bᴜʟʟᴇᴛ", m_GunDesign == 0 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Gᴜɴ Bᴜʟʟᴇᴛ", m_GunDesign == 4 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Pʟᴀsᴍᴀ Pɪsᴛᴏʟ", m_GunDesign == 1 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Gʜᴏsᴛ Dɪsᴘᴇɴsᴇʀ", m_GunDesign == 2 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	    str_format(aBuf, sizeof(aBuf), "│ %s Lᴏᴠᴇ Bᴜʟʟᴇᴛ", m_GunDesign == 3 ? "☒" : "☐");
+    	AddMsg.m_pDescription = aBuf;
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+    	AddMsg.m_pDescription = "╰──";
+    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+    }
+
 	AddMsg.m_pDescription = " ";
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 	AddMsg.m_pDescription = "≡ Sᴇᴛᴛɪɴɢs"; // m_Settings

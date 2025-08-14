@@ -11,6 +11,7 @@
 #include "entities/special/koh.h"
 #include "entities/events/lmb.h"
 #include "gamecontroller.h"
+#include "entities/loremipsum.h"
 #include "gamecontext.h"
 #include "player.h"
 
@@ -121,7 +122,7 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 		m_aaSpawnPoints[0+TeleNum][m_aNumSpawnPoints[0+TeleNum]++] = Pos;
 	else if(str_comp(pName, "redSpawn") == 0)
 		m_aaSpawnPoints[1][m_aNumSpawnPoints[1]++] = Pos;
-	else if(str_comp(pName, "buleSpawn") == 0)
+	else if(str_comp(pName, "blueSpawn") == 0)
 		m_aaSpawnPoints[2][m_aNumSpawnPoints[2]++] = Pos;
 	else if(str_comp(pName, "armor") == 0)
 		Type = POWERUP_ARMOR;
@@ -164,6 +165,12 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 	if(str_comp(pName, "lmb") == 0)
 	{
 		new CLmb(&GameServer()->m_World);
+		return true;
+	}
+
+	if(str_comp(pName, "lorem") == 0)
+	{
+		new CLoremIpsum(&GameServer()->m_World, Pos);
 		return true;
 	}
 

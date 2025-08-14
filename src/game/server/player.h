@@ -59,14 +59,11 @@ public:
 		COSM_RANDOMSKIN=4,
 		COSM_STARTRAIL=8,
 		COSM_STARGLOW=16,
+		COSM_LOVELY=32,
 
 		SETTINGS_PREDICTVANILLA=1,
 		SETTINGS_BEYONDZOOM=2,
 		SETTINGS_TRANSPARENTPASSIVE=4,
-
-		// MENU_VOTES=1,
-		// MENU_MAIN=2,
-		// MENU_SETTINGS=4,
 
 		LMB_STANDBY=0,
 		LMB_REG,
@@ -129,6 +126,7 @@ public:
 
 	int m_Inventory;
 	int m_Hat;
+	int m_GunDesign;
 
 	vec2 m_SavePos;
 

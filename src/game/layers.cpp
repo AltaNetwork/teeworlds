@@ -28,9 +28,9 @@ void CLayers::Init(class IKernel *pKernel)
 		char aGroupName[12];
 		IntsToStr(pGroup->m_aName, sizeof(aGroupName)/sizeof(int), aGroupName);
 
-		if(str_comp(aGroupName, "@Z") == 0)
+		if(str_comp(aGroupName, "@z") == 0)
 			m_pZoneGroup = pGroup;
-		else if(str_comp(aGroupName, "#Entities") == 0)
+		else if(str_comp(aGroupName, "@e") == 0)
 			m_pEntityGroup = pGroup;
 		else
 		{

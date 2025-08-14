@@ -2,7 +2,7 @@
 #include <game/server/gamecontext.h>
 #include "indicator.h"
 
-CIndicator::CIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner, int Flags)
+CIndicator::CIndicator(CGameWorld *pGameWorld, vec2 Pos, int Owner)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PICKUP)
 {
 	m_Owner = Owner;
