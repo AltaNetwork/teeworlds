@@ -2065,7 +2065,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
 
 	Console()->Register("weapons", "", CFGFLAG_CHAT, ConWeapons, this, "weapons kit");
-	Console()->Register("deathnote", "?s", CFGFLAG_CHAT, ConDeathnote, this, "deathnote");
+	Console()->Register("deathnote", "s", CFGFLAG_CHAT, ConDeathnote, this, "deathnote");
 	Console()->Register("pages", "", CFGFLAG_CHAT, ConDeathnote, this, "list deathnote pages");
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
@@ -2130,7 +2130,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 						m_pController->OnEntity("redSpawn", Pivot, P0, P1, P2, P3, -1);
 						break;
 					case ENTITY_SPAWN_BLUE:
-						m_pController->OnEntity("buleSpawn", Pivot, P0, P1, P2, P3, -1);
+						m_pController->OnEntity("blueSpawn", Pivot, P0, P1, P2, P3, -1);
 						break;
 					case ENTITY_ARMOR:
 						m_pController->OnEntity("armor", Pivot, P0, P1, P2, P3, -1);

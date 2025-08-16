@@ -577,6 +577,15 @@ bool CPlayer::OnCallVote(const char* pVote, const char* pReason)
                 m_Cosmetics |= COSM_LOVELY;
             }
         }
+        if(strstr(pVote, "Bʟᴏᴏᴅʏ"))
+        {
+            if(m_Cosmetics&COSM_BLOODY)
+            {
+                m_Cosmetics&= ~COSM_BLOODY;
+            } else {
+                m_Cosmetics |= COSM_BLOODY;
+            }
+        }
 
         if(strstr(pVote, "Hᴀᴛs"))
         {
@@ -787,6 +796,10 @@ void CPlayer::SendVoteMenu()
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
 	str_format(aBuf, sizeof(aBuf), "%s Lᴏᴠᴇʟʏ", m_Cosmetics&COSM_LOVELY ? "☑︎" : "☐");
+	AddMsg.m_pDescription = aBuf;
+	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+
+	str_format(aBuf, sizeof(aBuf), "%s Bʟᴏᴏᴅʏ", m_Cosmetics&COSM_BLOODY ? "☑︎" : "☐");
 	AddMsg.m_pDescription = aBuf;
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 

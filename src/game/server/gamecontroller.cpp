@@ -1,5 +1,6 @@
 
 
+#include <csignal>
 #include <engine/shared/config.h>
 #include <game/mapitems.h>
 #include <game/zones.h>
@@ -8,6 +9,7 @@
 
 #include "entities/character.h"
 #include "entities/pickup.h"
+#include "entities/special/edge.h"
 #include "entities/special/koh.h"
 #include "entities/events/lmb.h"
 #include "gamecontroller.h"
@@ -171,6 +173,18 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 	if(str_comp(pName, "lorem") == 0)
 	{
 		new CLoremIpsum(&GameServer()->m_World, Pos);
+		return true;
+	}
+
+	if(str_comp(pName, "_de") == 0)
+	{
+		new CEdge(&GameServer()->m_World, Pos, false);
+		return true;
+	}
+
+	if(str_comp(pName, "_te") == 0)
+	{
+		new CEdge(&GameServer()->m_World, Pos, true);
 		return true;
 	}
 

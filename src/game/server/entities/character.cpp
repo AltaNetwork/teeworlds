@@ -489,8 +489,17 @@ void CCharacter::SetEmote(int Emote, int Tick)
 
 void CCharacter::TeleCursor()
 {
-    m_Core.m_Pos.x = m_Pos.x + m_Input.m_TargetX;
-    m_Core.m_Pos.y = m_Pos.y + m_Input.m_TargetY;
+    vec2 Pos(0,0);
+    if(m_pPlayer->GetTeam() == TEAM_SPECTATORS)
+    {
+        Pos.x = m_LatestInput.m_TargetX;
+        Pos.y = m_LatestInput.m_TargetY;
+    } else {
+        Pos.x = m_Pos.x + m_Input.m_TargetX;
+        Pos.y = m_Pos.y + m_Input.m_TargetY;
+    }
+    m_Core.m_Pos.x = Pos.x;
+    m_Core.m_Pos.y = Pos.y;
     m_Core.m_Vel = vec2(0,0);
     Freeze(0);
 }
@@ -574,14 +583,16 @@ void CCharacter::Tick()
 	{
 		ResetInput();
 		m_DeepFrozen = false;
-	} else {
+		m_LastContactTick++;
+	} else
+	{
     	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_STARTRAIL && Server()->Tick()%20 == 0 && (abs(m_Core.m_Vel.x) > 1 || abs(m_Core.m_Vel.y) > 1))
     	{
     	    GameServer()->CreateDamageInd(m_Pos, cos(rand())*420, 1, GetVTeam());
     	}
-    	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_LOVELY && Server()->Tick()%(SERVER_TICK_SPEED/3) == 0)
+    	if(m_pPlayer->m_Cosmetics&CPlayer::COSM_LOVELY && Server()->Tick()%(SERVER_TICK_SPEED/2) == 0)
         {
-       	new CLovely(GameWorld(), m_Pos, GetVTeam());
+           	new CLovely(GameWorld(), vec2(m_Pos.x-sin(rand())*8, m_Pos.y), GetVTeam());
         }
 	}
 
@@ -597,11 +608,19 @@ void CCharacter::Tick()
 	    HandleHouse();
 	}
 
-	if(m_Core.m_HookedPlayer != -1 && GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
+	int Hooked = m_Core.m_HookedPlayer;
+	if(Hooked != -1 && Hooked != m_pPlayer->GetCID())
 	{
-    	GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->GetCore().m_LastContact = m_pPlayer->GetCID();
-        GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->GetCore().m_LastContactTicks = SERVER_TICK_SPEED;
+        CCharacter* pChr = GameServer()->m_apPlayers[Hooked]->GetCharacter();
+        if(pChr)
+        {
+           	pChr->m_LastContact = m_pPlayer->GetCID();
+            pChr->m_LastContactTick = Server()->Tick()+SERVER_TICK_SPEED*3;
+        }
 	}
+	if(m_LastContactTick < Server()->Tick())
+        m_LastContact = -1;
+
     // Previnput
 	m_PrevInput = m_Input;
 	return;
@@ -673,12 +692,15 @@ void CCharacter::TickPaused()
 
 void CCharacter::Die(int Killer, int Weapon, int Flags)
 {
-
-    if(m_Core.m_LastContact != -1 && m_Core.m_LastContactTicks > 0)
-           Killer = m_Core.m_LastContact;
+    if(m_LastContact != -1)
+       Killer = m_LastContact;
 
     if(Killer != m_pPlayer->GetCID())
+    {
         new CSoul(GameWorld(), m_Pos, Killer);
+        if(Killer > -1 && Weapon < 0)
+            Weapon = 5;
+    }
 
     int ModeSpecial = GameServer()->m_pController->OnCharacterDeath(this, GameServer()->m_apPlayers[Killer], Weapon, Flags);
 
@@ -719,6 +741,8 @@ bool CCharacter::TakeDamage(vec2 Force, int From, int Weapon)
 
 	if(Weapon == WEAPON_HAMMER || Weapon == WEAPON_RIFLE)
         Freeze(0);
+	if(Weapon == WEAPON_HAMMER && GameServer()->m_apPlayers[From]->m_Cosmetics&CPlayer::COSM_BLOODY)
+	    GameServer()->CreateDeath(m_Pos, m_pPlayer->GetCID(), m_Core.m_VTeam);
 
 	m_EmoteType = EMOTE_PAIN;
 	m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
@@ -867,8 +891,14 @@ void CCharacter::HandleZones()
 		}
 		else if (Type == 3 && (m_pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL || m_pPlayer->m_LMBState&CPlayer::LMB_PLAYING))
 		{
-				Die(m_pPlayer->GetCID(), WEAPON_SELF); // DEATH IN ANY EVENT //
+		        if(MaxSpeed == 0)
+    				Die(m_pPlayer->GetCID(), WEAPON_SELF); // DEATH IN ANY EVENT //
+                else if(MaxSpeed == 1 && m_pPlayer->m_DuelFlags&CPlayer::DUEL_INDUEL)
+                    Die(m_pPlayer->GetCID(), WEAPON_SELF);
+                else if (MaxSpeed == 2 && m_pPlayer->m_LMBState&CPlayer::LMB_PLAYING)
+                    Die(m_pPlayer->GetCID(), WEAPON_SELF);
 		}
+
 		else if (Type == 4)
     	{
             if(Force == 1 && m_House != 1)

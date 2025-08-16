@@ -74,8 +74,8 @@ void CCharacterCore::Reset()
 	m_HookTick = 0;
 	m_HookState = HOOK_IDLE;
 	m_HookedPlayer = -1;
-	m_LastContact = -1;
-	m_LastContactTicks = 0;
+	// m_LastContact = -1;
+	// m_LastContactTicks = 0;
 	m_Jumped = 0;
 	m_AirJumped = 1;
 	m_AirJumps = 1;
@@ -116,8 +116,8 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 
 	m_Angle = (int)(a*256.0f);
 
-	if(m_LastContactTicks>0)// && m_FreezeTicks==0)
-        m_LastContactTicks--;
+	// if(m_LastContactTicks>0)// && m_FreezeTicks==0)
+ //        m_LastContactTicks--;
 
     if(UseInput)
 	{

@@ -198,11 +198,6 @@ public:
 	int m_AirJumped;
 	int m_AirJumps;
 
-	int m_LastContact;
-	int m_LastContactTicks;
-
-	// int m_FreezeTicks;
-
 	int m_Direction;
 	int m_Angle;
 	CNetObj_PlayerInput m_Input;

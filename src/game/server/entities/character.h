@@ -13,24 +13,7 @@ enum
 	WEAPON_SELF = -2, // console kill command
 	WEAPON_WORLD = -1, // death tiles etc
 
-    // FTUNE_NOMOVE = 1, // All 3 used by "freeze"; flag "0" is used on connection
-    // FTUNE_NOHOOK = 2,
-    // FTUNE_NOJUMP = 4,
-    // FTUNE_NOCOLL = 8,
-    // FTUNE_CANTHOOK = 16,
-
     FLAG_NOKILLMSG = 1,
-    // FLAG_ENDDUEL = 2,
-
-    // INDFLAG_PASSIVE = 1,
-    // INDFLAG_HAT = 2,
-    // INDFLAG_FREEZEHIDE = 4,
-    // INDFLAG_HAMMER = 8,
-    // INDFLAG_GUN = 16,
-    // INDFLAG_SHOTGUN = 32,
-    // INDFLAG_GRENADE = 64,
-    // INDFLAG_LASER = 128,
-    // INDFLAG_NINJA = 256,
 
 };
 
@@ -126,6 +109,9 @@ public:
 	int m_RaceTick;
 
 	int m_House;
+
+	int m_LastContact;
+	int m_LastContactTick;
 
 private:
 	// player controlling this character
