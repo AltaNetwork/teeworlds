@@ -4,7 +4,6 @@
 #define ENGINE_SERVER_SERVER_H
 
 #include <engine/server.h>
-#include "accounts.h"
 
 
 class CSnapIDPool
@@ -69,8 +68,6 @@ public:
 	class IGameServer *GameServer() { return m_pGameServer; }
 	class IConsole *Console() { return m_pConsole; }
 	class IStorage *Storage() { return m_pStorage; }
-
-	CAccounts *m_pAccounts = nullptr;
 
 
 	enum

@@ -2046,9 +2046,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("info", "", CFGFLAG_CHAT, ConAbout, this, "Show information about the mod");
 	Console()->Register("language", "?s", CFGFLAG_CHAT, ConLanguage, this, "change language");
 
-	// Console()->Register("register", "?s", CFGFLAG_CHAT, ConRegister, this, "change language");
-	// Console()->Register("login", "?s", CFGFLAG_CHAT, ConLogin, this, "change language");
-
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
 
