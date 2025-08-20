@@ -1833,27 +1833,24 @@ void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 
 void CServer::ConRegister(IConsole::IResult *pResult, void *pUserData)
 {
-    CServer *pServer = (CServer *)pUserData;
+ //    const char *pUsr = pResult->GetString(0);
+	// const char *pPas = pResult->GetString(1);
 
-	const char *pDescription = pResult->GetString(0);
-	const char *pCommand = pResult->GetString(1);
-
-	// if(pServer->m_pAccounts->Register(pDescription, pCommand))
-	//     pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "registered");
-	// else
-	    pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "failed to register");
+	// char aBuf[128];
+	// str_format(aBuf, sizeof(aBuf), "%d;%s;%s", pResult->GetClientID(), pUsr, pPas);
+	// dbg_msg("acc", aBuf);
 }
 
 void CServer::ConLogin(IConsole::IResult *pResult, void *pUserData)
 {
-    CServer *pServer = (CServer *)pUserData;
-	const char *pDescription = pResult->GetString(0);
-	const char *pCommand = pResult->GetString(1);
+ //    CServer *pServer = (CServer *)pUserData;
 
-	// if(pServer->m_pAccounts->Login(pDescription, pCommand))
- //        pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "logged in");
- //    else
-        pServer->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "server", "failed to login");
+ //    const char *pUsr = pResult->GetString(0);
+	// const char *pPas = pResult->GetString(1);
+
+	// char aBuf[128];
+	// str_format(aBuf, sizeof(aBuf), "%d;%s;%s", pResult->GetClientID(), pUsr, pPas);
+	// pServer->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "login", aBuf);
 }
 
 
