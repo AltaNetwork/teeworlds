@@ -1831,29 +1831,6 @@ void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 	((CServer *)pUser)->m_MapReload = 1;
 }
 
-void CServer::ConRegister(IConsole::IResult *pResult, void *pUserData)
-{
- //    const char *pUsr = pResult->GetString(0);
-	// const char *pPas = pResult->GetString(1);
-
-	// char aBuf[128];
-	// str_format(aBuf, sizeof(aBuf), "%d;%s;%s", pResult->GetClientID(), pUsr, pPas);
-	// dbg_msg("acc", aBuf);
-}
-
-void CServer::ConLogin(IConsole::IResult *pResult, void *pUserData)
-{
- //    CServer *pServer = (CServer *)pUserData;
-
- //    const char *pUsr = pResult->GetString(0);
-	// const char *pPas = pResult->GetString(1);
-
-	// char aBuf[128];
-	// str_format(aBuf, sizeof(aBuf), "%d;%s;%s", pResult->GetClientID(), pUsr, pPas);
-	// pServer->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "login", aBuf);
-}
-
-
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
 {
 	CServer *pServer = (CServer *)pUser;
@@ -1943,10 +1920,6 @@ void CServer::RegisterCommands()
 	Console()->Register("status", "", CFGFLAG_SERVER, ConStatus, this, "List players");
 	Console()->Register("shutdown", "", CFGFLAG_SERVER, ConShutdown, this, "Shut down");
 	Console()->Register("logout", "", CFGFLAG_SERVER, ConLogout, this, "Logout of rcon");
-
-    Console()->Register("login", "ss", CFGFLAG_CHAT, ConLogin, this, "Login");
-    Console()->Register("register", "ss", CFGFLAG_CHAT, ConRegister, this, "Register");
-
 	//Console()->Register("record", "?s", CFGFLAG_SERVER|CFGFLAG_STORE, ConRecord, this, "Record to a file");
 	//Console()->Register("stoprecord", "", CFGFLAG_SERVER, ConStopRecord, this, "Stop recording");
 

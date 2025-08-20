@@ -1,5 +1,4 @@
 
-
 #include <new>
 #include <base/math.h>
 #include <engine/shared/config.h>
@@ -44,6 +43,9 @@ void CGameContext::Construct(int Resetting)
 
 	if(Resetting==NO_RESET)
 		m_pVoteOptionHeap = new CHeap();
+
+	m_AccountData = new CAccountData;
+	m_Sql = new CSQL(this);
 }
 
 CGameContext::CGameContext(int Resetting)
@@ -77,6 +79,9 @@ void CGameContext::Clear()
 	CVoteOptionServer *pVoteOptionLast = m_pVoteOptionLast;
 	int NumVoteOptions = m_NumVoteOptions;
 	CTuningParams Tuning = m_Tuning;
+
+	delete m_Sql;
+	delete m_AccountData;
 
 	m_Resetting = true;
 	this->~CGameContext();
@@ -1664,6 +1669,42 @@ void CGameContext::ConLeave(IConsole::IResult *pResult, void *pUserData)
     return;
 }
 
+void CGameContext::ConLogin(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+    // if (pResult->NumArguments() != 2) {
+    //     pSelf->SendChatTarget_Localization(pResult->GetClientID(), CHATCATEGORY_INFO, _("usage: /login <username> <password>"));
+    //     return;
+    // }
+
+    char Username[512];
+    char Password[512];
+    str_copy(Username, pResult->GetString(0), sizeof(Username));
+    str_copy(Password, pResult->GetString(1), sizeof(Password));
+
+ //    char aHash[64]; //Result
+	// mem_zero(aHash, sizeof(aHash));
+	// Crypt(Password, (const unsigned char*) "d9", 1, 14, aHash);
+
+    pSelf->Sql()->login(Username, Password, pResult->GetClientID());
+}
+
+void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *) pUserData;
+
+
+    char Username[512];
+    char Password[512];
+    str_copy(Username, pResult->GetString(0), sizeof(Username));
+    str_copy(Password, pResult->GetString(1), sizeof(Password));
+
+ //    char aHash[64];
+	// Crypt(Password, (const unsigned char*) "d9", 1, 14, aHash);
+
+    pSelf->Sql()->create_account(Username, Password, pResult->GetClientID());
+}
+
 void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
@@ -2048,6 +2089,9 @@ void CGameContext::OnConsoleInit()
 
 	Console()->Register("jumps", "?s", CFGFLAG_CHAT, ConAirJumps, this, "set jumps");
 	Console()->Register("accept", "?s", CFGFLAG_CHAT, ConAcceptDuel, this, "accept duel");
+
+	Console()->Register("login", "ss", CFGFLAG_CHAT, ConLogin, this, "set jumps");
+	Console()->Register("register", "ss", CFGFLAG_CHAT, ConRegister, this, "set jumps");
 
 	Console()->Register("duel" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
 	Console()->Register("1vs1" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");

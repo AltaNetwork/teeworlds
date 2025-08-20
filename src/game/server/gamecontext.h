@@ -12,6 +12,8 @@
 #include <game/layers.h>
 #include <game/voting.h>
 
+#include <engine/server/account.h>
+
 #include "eventhandler.h"
 #include "gamecontroller.h"
 #include "gameworld.h"
@@ -57,6 +59,9 @@ class CGameContext : public IGameServer
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
 
+	CSQL *m_Sql;
+	CAccountData *m_AccountData;
+
 	static void ConsoleOutputCallback_Chat(const char *pLine, void *pUser);
 
 	static void ConLanguage(IConsole::IResult *pResult, void *pUserData);
@@ -73,6 +78,10 @@ class CGameContext : public IGameServer
 	static void ConValDebug(IConsole::IResult *pResult, void *pUserData);
 	static void ConVTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConAbout(IConsole::IResult *pResult, void *pUserData);
+
+	static void ConRegister(IConsole::IResult *pResult, void *pUserData);
+	static void ConLogin(IConsole::IResult *pResult, void *pUserData);
+
 	static void ConDuel(IConsole::IResult *pResult, void *pUserData);
 	static void ConLeave(IConsole::IResult *pResult, void *pUserData);
 	static void ConAcceptDuel(IConsole::IResult *pResult, void *pUserData);
@@ -116,6 +125,9 @@ public:
 	CCollision *Collision() { return &m_Collision; }
 	CTuningParams *Tuning() { return &m_Tuning; }
 	virtual class CLayers *Layers() { return &m_Layers; }
+
+	CSQL *Sql() const { return m_Sql; };
+	CAccountData *AccountData() {return m_AccountData; };
 
 	CGameContext();
 	~CGameContext();

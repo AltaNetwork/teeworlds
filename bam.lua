@@ -81,7 +81,7 @@ settings.cc.Output = Intermediate_Output
 if config.compiler.driver == "cl" then
     settings.cc.flags:Add("/wd4244", "/wd4577")
 else
-    settings.cc.flags:Add("-Wall", "-fno-exceptions")
+    settings.cc.flags:Add("-Wall", "-fexceptions")
     settings.link.flags:Add("-fstack-protector", "-fstack-protector-all")
 end
 settings.cc.includes:Add("src")
@@ -95,7 +95,7 @@ settings.cc.flags:Add("-std=c++20")
 -- Use system zlib library instead of compiling a local copy
 settings.link.libs:Add("z")
 
--- settings.link.flags:Add("-lsqlite3")
+settings.link.flags:Add("-lmysqlclient -lmysqlcppconn")
 -- Make Database interface in rust to avoid conflits and split work
 
 engine_settings = settings:Copy()
