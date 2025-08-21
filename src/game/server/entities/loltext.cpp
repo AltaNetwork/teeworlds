@@ -6,12 +6,13 @@
 ClolPlasma *CLoltext::s_aapPlasma[MAX_LOLTEXTS][MAX_PLASMA_PER_LOLTEXT];
 int CLoltext::s_aExpire[MAX_LOLTEXTS];
 
-ClolPlasma::ClolPlasma(CGameWorld *pGameWorld, vec2 Pos, int Lifespan)
+ClolPlasma::ClolPlasma(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, int Type)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_PROJECTILE)
 {
 	m_LocalPos = vec2(0.0f, 0.0f);
 	m_StartOff = Pos;
 	m_Pos = Pos;
+	m_Type = Type;
 	m_Life = Lifespan;
 	GameWorld()->InsertEntity(this);
 }
@@ -33,14 +34,28 @@ void ClolPlasma::Snap(int SnappingClient)
 	if (NetworkClipped(SnappingClient))
 		return;
 
-	CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
+	if(m_Type < 2)
+    {
+        CNetObj_Projectile *pProj = static_cast<CNetObj_Projectile *>(Server()->SnapNewItem(NETOBJTYPE_PROJECTILE, m_ID, sizeof(CNetObj_Projectile)));
 
-	pProj->m_X = (int)m_Pos.x;
-	pProj->m_Y = (int)m_Pos.y;
-	pProj->m_StartTick = Server()->Tick();
-	pProj->m_VelX = 0;
-	pProj->m_VelY = 0;
-	pProj->m_Type = 0;
+    	pProj->m_X = (int)m_Pos.x;
+    	pProj->m_Y = (int)m_Pos.y;
+    	pProj->m_StartTick = Server()->Tick()-1;
+    	pProj->m_VelX = 0;
+    	pProj->m_VelY = -1;
+    	pProj->m_Type = m_Type == 0 ? 2 : 0;
+    } else
+	{
+    	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, m_ID, sizeof(CNetObj_Laser)));
+    	if(!pObj)
+    		return;
+
+    	pObj->m_X = (int)m_Pos.x;
+    	pObj->m_Y = (int)m_Pos.y;
+    	pObj->m_FromX = (int)m_Pos.x;
+    	pObj->m_FromY = (int)m_Pos.y;
+    	pObj->m_StartTick = 0;
+	}
 
 }
 
@@ -59,7 +74,7 @@ vec2 CLoltext::TextSize(const char *pText)
 	return vec2(Count*6.9f*4.0f, 6.9f*5.0f);
 }
 
-int CLoltext::Create(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, const char *pText, bool Center, bool Follow)
+int CLoltext::Create(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, const char *pText, bool Center, bool Follow, int Type)
 {
 	char c;
 	vec2 CurPos = Pos;
@@ -93,7 +108,7 @@ int CLoltext::Create(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, const char 
 			for(int x = 0; x < 3/*XXX*/; ++x)
 				if (s_aaaChars[(unsigned)c][y][x] && NumPlasmas < MAX_PLASMA_PER_LOLTEXT)
 					s_aapPlasma[TextID][NumPlasmas++] =
-						        new ClolPlasma(pGameWorld, CurPos + vec2(x*6.9f, y*6.9f), Lifespan);
+						        new ClolPlasma(pGameWorld, CurPos + vec2(x*6.9f, y*6.9f), Lifespan, Type);
 		CurPos.x += 4*6.9f;
 	}
 	return TextID;

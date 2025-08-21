@@ -60,10 +60,10 @@ struct CSqlData
 	int UserID[MAX_CLIENTS];
 
 	unsigned int m_Level[MAX_CLIENTS];
-	unsigned long long int m_ExpPoints[MAX_CLIENTS];
+	unsigned long long int m_eXPerience[MAX_CLIENTS];
 
 	// basic
-	unsigned long long m_Money[MAX_CLIENTS];
+	unsigned long long m_BPWager[MAX_CLIENTS];
 	int m_Health[MAX_CLIENTS];
 	int m_Armor[MAX_CLIENTS];
 	int m_Kills[MAX_CLIENTS];

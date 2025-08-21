@@ -13,7 +13,7 @@ class ClolPlasma : public CEntity
 {
 public:
 	//position relative to pParent->m_Pos. if pParent is NULL, Pos is absolute. lifespan in ticks
-	ClolPlasma(CGameWorld *pGameWorld, vec2 Pos, int Lifespan);
+	ClolPlasma(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, int Type);
 
 	virtual void Reset();
 	virtual void Tick();
@@ -24,6 +24,7 @@ private:
 	vec2 m_LocalPos; // local coordinate system is origin'd wherever we actually start (i.e. this is (0,0) after creation)
 	int m_Life; // remaining ticks
 	int m_StartTick; // tick created
+	int m_Type;
 	vec2 m_StartOff; // initial offset from parent, for proper following
 };
 
@@ -36,7 +37,7 @@ private:
 	static bool HasRepr(char c);
 public:
 	static vec2 TextSize(const char *pText);
-	static int Create(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, const char *pText, bool Center, bool Follow);
+	static int Create(CGameWorld *pGameWorld, vec2 Pos, int Lifespan, const char *pText, bool Center, bool Follow, int Type);
 	static void Destroy(CGameWorld *pGameWorld, int TextID);
 };
 

@@ -377,8 +377,8 @@ static void login_thread(void *user)
 						}
 
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_UserID = Data->m_SqlData->results->getInt("UserID");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpPoints = (float)Data->m_SqlData->results->getInt("Exp");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Money = Data->m_SqlData->results->getInt("Money");
+						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_eXPerience = (float)Data->m_SqlData->results->getInt("Exp");
+						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_BPWager = Data->m_SqlData->results->getInt("Money");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_HouseID = Data->m_SqlData->results->getInt("HouseID");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Level = Data->m_SqlData->results->getInt("Level");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Health = Data->m_SqlData->results->getInt("Health");
@@ -541,13 +541,13 @@ static void update_thread(void *user)
 					"WHERE UserID=%d",
 					Data->m_SqlData->prefix,
 					Data->m_HouseID[Data->m_ClientID],
-					Data->m_Money[Data->m_ClientID],
+					Data->m_BPWager[Data->m_ClientID],
 					Data->m_Health[Data->m_ClientID],
 					Data->m_Armor[Data->m_ClientID],
 					Data->m_Donor[Data->m_ClientID],
 					Data->m_VIP[Data->m_ClientID],
 					Data->m_Level[Data->m_ClientID],
-					Data->m_ExpPoints[Data->m_ClientID],
+					Data->m_eXPerience[Data->m_ClientID],
 					Data->m_LvlHammer[Data->m_ClientID],
 					Data->m_LvlGun[Data->m_ClientID],
 					Data->m_LvlShotgun[Data->m_ClientID],
@@ -672,11 +672,16 @@ static void update_thread(void *user)
 
 void CSQL::update(int m_ClientID)
 {
+    if(!GameServer()->m_apPlayers[m_ClientID])
+        return;
+    if(!GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_UserID)
+        return;
+
 	CSqlData *tmp = new CSqlData();
 	tmp->m_ClientID = m_ClientID;
 	tmp->UserID[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_UserID;
-	tmp->m_ExpPoints[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_ExpPoints;
-	tmp->m_Money[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Money;
+	tmp->m_eXPerience[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_eXPerience;
+	tmp->m_BPWager[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_BPWager;
 	tmp->m_Level[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Level;
 	tmp->m_AllWeapons[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_AllWeapons;
 	tmp->m_Armor[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Armor;
@@ -685,7 +690,7 @@ void CSQL::update(int m_ClientID)
 	tmp->m_Bounty[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Bounty;
 	tmp->m_Donor[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Donor;
 	tmp->m_EndlessHook[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_EndlessHook;
-	tmp->m_ExpPoints[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_ExpPoints;
+	tmp->m_eXPerience[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_eXPerience;
 	tmp->m_FastReload[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_FastReload;
 	tmp->m_FlameThrower[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_FlameThrower;
 	tmp->m_GrenadeBounce[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_GrenadeBounce;
@@ -783,13 +788,13 @@ void CSQL::update_all()
 					"WHERE UserID=%d;",
 					prefix,
 					GameServer()->m_apPlayers[i]->m_AccData.m_HouseID,
-					GameServer()->m_apPlayers[i]->m_AccData.m_Money,
+					GameServer()->m_apPlayers[i]->m_AccData.m_BPWager,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Health,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Armor,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Donor,
 					GameServer()->m_apPlayers[i]->m_AccData.m_VIP,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Level,
-					GameServer()->m_apPlayers[i]->m_AccData.m_ExpPoints,
+					GameServer()->m_apPlayers[i]->m_AccData.m_eXPerience,
 					GameServer()->m_apPlayers[i]->m_AccData.m_LvlWeapon[WEAPON_HAMMER],
 					GameServer()->m_apPlayers[i]->m_AccData.m_LvlWeapon[WEAPON_GUN],
 					GameServer()->m_apPlayers[i]->m_AccData.m_LvlWeapon[WEAPON_SHOTGUN],

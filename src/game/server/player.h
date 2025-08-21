@@ -79,6 +79,7 @@ public:
 		DUEL_INVITED = 32,
 
 		EFFECT_BLIND = 1,
+		EFFECT_FORCENATURALPREDICTION = 2,
 
 		INVENTORY_VIP = 1,
 	};
@@ -139,10 +140,12 @@ public:
 		int m_UserID;
 		char m_Username[32];
 		char m_Password[32];
-		char m_RconPassword[32];
+		char m_Clan[32];
+		int m_ClanStatus;
+		// char m_RconPassword[32];
 
 		// basic
-		unsigned long long m_Money;
+		unsigned long long m_BPWager;
 		int m_Health;
 		int m_Armor;
 		int m_Kills;
@@ -150,7 +153,7 @@ public:
 
 		// levels
 		unsigned int m_Level;
-		unsigned long long int m_ExpPoints;
+		unsigned long long int m_eXPerience;
 		unsigned int m_LvlWeapon[5];
 		unsigned int m_ExpWeapon[5];
 

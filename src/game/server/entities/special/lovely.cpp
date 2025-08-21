@@ -7,7 +7,7 @@ CLovely::CLovely(CGameWorld *pGameWorld, vec2 Pos, int VTeam)
 {
 	m_Pos = Pos;
 	m_WTeam = VTeam;
-	m_Lifetime = 1*SERVER_TICK_SPEED;
+	m_Lifetime = SERVER_TICK_SPEED/1.5;
 
   	GameWorld()->InsertEntity(this);
 }

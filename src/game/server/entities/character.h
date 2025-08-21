@@ -20,17 +20,17 @@ enum
 [[maybe_unused]]
 static const char *aStoreNames[] = {
 	"Weapons Kit",
-	"Passive Mode 2 Hours",
 	"Deathnote Page",
-	"VIP+ Room access",
+	// "Passive Mode 2 Hours",
+	// "VIP+ Room access",
 };
 
 [[maybe_unused]]
 static const int aStorePrices[] = {
-	25,
 	30,
 	15,
-	50,
+	// 15,
+	// 50,
 };
 
 class CCharacter : public CEntity
@@ -101,14 +101,13 @@ public:
 
 	bool m_Indicator;
 	bool m_Hat;
-	bool m_SentFlags;
 
 	int m_EmoteType;
 	int m_EmoteStop;
 
 	int m_RaceTick;
-
-	int m_House;
+	int m_StoreTick;
+	int m_Store;
 
 	int m_LastContact;
 	int m_LastContactTick;
@@ -116,8 +115,6 @@ public:
 private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
-
-	int m_StoreItem;
 
 	bool m_Alive;
 

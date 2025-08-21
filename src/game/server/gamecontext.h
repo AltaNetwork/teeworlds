@@ -83,6 +83,7 @@ class CGameContext : public IGameServer
 	static void ConLogin(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConDuel(IConsole::IResult *pResult, void *pUserData);
+	static void ConBP(IConsole::IResult *pResult, void *pUserData);
 	static void ConLeave(IConsole::IResult *pResult, void *pUserData);
 	static void ConAcceptDuel(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneParam(IConsole::IResult *pResult, void *pUserData);

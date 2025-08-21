@@ -1766,8 +1766,8 @@ void CServer::ConStatus(IConsole::IResult *pResult, void *pUser)
 			{
 				const char *pAuthStr = pThis->m_aClients[i].m_Authed == CServer::AUTHED_ADMIN ? "(Admin)" :
 										pThis->m_aClients[i].m_Authed == CServer::AUTHED_MOD ? "(Mod)" : "";
-				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s name='%s' score=%d secure=%s %s", i, aAddrStr,
-					pThis->m_aClients[i].m_aName, pThis->m_aClients[i].m_Score, pThis->m_NetServer.HasSecurityToken(i) ? "yes":"no", pAuthStr);
+				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s name='%s' secure=%s %s", i, aAddrStr,
+					pThis->m_aClients[i].m_aName, pThis->m_NetServer.HasSecurityToken(i) ? "yes":"no", pAuthStr);
 			}
 			else
 				str_format(aBuf, sizeof(aBuf), "id=%d addr=%s connecting", i, aAddrStr);

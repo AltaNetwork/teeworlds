@@ -332,7 +332,7 @@ void IGameController::PostReset()
 		if(GameServer()->m_apPlayers[i])
 		{
 			GameServer()->m_apPlayers[i]->Respawn();
-			GameServer()->m_apPlayers[i]->m_Score = 0;
+			// GameServer()->m_apPlayers[i]->m_Score = 0;
 			GameServer()->m_apPlayers[i]->m_ScoreStartTick = Server()->Tick();
 			// GameServer()->m_apPlayers[i]->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()/2;
 		}
@@ -382,7 +382,7 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	if(!pKiller || pKiller == pVictim->GetPlayer())
 		return 0;
 
-    pKiller->m_Score++;
+    pKiller->m_AccData.m_BPWager++;
 
 	return 0;
 }
@@ -636,8 +636,8 @@ void IGameController::Snap(int SnappingClient)
 
 	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL |  GAMEINFOFLAG_ALLOW_ZOOM;
 	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE;
-	if(~GameServer()->m_apPlayers[SnappingClient]->m_Settings&CPlayer::SETTINGS_PREDICTVANILLA)
-	    pGameInfoEx->m_Flags |= GAMEINFOFLAG_PREDICT_DDRACE | GAMEINFOFLAG_PREDICT_DDRACE_TILES;
+	if(~(GameServer()->m_apPlayers[SnappingClient]->m_Settings & CPlayer::SETTINGS_PREDICTVANILLA))
+        pGameInfoEx->m_Flags |= GAMEINFOFLAG_PREDICT_DDRACE | GAMEINFOFLAG_PREDICT_DDRACE_TILES;
 	pGameInfoEx->m_Version = 8;
 
 	// This object needs to be snapped alongside pGameInfoObj for that object to work properly

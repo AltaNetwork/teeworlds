@@ -21,7 +21,7 @@ void CLoremIpsum::Tick()
 {
     if(Server()->Tick()%(SERVER_TICK_SPEED*5) == 0)
     {
-        CLoltext::Create(GameWorld(), m_Pos, SERVER_TICK_SPEED*3, "/DUEL", true, false);
+        CLoltext::Create(GameWorld(), m_Pos, SERVER_TICK_SPEED*3, "/DUEL", true, false, 0);
     }
     // Reset();
 }

@@ -129,15 +129,15 @@ void CDuel::EndDuel()
     if(Winner > -1 && GameServer()->m_apPlayers[Winner])
     {
         str_format(Buf, sizeof(Buf), "%d", m_Wager);
-        GameServer()->m_apPlayers[Winner]->m_Score += m_Wager * 2;
+        GameServer()->m_apPlayers[Winner]->m_AccData.m_BPWager += m_Wager * 2;
         GameServer()->SendChatTarget(-1, _("'{str:Winner}' won the wager ( {num:Wager} )"), "Winner", Server()->ClientName(Winner), "Wager", Buf);
     }
     else
     {
         if(pPlayer)
-            pPlayer->m_Score += m_Wager;
+            pPlayer->m_AccData.m_BPWager += m_Wager;
         if(pOpponent)
-            pOpponent->m_Score += m_Wager;
+            pOpponent->m_AccData.m_BPWager += m_Wager;
         GameServer()->SendChatTarget(-1, _("The match ended in a draw, wagers have been returned."));
     }
 }
@@ -161,8 +161,8 @@ void CDuel::Tick()
             PreparePlayer(m_Opponent);
             PreparePlayer(m_Player);
             m_Started = true;
-            m_pNonOpponent->m_Score-=m_Wager;
-            m_pOpponent->m_Score-=m_Wager;
+            m_pNonOpponent->m_AccData.m_BPWager-=m_Wager;
+            m_pOpponent->m_AccData.m_BPWager-=m_Wager;
             return;
         }
         if(m_AutoCancelTick <= 0)

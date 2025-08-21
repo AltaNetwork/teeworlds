@@ -3,6 +3,7 @@
 #include <game/generated/protocol.h>
 #include <game/server/gamecontext.h>
 #include "projectile.h"
+#include "loltext.h"
 
 CProjectile::CProjectile(CGameWorld *pGameWorld, int Type, int Owner, vec2 Pos, vec2 Dir, int Span,
 		int Damage, bool Explosive, float Force, int SoundImpact, int Weapon, int VTeam, int SubType)
@@ -97,6 +98,8 @@ void CProjectile::Tick()
 
 		if(m_SubType == 0 && m_Type == WEAPON_GUN)
     		GameServer()->CreateDamageInd(GetPos(Ct), -std::atan2(m_Direction.x, m_Direction.y), 6, m_VTeam);
+
+		// CLoltext::Create(GameWorld(), PrevPos, SERVER_TICK_SPEED/5, "PEW", true, false, 1);
 
         GameServer()->m_World.DestroyEntity(this);
 	}

@@ -509,44 +509,9 @@ void CGameContext::SendTuningParams(int ClientID, int Flags)
 {
 	CheckPureTuning();
 
-	CTuningParams FakeTuning;
-	mem_comp(&FakeTuning, &m_Tuning, sizeof(CTuningParams));
-
-	// CPlayer *pPlayer = m_apPlayers[ClientID];
-
-	// if(pPlayer && Flags != 0) {
-	//     if(Flags&FTUNE_NOCOLL)
-	// 	{
-	// 		FakeTuning.m_PlayerCollision = 0;
-	// 	}
-	// 	if(Flags&FTUNE_NOHOOK)
-	// 	{
- //            FakeTuning.m_PlayerHooking = 0;
-	// 	}
- //        if(Flags&FTUNE_NOMOVE)
-	// 	{
- //        FakeTuning.m_GroundControlAccel = 0;
- //        FakeTuning.m_GroundControlSpeed = 0;
- //        FakeTuning.m_AirControlSpeed = 0;
- //        FakeTuning.m_AirControlAccel = 0;
-	// 	}
-	// 	if(Flags&FTUNE_NOJUMP)
-	// 	{
- //        FakeTuning.m_GroundJumpImpulse = 0;
- //        FakeTuning.m_AirJumpImpulse = 0;
-	// 	}
-	// 	if(Flags&FTUNE_CANTHOOK)
-	// 	{
- //        FakeTuning.m_HookLength = 0;
- //        FakeTuning.m_HookFireSpeed = 0;
- //        FakeTuning.m_HookDragAccel = 0;
- //        FakeTuning.m_HookDragSpeed = 0;
-	// 	}
-	// }
-
 	CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
-	int *pParams = (int *)&FakeTuning;
-	for(unsigned i = 0; i < sizeof(FakeTuning)/sizeof(int); i++)
+	int *pParams = (int *)&m_Tuning;
+	for(unsigned i = 0; i < sizeof(m_Tuning)/sizeof(int); i++)
 		Msg.AddInt(pParams[i]);
 	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
@@ -1693,7 +1658,6 @@ void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *) pUserData;
 
-
     char Username[512];
     char Password[512];
     str_copy(Username, pResult->GetString(0), sizeof(Username));
@@ -1703,6 +1667,34 @@ void CGameContext::ConRegister(IConsole::IResult *pResult, void *pUserData)
 	// Crypt(Password, (const unsigned char*) "d9", 1, 14, aHash);
 
     pSelf->Sql()->create_account(Username, Password, pResult->GetClientID());
+}
+
+void CGameContext::ConBP(IConsole::IResult *pResult, void *pUserData)
+{
+    CGameContext *pSelf = (CGameContext *)pUserData;
+    int player = pResult->GetClientID();
+    int requested = -1;
+    if(pResult->NumArguments() > 0)
+    {
+        const char *pName = pResult->GetString(0);
+       	for(int i = 0; i < MAX_CLIENTS; i++)
+    	{if(!str_comp(pName, pSelf->Server()->ClientName(i))){requested = i;break;}}
+       	if(requested == -1)
+    	{
+            pSelf->SendChatTarget(player, _("Couldnt find player '{str:Player}'"), "Player", pName);
+    		return;
+    	}
+    }
+
+    if(requested == -1)
+        requested = player;
+
+    char aBuf[128];
+    str_format(aBuf, sizeof(aBuf), "%d", pSelf->m_apPlayers[requested]->m_AccData.m_BPWager);
+    if(requested == player)
+        pSelf->SendChatTarget(player, _("You have {str:amount} blockpoints"), "amount", aBuf);
+    else
+        pSelf->SendChatTarget(player, _("'{str:player}' has {str:amount} blockpoints"), "amount", aBuf, "player", pSelf->Server()->ClientName(requested));
 }
 
 void CGameContext::ConDuel(IConsole::IResult *pResult, void *pUserData)
@@ -2098,6 +2090,8 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("1on1" , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
 	Console()->Register("1v1"  , "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
 	Console()->Register("match", "?s?i", CFGFLAG_CHAT, ConDuel, this, "send match request");
+
+	Console()->Register("bp", "?s", CFGFLAG_CHAT, ConBP, this, "See your block point amount");
 
 	Console()->Register("leave", "", CFGFLAG_CHAT, ConLeave, this, "leave event");
 	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");

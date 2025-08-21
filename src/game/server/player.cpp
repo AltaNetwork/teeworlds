@@ -102,6 +102,12 @@ void CPlayer::Tick()
         SendVoteMenu();
 	}
 
+	// if(m_Score < m_AccData.m_BPWager)
+ //    	m_Score = m_AccData.m_BPWager;
+	// else
+	//     m_AccData.m_BPWager = m_Score;
+	m_Score = m_AccData.m_Level;
+
 	// do latency stuff
 	{
 		IServer::CClientInfo Info;
@@ -206,6 +212,7 @@ void CPlayer::Snap(int SnappingClient)
     	pClientInfo->m_UseCustomColor = m_Cosmetics&COSM_RAINBOW || m_Cosmetics&COSM_RAINBOWFEET ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
     	pClientInfo->m_ColorBody = m_Cosmetics&COSM_RAINBOW ? Colour : m_TeeInfos.m_ColorBody;
     	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
+        pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
     }
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
@@ -214,7 +221,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_ClientID = m_ClientID;
-	pPlayerInfo->m_Score = m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
+	pPlayerInfo->m_Score = m_AccData.m_BPWager;//m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
 	pPlayerInfo->m_Team =  Effects&EFFECT_BLIND ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
@@ -259,6 +266,8 @@ void CPlayer::FakeSnap(int SnappingClient)
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+    GameServer()->Sql()->update(m_ClientID);
+
 	KillCharacter(WEAPON_SELF);
 
 	if(Server()->ClientIngame(m_ClientID))
