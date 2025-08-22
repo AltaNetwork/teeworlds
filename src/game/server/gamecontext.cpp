@@ -1844,11 +1844,11 @@ void CGameContext::ConWeapons(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
     int ClientID = pResult->GetClientID();
-    if(pSelf->m_apPlayers[ClientID]->m_WeaponKits > 0)
+    if(pSelf->m_apPlayers[ClientID]->m_AccData.m_WeaponsKit > 0)
     {
-        pSelf->m_apPlayers[ClientID]->m_WeaponKits--;
+        pSelf->m_apPlayers[ClientID]->m_AccData.m_WeaponsKit--;
         char aBuf[128];
-        str_format(aBuf, sizeof(aBuf),"%d", pSelf->m_apPlayers[ClientID]->m_WeaponKits);
+        str_format(aBuf, sizeof(aBuf),"%d", pSelf->m_apPlayers[ClientID]->m_AccData.m_WeaponsKit);
         pSelf->SendChatTarget(ClientID, _("Used a weapon kit. You have {str:Num} weapon kits left."), "Num", aBuf);
         CCharacter *pChr = pSelf->m_apPlayers[ClientID]->GetCharacter();
         if(pChr)
@@ -2224,6 +2224,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 void CGameContext::OnShutdown()
 {
+    Sql()->update_all();
 	delete m_pController;
 	m_pController = 0;
 	Clear();

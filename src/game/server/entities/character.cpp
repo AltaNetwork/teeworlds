@@ -626,8 +626,24 @@ void CCharacter::Tick()
 		}
 		if(m_StoreTick == -2)
 		{
-    		GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("Idk buying or something"));
-            m_Store = -1;
+		    if(m_pPlayer->m_AccData.m_BPWager > aStorePrices[m_Store])
+      		{
+          		GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("Successfully bought '{str:Item}'"), "Item", aStoreNames[m_Store]);
+                m_pPlayer->m_AccData.m_BPWager -= aStorePrices[m_Store];
+                switch (m_Store) {
+                    case 0:
+                        m_pPlayer->m_AccData.m_WeaponsKit++;
+                        break;
+                    case 1:
+                        // m_pPlayer->m_AccData.
+                        break;
+                }
+      		} else {
+                char aBuf[128];
+                str_format(aBuf, sizeof(aBuf), "%d", aStorePrices[m_Store]-m_pPlayer->m_AccData.m_BPWager);
+                GameServer()->SendChatTarget(m_pPlayer->GetCID(),_("Unable to purchase item due to lack of {str:am} blockpoints"), "am", aBuf);
+            }
+		    m_Store = -1;
             m_StoreTick = 0;
 		}
 	}
@@ -1149,7 +1165,7 @@ bool CCharacter::OnVote(int Vote)
         //     bool Bought = false;
         //     switch (m_StoreTick) {
         //         case 0:
-        //             m_pPlayer->m_WeaponKits++;
+        //             m_pPlayer->m_AccData.m_WeaponsKit++;
         //             Bought = true;
         //             break;
         //         case 2:

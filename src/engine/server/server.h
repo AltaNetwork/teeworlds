@@ -234,6 +234,8 @@ public:
 	void InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterServer, IConsole *pConsole);
 	int Run();
 
+	static void handle_sigint(int signal);
+
 	static void ConKick(IConsole::IResult *pResult, void *pUser);
 
 	static void ConRedirect(IConsole::IResult *pResult, void *pUserData);
@@ -262,5 +264,7 @@ public:
 	virtual int* GetIdMap(int ClientID);
 	virtual void SetCustClt(int ClientID);
 };
+
+static CServer *g_pServerInstance = nullptr;
 
 #endif

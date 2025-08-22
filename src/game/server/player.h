@@ -121,8 +121,6 @@ public:
 
 	// ITEMS
 
-	int m_WeaponKits;
-
 	int m_DeathNotes;
 	int m_LastDeathNote;
 
@@ -148,8 +146,8 @@ public:
 		unsigned long long m_BPWager;
 		int m_Health;
 		int m_Armor;
-		int m_Kills;
-		int m_HouseID;
+		int m_Elo;
+		int m_IsConnected;
 
 		// levels
 		unsigned int m_Level;
@@ -168,7 +166,7 @@ public:
 		int m_Arrested;
 
 		// Player
-		int m_AllWeapons;
+		int m_WeaponsKit;
 		int m_HealthRegen;
 		int m_InfinityAmmo;
 		int m_InfinityJumps;

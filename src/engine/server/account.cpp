@@ -229,9 +229,7 @@ void CSQL::create_account(const char* name, const char* pass, int m_ClientID)
 	tmp->m_SqlData = this;
 
 	void *register_thread = thread_init(create_account_thread, tmp);
-#if defined(CONF_FAMILY_UNIX)
 	pthread_detach((pthread_t)register_thread);
-#endif
 }
 
 // change password
@@ -274,9 +272,9 @@ static void change_password_thread(void *user)
 				dbg_msg("SQL", "Account '%s' changed password.", acc_name);
 
 				// Success
-				str_format(buf, sizeof(buf), "Successfully changed your password to '%s'.", Data->pass);
-				GameServer()->SendBroadcast(buf, Data->m_ClientID);
-				GameServer()->SendChatTarget(Data->m_ClientID, buf);
+				// str_format(buf, sizeof(buf), "Successfully changed your password to '%s'.", Data->pass);
+				// GameServer()->SendBroadcast(buf, Data->m_ClientID);
+				GameServer()->SendChatTarget(Data->m_ClientID, _("Sucessfully changed your password to '{str:Pass}'"), "Pass", Data->pass);
 			}
 			else
 				dbg_msg("SQL", "Account seems to be deleted");
@@ -308,9 +306,7 @@ void CSQL::change_password(int m_ClientID, const char* new_pass)
 	tmp->m_SqlData = this;
 
 	void *change_pw_thread = thread_init(change_password_thread, tmp);
-#if defined(CONF_FAMILY_UNIX)
 	pthread_detach((pthread_t)change_pw_thread);
-#endif
 }
 
 // login stuff
@@ -329,77 +325,52 @@ static void login_thread(void *user)
 			{
 				// check if Account exists
 				char buf[1024];
-				str_format(buf, sizeof(buf), "SELECT * FROM %s_Account WHERE Username='%s';", Data->m_SqlData->prefix, Data->name);
+				str_format(buf, sizeof(buf), "SELECT * FROM %s_Account WHERE Username='%s' AND Password='%s';", Data->m_SqlData->prefix, Data->name, Data->pass);
 				Data->m_SqlData->results = Data->m_SqlData->statement->executeQuery(buf);
 				if(Data->m_SqlData->results->next())
 				{
-					// check for right pw and get data
-					str_format(buf, sizeof(buf), "SELECT * FROM %s_Account WHERE Username='%s' AND Password='%s';", Data->m_SqlData->prefix, Data->name, Data->pass);
-
-					// create results
-					Data->m_SqlData->results = Data->m_SqlData->statement->executeQuery(buf);
-
-					// if match jump to it
-					if(Data->m_SqlData->results->next())
+					// check if Account allready is logged in
+					if(Data->m_SqlData->results->getInt("HouseID") == 1)
 					{
-						// never use player directly!
-						// finally save the result to AccountData() \o/
+						dbg_msg("SQL", "Account '%s' already is logged in", Data->name);
 
-						// check if Account allready is logged in
-						for(int i = 0; i < MAX_CLIENTS; i++)
-						{
-							if(GameServer()->m_apPlayers[i])
-								continue;
+						GameServer()->SendChatTarget(Data->m_ClientID, _("This Account is already logged in."));
 
-							Data->m_SqlData->results->getInt("UserID");
+						// delete statement and results
+						delete Data->m_SqlData->statement;
+						delete Data->m_SqlData->results;
 
-							if(Data->UserID[i] == Data->m_SqlData->results->getInt("UserID"))
-							{
-								dbg_msg("SQL", "Account '%s' already is logged in", Data->name);
+						// disconnect from database
+						Data->m_SqlData->disconnect();
 
-								GameServer()->SendChatTarget(Data->m_ClientID, "This Account is already logged in.");
+						// delete Data
+						delete Data;
 
-								// delete statement and results
-								delete Data->m_SqlData->statement;
-								delete Data->m_SqlData->results;
+						// release lock
+						lock_release(sql_lock);
 
-								// disconnect from database
-								Data->m_SqlData->disconnect();
-
-								// delete Data
-								delete Data;
-
-								// release lock
-								lock_release(sql_lock);
-
-								return;
-							}
-						}
-
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_UserID = Data->m_SqlData->results->getInt("UserID");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_eXPerience = (float)Data->m_SqlData->results->getInt("Exp");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_BPWager = Data->m_SqlData->results->getInt("Money");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_HouseID = Data->m_SqlData->results->getInt("HouseID");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Level = Data->m_SqlData->results->getInt("Level");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Health = Data->m_SqlData->results->getInt("Health");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Armor = Data->m_SqlData->results->getInt("Armor");
-						//GameServer()->m_apPlayers[Data->m_ClientID]->Server()->SetClientLanguage(Data->m_ClientID, Data->m_SqlData->results->getString("Language"));
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_VIP = Data->m_SqlData->results->getInt("VIP");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Donor = Data->m_SqlData->results->getInt("Donor");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_GUN] = Data->m_SqlData->results->getInt("Gun");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_SHOTGUN] = Data->m_SqlData->results->getInt("Shotgun");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_GRENADE] = Data->m_SqlData->results->getInt("Grenade");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_RIFLE] = Data->m_SqlData->results->getInt("Rifle");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_HAMMER] = Data->m_SqlData->results->getInt("Hammer");
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Bounty = Data->m_SqlData->results->getInt("Bounty");
+						return;
 					}
-					else
-					{
-						// wrong password
-						dbg_msg("SQL", "Account '%s' is not logged in due to wrong password", Data->name);
 
-						GameServer()->SendChatTarget(Data->m_ClientID, "The password you entered is wrong.");
-					}
+					str_format(buf, sizeof(buf), "UPDATE %s_Account SET HouseID=1 WHERE UserID=%d ", Data->m_SqlData->prefix, Data->m_SqlData->results->getInt("UserID"));
+					Data->m_SqlData->statement->execute(buf);
+
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_UserID = Data->m_SqlData->results->getInt("UserID");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_eXPerience = (float)Data->m_SqlData->results->getInt("Exp");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_BPWager = Data->m_SqlData->results->getInt("Money");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_IsConnected = 1;//Data->m_SqlData->results->getInt("HouseID");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Level = Data->m_SqlData->results->getInt("Level");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Health = Data->m_SqlData->results->getInt("Health");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Armor = Data->m_SqlData->results->getInt("Armor");
+					//GameServer()->m_apPlayers[Data->m_ClientID]->Server()->SetClientLanguage(Data->m_ClientID, Data->m_SqlData->results->getString("Language"));
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_VIP = Data->m_SqlData->results->getInt("VIP");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Donor = Data->m_SqlData->results->getInt("Donor");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_GUN] = Data->m_SqlData->results->getInt("Gun");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_SHOTGUN] = Data->m_SqlData->results->getInt("Shotgun");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_GRENADE] = Data->m_SqlData->results->getInt("Grenade");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_RIFLE] = Data->m_SqlData->results->getInt("Rifle");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_ExpWeapon[WEAPON_HAMMER] = Data->m_SqlData->results->getInt("Hammer");
+					GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_Bounty = Data->m_SqlData->results->getInt("Bounty");
 
 					// check for right pw and get data
 					str_format(buf, sizeof(buf), "SELECT * FROM %s_Upgr WHERE UserID=%d;",
@@ -411,7 +382,7 @@ static void login_thread(void *user)
 					// if match jump to it
 					if(Data->m_SqlData->results->next())
 					{
-						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_AllWeapons = Data->m_SqlData->results->getInt("AllWeapons");
+						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_WeaponsKit = Data->m_SqlData->results->getInt("AllWeapons");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_HealthRegen = Data->m_SqlData->results->getInt("HealthRegen");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_InfinityAmmo = Data->m_SqlData->results->getInt("InfinityAmmo");
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_InfinityJumps = Data->m_SqlData->results->getInt("InfinityJumps");
@@ -446,20 +417,16 @@ static void login_thread(void *user)
 						GameServer()->m_apPlayers[Data->m_ClientID]->m_AccData.m_PullAura = Data->m_SqlData->results->getInt("PullAura");
 
 						// login should be the last thing
-						dbg_msg("SQL", "Account '%s' logged in sucessfully", Data->name);
+						dbg_msg("SQL", "'%s' logged in sucessfully", Data->name);
 
-						GameServer()->SendChatTarget(Data->m_ClientID, "Succesfully logged in");
+						GameServer()->SendChatTarget(Data->m_ClientID, _("Succesfully logged in"));
 						GameServer()->m_apPlayers[Data->m_ClientID]->KillCharacter(WEAPON_WORLD);
 					}
-
 				}
 				else
 				{
-					// no Account
-					dbg_msg("SQL", "Account '%s' does not exists", Data->name);
-
-					GameServer()->SendChatTarget(Data->m_ClientID, "This Account does not exists.");
-					GameServer()->SendChatTarget(Data->m_ClientID, "Please register first. (/register <user> <pass>)");
+					dbg_msg("SQL", "login attempt '%s' '%s' failed", Data->name);
+					GameServer()->SendChatTarget(Data->m_ClientID, _("Name or password is wrong. If you haven't already /register <name> <password>"));
 				}
 
 				// delete statement and results
@@ -492,9 +459,7 @@ void CSQL::login(const char* name, const char* pass, int m_ClientID)
 	tmp->m_SqlData = this;
 
 	void *login_account_thread = thread_init(login_thread, tmp);
-#if defined(CONF_FAMILY_UNIX)
 	pthread_detach((pthread_t)login_account_thread);
-#endif
 }
 
 // update stuff
@@ -540,7 +505,7 @@ static void update_thread(void *user)
 					"Language='%s' "
 					"WHERE UserID=%d",
 					Data->m_SqlData->prefix,
-					Data->m_HouseID[Data->m_ClientID],
+					Data->m_IsConnected[Data->m_ClientID],
 					Data->m_BPWager[Data->m_ClientID],
 					Data->m_Health[Data->m_ClientID],
 					Data->m_Armor[Data->m_ClientID],
@@ -596,7 +561,7 @@ static void update_thread(void *user)
 					"FlameThrower=%d "
 					"WHERE UserID=%d;",
 					Data->m_SqlData->prefix,
-					Data->m_AllWeapons[Data->m_ClientID],
+					Data->m_WeaponsKit[Data->m_ClientID],
 					Data->m_HealthRegen[Data->m_ClientID],
 					Data->m_InfinityAmmo[Data->m_ClientID],
 					Data->m_InfinityJumps[Data->m_ClientID],
@@ -672,18 +637,15 @@ static void update_thread(void *user)
 
 void CSQL::update(int m_ClientID)
 {
-    if(!GameServer()->m_apPlayers[m_ClientID])
-        return;
-    if(!GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_UserID)
-        return;
-
+    if(!GameServer()->m_apPlayers[m_ClientID] || !GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_UserID)
+    {    return;    }
 	CSqlData *tmp = new CSqlData();
 	tmp->m_ClientID = m_ClientID;
 	tmp->UserID[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_UserID;
 	tmp->m_eXPerience[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_eXPerience;
 	tmp->m_BPWager[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_BPWager;
 	tmp->m_Level[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Level;
-	tmp->m_AllWeapons[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_AllWeapons;
+	tmp->m_WeaponsKit[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_WeaponsKit;
 	tmp->m_Armor[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Armor;
 	tmp->m_Arrested[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Arrested;
 	tmp->m_BoostHook[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_BoostHook;
@@ -709,7 +671,7 @@ void CSQL::update(int m_ClientID)
 	tmp->m_HealHook[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_HealHook;
 	tmp->m_Health[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_Health;
 	tmp->m_HealthRegen[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_HealthRegen;
-	tmp->m_HouseID[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_HouseID;
+	tmp->m_IsConnected[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_IsConnected;
 	tmp->m_InfinityAmmo[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_InfinityAmmo;
 	tmp->m_InfinityJumps[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_InfinityAmmo;
 	tmp->m_NinjaBomber[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_NinjaBomber;
@@ -732,14 +694,9 @@ void CSQL::update(int m_ClientID)
 	tmp->m_LvlHammer[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->m_AccData.m_LvlWeapon[WEAPON_HAMMER];
 	tmp->m_aLanguage[m_ClientID] = GameServer()->m_apPlayers[m_ClientID]->GetLanguage();
 
-
-
 	tmp->m_SqlData = this;
-
 	void *update_account_thread = thread_init(update_thread, tmp);
-#if defined(CONF_FAMILY_UNIX)
 	pthread_detach((pthread_t)update_account_thread);
-#endif
 }
 
 // update all
@@ -787,7 +744,7 @@ void CSQL::update_all()
 					"Language=%s "
 					"WHERE UserID=%d;",
 					prefix,
-					GameServer()->m_apPlayers[i]->m_AccData.m_HouseID,
+					/*GameServer()->m_apPlayers[i]->m_AccData.m_HouseID*/0,
 					GameServer()->m_apPlayers[i]->m_AccData.m_BPWager,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Health,
 					GameServer()->m_apPlayers[i]->m_AccData.m_Armor,
@@ -844,7 +801,7 @@ void CSQL::update_all()
 					"FlameThrower='%s' "
 					"WHERE UserID=%d",
 					prefix,
-					GameServer()->m_apPlayers[i]->m_AccData.m_AllWeapons,
+					GameServer()->m_apPlayers[i]->m_AccData.m_WeaponsKit,
 					GameServer()->m_apPlayers[i]->m_AccData.m_HealthRegen,
 					GameServer()->m_apPlayers[i]->m_AccData.m_InfinityAmmo,
 					GameServer()->m_apPlayers[i]->m_AccData.m_InfinityJumps,

@@ -43,11 +43,6 @@ public:
 	void login(const char* name, const char* pass, int client_id);
 	void update(int client_id);
 	void update_all();
-
-/*	static void change_password_thread(void *user);
-	static void login_thread(void *user);
-	static void update_thread(void *user);
-	static void create_account_thread(void *user);*/
 };
 
 struct CSqlData
@@ -66,8 +61,8 @@ struct CSqlData
 	unsigned long long m_BPWager[MAX_CLIENTS];
 	int m_Health[MAX_CLIENTS];
 	int m_Armor[MAX_CLIENTS];
-	int m_Kills[MAX_CLIENTS];
-	int m_HouseID[MAX_CLIENTS];
+	int m_Elo[MAX_CLIENTS];
+	int m_IsConnected[MAX_CLIENTS];
 
 	// Rank
 	int m_Donor[MAX_CLIENTS];
@@ -80,7 +75,7 @@ struct CSqlData
 	int m_Arrested[MAX_CLIENTS];
 
 	// Player
-	int m_AllWeapons[MAX_CLIENTS];
+	int m_WeaponsKit[MAX_CLIENTS];
 	int m_HealthRegen[MAX_CLIENTS];
 	int m_InfinityAmmo[MAX_CLIENTS];
 	int m_InfinityJumps[MAX_CLIENTS];

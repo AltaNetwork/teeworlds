@@ -38,8 +38,6 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 
 	m_Effects = 0;
 
-	m_WeaponKits = 0;
-
 	m_DeathNotes = 0;
 	m_LastDeathNote = 0;
 
@@ -266,6 +264,7 @@ void CPlayer::FakeSnap(int SnappingClient)
 
 void CPlayer::OnDisconnect(const char *pReason)
 {
+    m_AccData.m_IsConnected = 0;
     GameServer()->Sql()->update(m_ClientID);
 
 	KillCharacter(WEAPON_SELF);
@@ -770,9 +769,9 @@ void CPlayer::SendVoteMenu()
     	AddMsg.m_pDescription = "≡ Iɴᴠᴇɴᴛᴏʀʏ"; // m_Inventory
     	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
-    	str_format(aBuf, sizeof(aBuf), "─ %d Wᴇᴀᴘᴏɴ Kɪᴛs", m_WeaponKits);
+    	str_format(aBuf, sizeof(aBuf), "─ %d Wᴇᴀᴘᴏɴ Kɪᴛs", m_AccData.m_WeaponsKit);
     	AddMsg.m_pDescription = aBuf;
-    	if(m_WeaponKits > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
+    	if(m_AccData.m_WeaponsKit > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
 
     	str_format(aBuf, sizeof(aBuf), "─ %d Dᴇᴀᴛʜɴᴏᴛᴇ Pᴀɢᴇs", m_DeathNotes);
     	AddMsg.m_pDescription = aBuf;

@@ -26,6 +26,8 @@
 #include <engine/shared/protocol.h>
 #include <engine/shared/snapshot.h>
 
+#include <signal.h>
+
 #include "mastersrv.h"
 
 #include "register.h"
@@ -1553,9 +1555,14 @@ void CServer::InitRegister(CNetServer *pNetServer, IEngineMasterServer *pMasterS
 	m_Register.Init(pNetServer, pMasterServer, pConsole);
 }
 
+void CServer::handle_sigint(int signal) {
+    g_pServerInstance->m_RunServer = 0;
+}
+
 int CServer::Run()
 {
-	//
+	g_pServerInstance = this;
+
 	m_PrintCBIndex = Console()->RegisterPrintCallback(g_Config.m_ConsoleOutputLevel, SendRconLineAuthed, this);
 
 	// load map
@@ -1564,6 +1571,8 @@ int CServer::Run()
 		dbg_msg("server", "failed to load map. mapname='%s'", g_Config.m_SvMap);
 		return -1;
 	}
+
+	signal(SIGINT, handle_sigint);
 
 	// start server
 	NETADDR BindAddr;
