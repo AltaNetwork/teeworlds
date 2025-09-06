@@ -13,6 +13,8 @@ CDuel::CDuel(CGameWorld *pGameWorld, int Opponent, int Inviter, int Wager)
     m_OpponentPoints = 0;
     m_Wager = Wager;
 
+    m_Arena = rand()%2+3; // 4 or 3 telespawn
+
     m_RememberPos[Inviter] = vec2(0,0);
 
     m_Started = false;
@@ -66,7 +68,7 @@ void CDuel::PreparePlayer(int p_ID)
     CPlayer *m_pPlayer = GameServer()->m_apPlayers[p_ID];
     if (m_pPlayer)
     {
-        m_pPlayer->m_SpawnTeam = 1;
+        m_pPlayer->m_SpawnTeam = m_Arena;
         m_pPlayer->m_SpawnVTeam = m_VTeamSpawn;
         m_pPlayer->m_DuelFlags = CPlayer::DUEL_INDUEL;
         if(m_pPlayer->GetCharacter())
@@ -141,6 +143,7 @@ void CDuel::EndDuel()
         GameServer()->SendChatTarget(-1, _("The match ended in a draw, wagers have been returned."));
     }
 }
+
 void CDuel::Tick()
 {
     CPlayer *m_pOpponent = GameServer()->m_apPlayers[m_Opponent];
@@ -204,16 +207,16 @@ void CDuel::Tick()
     {
         m_OpponentPoints++;
         Scored = m_Opponent;
-        m_pNonOpponent->m_DuelFlags-=CPlayer::DUEL_DIED;
+        m_pNonOpponent->m_DuelFlags&=~CPlayer::DUEL_DIED;
     }
     if(m_pOpponent->m_DuelFlags&CPlayer::DUEL_DIED)
     {
         m_PlayerPoints++;
         Scored = m_Player;
-        m_pOpponent->m_DuelFlags-=CPlayer::DUEL_DIED;
+        m_pOpponent->m_DuelFlags&=~CPlayer::DUEL_DIED;
     }
-    if((m_pNonOpponent->m_DieTick > Server()->Tick()-2 ||
-       	m_pOpponent->m_DieTick > Server()->Tick()-2) ||
+    if((m_pNonOpponent->m_DieTick != 0 ||
+       	m_pOpponent->m_DieTick != 0) ||
         (Draw))
     {
         m_pNonOpponent->KillCharacter(WEAPON_GAME, FLAG_NOKILLMSG);
@@ -231,14 +234,19 @@ void CDuel::Tick()
             GameServer()->SendChatTarget(m_Opponent, _("Draw!"));
         }
     }
+}
 
-    if(Server()->Tick()%SERVER_TICK_SPEED == 0)
+void CDuel::Snap(int SnappingClient)
+{
+    if(GameServer()->m_apPlayers[SnappingClient]->m_WTeam == m_VTeamSpawn)
     {
-       	char Buf[256];
-    	str_format(Buf, sizeof(Buf), "%s: %d\n%s: %d                                                  ",
-            Server()->ClientName(m_Player), m_PlayerPoints,
-            Server()->ClientName(m_Opponent), m_OpponentPoints);
-    	GameServer()->SendBroadcast(Buf, m_Opponent);
-    	GameServer()->SendBroadcast(Buf, m_Player);
+        if(Server()->Tick()%SERVER_TICK_SPEED == 0)
+        {
+            char Buf[256];
+            str_format(Buf, sizeof(Buf), "%s: %d\n%s: %d                                                  ",
+                Server()->ClientName(m_Player), m_PlayerPoints,
+                Server()->ClientName(m_Opponent), m_OpponentPoints);
+            GameServer()->SendBroadcast(Buf, SnappingClient);
+        }
     }
 }

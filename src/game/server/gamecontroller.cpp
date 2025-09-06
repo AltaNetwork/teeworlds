@@ -119,6 +119,7 @@ bool IGameController::OnEntity(const char* pName, vec2 Pivot, vec2 P0, vec2 P1, 
 	vec2 Pos = (P0 + P1 + P2 + P3)/4.0f;
 	int Type = -1;
 	int SubType = 0;
+	TeleNum = clamp(TeleNum, 0, 255);
 
 	if(str_comp(pName, "spawn") == 0)
 		m_aaSpawnPoints[0+TeleNum][m_aNumSpawnPoints[0+TeleNum]++] = Pos;
@@ -615,6 +616,8 @@ void IGameController::Snap(int SnappingClient)
 
 	pGameInfoObj->m_GameFlags = m_GameFlags;
 	pGameInfoObj->m_GameStateFlags = 0;
+	if(GameServer()->m_apPlayers[SnappingClient]->m_Effects&CPlayer::EFFECT_TEAMFIGHT)
+		pGameInfoObj->m_GameFlags |= GAMEFLAG_TEAMS;
 	if(m_GameOverTick != -1)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_GAMEOVER;
 	if(m_SuddenDeath)
@@ -634,10 +637,11 @@ void IGameController::Snap(int SnappingClient)
 	if(!pGameInfoEx)
 		return;
 
-	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL |  GAMEINFOFLAG_ALLOW_ZOOM;
-	pGameInfoEx->m_Flags2 =	GAMEINFOFLAG2_HUD_DDRACE;
-	if(~(GameServer()->m_apPlayers[SnappingClient]->m_Settings & CPlayer::SETTINGS_PREDICTVANILLA))
-        pGameInfoEx->m_Flags |= GAMEINFOFLAG_PREDICT_DDRACE | GAMEINFOFLAG_PREDICT_DDRACE_TILES;
+	pGameInfoEx->m_Flags =	GAMEINFOFLAG_ALLOW_HOOK_COLL + GAMEINFOFLAG_ALLOW_ZOOM + GAMEINFOFLAG_PREDICT_DDRACE_TILES + GAMEINFOFLAG_PREDICT_DDRACE;
+	pGameInfoEx->m_Flags2 = GAMEINFOFLAG2_HUD_DDRACE;
+	// if(GameServer()->m_apPlayers[SnappingClient]->m_Effects&CPlayer::EFFECT_SHOWHEALTH)
+	// 	pGameInfoEx->m_Flags2 |= GAMEINFOFLAG2_HUD_HEALTH_ARMOR;
+        
 	pGameInfoEx->m_Version = 8;
 
 	// This object needs to be snapped alongside pGameInfoObj for that object to work properly

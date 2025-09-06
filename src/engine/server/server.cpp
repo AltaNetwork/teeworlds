@@ -271,26 +271,62 @@ void CServer::ConRedirect(IConsole::IResult *pResult, void *pUser)
 
     // Now call RedirectClient on that instance
     // Assuming you want client 0 to be redirected to port 8303
-    pSelf->RedirectClient(0, 8303); // Use pSelf to call the member function
+    pSelf->RedirectClient(0, 8304); // Use pSelf to call the member function
 }
 
 void CServer::RedirectClient(int ClientID, int Port)
 {
-	if(ClientID < 0 || ClientID >= MAX_CLIENTS)
-		return;
+	// if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+	// 	return;
 
-	char aBuf[512];
+	// char aBuf[512];
 
-	Port = 8303;
+	// str_format(aBuf, sizeof(aBuf), "redirecting '%s' to port %d", ClientName(ClientID), Port);
+	// Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "redirect", aBuf);
 
-	str_format(aBuf, sizeof(aBuf), "redirecting '%s' to port %d", ClientName(ClientID), Port);
-	Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "redirect", aBuf);
+	// CMsgPacker Msg(65548);
+	// Msg.AddInt(Port);
 
-	CMsgPacker Msg(65548);
-	Msg.AddInt(Port);
+	// SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
 
-	SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
-	Kick(ClientID, "Failed to redirect."); // TO FIX NIGGA
+	// if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+    // {
+    //     Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "replay", "invalid client ID");
+    //     return;
+    // }
+    
+    // if(!m_aClients[ClientID].m_State)
+    // {
+    //     Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "replay", "client not connected");
+    //     return;
+    // }
+    
+    // char aBuf[512];
+    // str_format(aBuf, sizeof(aBuf), "replaying captured packet to client %d (%s)", 
+    //            ClientID, ClientName(ClientID));
+    // Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "replay", aBuf);
+    
+    // // Your captured data: 20 08 41 69
+    // CMsgPacker Msg(65553); // Use your own message type
+    
+    // // Method A: Send as separate integers
+    // Msg.AddInt(0x20);
+    // Msg.AddInt(0x08);  
+    // Msg.AddInt(0x41);
+    // Msg.AddInt(0x69);
+    
+    // // Method B: Send as combined values (uncomment to use instead)
+    // // Msg.AddInt(0x2008);     // First two bytes combined
+    // // Msg.AddInt(0x4169);     // "Ai" as 16-bit value
+    
+    // // Method C: Send as string if it represents text (uncomment to use instead)
+    // // Msg.AddString("Ai");    // If 0x41 0x69 is meant to be text
+    
+    // SendMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_FLUSH, ClientID);
+    
+    // str_format(aBuf, sizeof(aBuf), "packet replay sent to client %d", ClientID);
+    // Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "replay", aBuf);
+
 }
 
 

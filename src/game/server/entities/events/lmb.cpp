@@ -12,6 +12,7 @@ CLmb::CLmb(CGameWorld *pGameWorld)
     m_TimeLeft = g_Config.m_SvLMBTime * SERVER_TICK_SPEED;
     m_RegTimeLeft = g_Config.m_SvLMBRegTime * SERVER_TICK_SPEED;
     m_IsTeamfight = false;
+    m_Finished = false;
 
     GameWorld()->InsertEntity(this);
 
@@ -21,6 +22,13 @@ CLmb::CLmb(CGameWorld *pGameWorld)
     } else {
         GameServer()->m_LMBState = CGameContext::LMB_REG;
         GameServer()->m_LastLMB = Server()->Tick();
+        for(int i = 0; i < MAX_CLIENTS; i++)
+        {
+        	if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_LMBState == CPlayer::LMB_REG)
+        	{
+                GameServer()->m_apPlayers[i]->m_LMBState = CPlayer::LMB_STANDBY;
+        	}
+        }
     }
 }
 
@@ -55,14 +63,12 @@ bool CLmb::StartLMB()
 	{
 		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_LMBState == CPlayer::LMB_REG)
 		{
-		    GameServer()->m_apPlayers[i]->m_SpawnTeam = 2;
+		    GameServer()->m_apPlayers[i]->m_SpawnTeam = m_IsTeamfight ? 1 : 255;
 		    GameServer()->m_apPlayers[i]->KillCharacter(WEAPON_SELF);
 			GameServer()->m_apPlayers[i]->m_DieTick = 0;
 			GameServer()->m_apPlayers[i]->m_SpawnVTeam = GameServer()->m_pController->VTeamDuel(MAX_CLIENTS+1, MAX_CLIENTS);;
 		    GameServer()->m_apPlayers[i]->m_LMBState = CPlayer::LMB_PLAYING;
-			GameServer()->m_apPlayers[i]->m_Effects+=CPlayer::EFFECT_BLIND;
-            // if(GameServer()->m_apPlayers[i]->GetCharacter())
-            //     GameServer()->m_apPlayers[i]->m_SavePos = m_pPlayer->GetCharacter()->m_Pos;
+			GameServer()->m_apPlayers[i]->m_Effects = CPlayer::EFFECT_BLIND;
 		}
 	}
     return true;
@@ -71,70 +77,62 @@ bool CLmb::StartLMB()
 void CLmb::Tick()
 {
     char aBuf[512];
-    switch(GameServer()->m_LMBState)
+    if(!m_Finished)
     {
-        case CGameContext::LMB_REG:
-            m_RegTimeLeft--;
-            if (Server()->Tick() % SERVER_TICK_SPEED == 0)
-            {
-                char Buf[256];
-                char sBuf[256];
-                int Registers = 0;
-                for(int i = 0; i < MAX_CLIENTS; i++)
-               	{
-              		if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_LMBState == CPlayer::LMB_REG)
-                        Registers++;
-               	}
-                bool Registered = false;
-                for(int i = 0; i < MAX_CLIENTS; i++)
-               	{
-              		if(GameServer()->m_apPlayers[i])
-              		{
-                        Registered = GameServer()->m_apPlayers[i]->m_LMBState == CGameContext::LMB_REG ? true : false;
-
-                        str_format(aBuf, sizeof(aBuf), "                                                       %s", Registered ? "        " : "");
-                        str_format(Buf, sizeof(Buf), "%d", m_RegTimeLeft/SERVER_TICK_SPEED);
-                        str_format(sBuf, sizeof(Buf), "%d", Registers);
-                       	GameServer()->SendBroadcast_VL(_("Tournament is starting in {str:Time}s\n{str:Amnt} subscribed {str:Sug}{str:BL}"), i,
-                        "Time", Buf, "Amnt", sBuf, "BL", aBuf, "Sug", Registered ? "" : "(use /sub to subscribe)");
-              		}
-                }
-            }
-            if(m_RegTimeLeft < 1)
-            {
-                if(StartLMB())
+        switch(GameServer()->m_LMBState)
+        {
+            case CGameContext::LMB_REG:
+                m_RegTimeLeft--;
+                if (Server()->Tick() % SERVER_TICK_SPEED == 0)
                 {
-                    str_format(aBuf, sizeof(aBuf), "                                                     ");
-                   	GameServer()->SendBroadcast_VL(_("Tournament has begun!{str:BL}"), -1, "BL", aBuf);
-                } else
-                {
-                    str_format(aBuf, sizeof(aBuf), "                                                     ");
-                   	GameServer()->SendBroadcast_VL(_("Tournament failed to begin!{str:BL}"), -1, "BL", aBuf);
-                    Reset();
+                    char Buf[256];
+                    int Registers = 0;
+                    for(int i = 0; i < MAX_CLIENTS; i++)
+                    {
+                        if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->m_LMBState == CPlayer::LMB_REG)
+                            Registers++;
+                    }
+                    str_format(aBuf, sizeof(Buf), "%d", m_RegTimeLeft/SERVER_TICK_SPEED);
+                    str_format(Buf, sizeof(Buf), "%d", Registers);
+                    GameServer()->SendBroadcast_VL(_("Tournament is starting in {str:Time}s\n{str:Amnt} subscribed{str:BL}"), -1,
+                    "Time", aBuf, "Amnt", Buf, "BL", "                                                          ");
                 }
-            }
-            break;
-        case CGameContext::LMB_IN:
-            LMBTick();
-            break;
-        case CGameContext::LMB_CANCEL:
-            GameServer()->SendBroadcast_VL(_("Tournament was canceled"), -1);
-            GameWorld()->PurgeEntityType(CGameWorld::ENTTYPE_LMB);
-            break;
-        case CGameContext::LMB_POST:
-            if(!GameServer()->m_apPlayers[m_Winner])
-            {
-                Reset();
-                return;
-            }
-            CCharacter* pWinnerChar = GameServer()->GetPlayerChar(m_Winner);
-
-           	if(!pWinnerChar || !pWinnerChar->IsAlive())
-          		return;
-
-           	m_Pos = vec2(pWinnerChar->m_Pos.x, pWinnerChar->m_Pos.y);
-            break;
+                if(m_RegTimeLeft < 1)
+                {
+                    if(StartLMB())
+                    {
+                        str_format(aBuf, sizeof(aBuf), "                                                     ");
+                        GameServer()->SendBroadcast_VL(_("Tournament has begun!{str:BL}"), -1, "BL", aBuf);
+                    } else
+                    {
+                        str_format(aBuf, sizeof(aBuf), "                                                     ");
+                        GameServer()->SendBroadcast_VL(_("Tournament failed to begin!{str:BL}"), -1, "BL", aBuf);
+                        Reset();
+                    }
+                }
+                break;
+            case CGameContext::LMB_IN:
+                LMBTick();
+                break;
+            case CGameContext::LMB_CANCEL:
+                GameServer()->SendBroadcast_VL(_("Tournament was canceled"), -1);
+                GameWorld()->PurgeEntityType(CGameWorld::ENTTYPE_LMB);
+                break;
+        }
+        return;
     }
+    if(!GameServer()->m_apPlayers[m_Winner] || GameServer()->m_apPlayers[m_Winner]->m_LMBState != CPlayer::LMB_STANDBY)
+    {
+        Reset();
+        return;
+    }
+    CCharacter* pWinnerChar = GameServer()->GetPlayerChar(m_Winner);
+
+    if(!pWinnerChar || !pWinnerChar->IsAlive())
+        return;
+
+    m_WTeam = pWinnerChar->GetVTeam();
+    m_Pos = vec2(pWinnerChar->m_Pos.x, pWinnerChar->m_Pos.y);
 }
 
 void CLmb::LMBTick()
@@ -179,10 +177,10 @@ void CLmb::LMBTick()
             Reset();
             return;
         }
-        GameServer()->m_LMBState = CGameContext::LMB_POST;
+        GameServer()->m_LMBState = CGameContext::LMB_NAN;
         GameServer()->SendBroadcast_VL(_("{str:Player} has won the Tournament"), -1, "Player", Server()->ClientName(m_Winner));
-        GameServer()->m_apPlayers[m_Winner]->m_LMBState = CPlayer::LMB_WON;
         GameServer()->m_apPlayers[m_Winner]->KillCharacter(WEAPON_SELF, FLAG_NOKILLMSG);
+        m_Finished = true;
         return;
     }
     if(m_TimeLeft < 1 || Opponents < 1)

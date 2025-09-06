@@ -12,6 +12,7 @@ public:
 	int m_TimeLeft;
 	int m_RegTimeLeft;
 	bool m_IsTeamfight;
+	bool m_Finished;
 
 	CLmb(CGameWorld *pGameWorld);
 

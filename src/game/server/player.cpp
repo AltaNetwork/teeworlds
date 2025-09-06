@@ -37,6 +37,7 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_SpawnVTeam = 0;
 
 	m_Effects = 0;
+	m_FFState = 0;
 
 	m_DeathNotes = 0;
 	m_LastDeathNote = 0;
@@ -183,7 +184,12 @@ void CPlayer::PostTick()
 
 	// update view pos for spectators
 	if(m_Team == TEAM_SPECTATORS && m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[m_SpectatorID])
+	{
 		m_ViewPos = GameServer()->m_apPlayers[m_SpectatorID]->m_ViewPos;
+		CCharacter* pChr = GameServer()->m_apPlayers[m_SpectatorID]->GetCharacter();
+		if(pChr)
+			m_ViewPos = pChr->m_Pos;
+	}
 }
 
 void CPlayer::Snap(int SnappingClient)
@@ -223,15 +229,25 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Team =  Effects&EFFECT_BLIND ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
-	if(m_ClientID == SnappingClient && m_Team == TEAM_SPECTATORS)
+	if(m_Team == TEAM_SPECTATORS)
 	{
 		CNetObj_SpectatorInfo *pSpectatorInfo = static_cast<CNetObj_SpectatorInfo *>(Server()->SnapNewItem(NETOBJTYPE_SPECTATORINFO, m_ClientID, sizeof(CNetObj_SpectatorInfo)));
 		if(!pSpectatorInfo)
 			return;
 
-		pSpectatorInfo->m_SpectatorID = m_SpectatorID;
+		pSpectatorInfo->m_SpectatorID = GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID;
 		pSpectatorInfo->m_X = m_ViewPos.x;
 		pSpectatorInfo->m_Y = m_ViewPos.y;
+		if(m_ClientID != SnappingClient)
+		{
+			CCharacter* pChr = GameServer()->m_apPlayers[m_ClientID]->GetCharacter();
+			if(pChr)
+			{
+				vec2 Pos = pChr->m_Pos;
+				pSpectatorInfo->m_X = Pos.x;
+				pSpectatorInfo->m_Y = Pos.y;		
+			}
+		}
 	}
 
 	// WARNING, this is very hardcoded; for ddnet client support
@@ -240,7 +256,7 @@ void CPlayer::Snap(int SnappingClient)
 		return;
 
 	if(m_Team == TEAM_SPECTATORS)
-    	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_PAUSED;
+    	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
 }
 
 void CPlayer::FakeSnap(int SnappingClient)
@@ -762,21 +778,21 @@ void CPlayer::SendVoteMenu()
     	Server()->SendPackMsg(&OptionMsg, MSGFLAG_VITAL, m_ClientID);
 	}
 	char aBuf[128];
-	if(true)
-	{
-    	AddMsg.m_pDescription = " ";
-    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
-    	AddMsg.m_pDescription = "≡ Iɴᴠᴇɴᴛᴏʀʏ"; // m_Inventory
-    	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+	// if(true)
+	// {
+    // 	AddMsg.m_pDescription = " ";
+    // 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
+    // 	AddMsg.m_pDescription = "≡ Iɴᴠᴇɴᴛᴏʀʏ"; // m_Inventory
+    // 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);
 
-    	str_format(aBuf, sizeof(aBuf), "─ %d Wᴇᴀᴘᴏɴ Kɪᴛs", m_AccData.m_WeaponsKit);
-    	AddMsg.m_pDescription = aBuf;
-    	if(m_AccData.m_WeaponsKit > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
+    // 	str_format(aBuf, sizeof(aBuf), "─ %d Wᴇᴀᴘᴏɴ Kɪᴛs", m_AccData.m_WeaponsKit);
+    // 	AddMsg.m_pDescription = aBuf;
+    // 	if(m_AccData.m_WeaponsKit > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
 
-    	str_format(aBuf, sizeof(aBuf), "─ %d Dᴇᴀᴛʜɴᴏᴛᴇ Pᴀɢᴇs", m_DeathNotes);
-    	AddMsg.m_pDescription = aBuf;
-    	if(m_DeathNotes > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
-	}
+    // 	str_format(aBuf, sizeof(aBuf), "─ %d Dᴇᴀᴛʜɴᴏᴛᴇ Pᴀɢᴇs", m_DeathNotes);
+    // 	AddMsg.m_pDescription = aBuf;
+    // 	if(m_DeathNotes > 0) { Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID); }
+	// }
 
 	AddMsg.m_pDescription = " ";
 	Server()->SendPackMsg(&AddMsg, MSGFLAG_VITAL, m_ClientID);

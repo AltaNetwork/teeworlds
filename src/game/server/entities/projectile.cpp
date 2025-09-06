@@ -88,7 +88,7 @@ void CProjectile::Tick()
 	if((TargetChr && TargetChr->GetVTeam() == m_VTeam) || Collide || m_LifeSpan < 0 || GameLayerClipped(CurPos))
 	{
 		if(m_LifeSpan >= 0 || m_Weapon == WEAPON_GRENADE)
-			GameServer()->CreateSound(CurPos, m_SoundImpact);
+			GameServer()->CreateSound(CurPos, m_SoundImpact, m_WTeam);
 
 		if(m_Explosive)
 			GameServer()->CreateExplosion(CurPos, m_Owner, m_Weapon, false, m_VTeam);

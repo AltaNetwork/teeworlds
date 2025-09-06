@@ -10,7 +10,8 @@ class CDuel : public CEntity
 public:
     int m_Player;
     int m_Opponent;
-    int m_Wager;
+    long long m_Wager;
+    int m_Arena;
 
     vec2 m_RememberPos[MAX_CLIENTS];
 
@@ -34,7 +35,7 @@ public:
 
 	virtual void Reset();
 	virtual void Tick();
-	// virtual void Snap(int SnappingClient);
+	virtual void Snap(int SnappingClient);
 };
 
 #endif

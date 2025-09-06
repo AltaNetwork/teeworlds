@@ -217,9 +217,9 @@ void CCharacterCore::Tick(bool UseInput, const CTuningParams* pTuningParams)
 		bool GoingToHitGround = false;
 		bool GoingToRetract = false;
 		int Hit = m_pCollision->IntersectLine(m_HookPos, NewPos, &NewPos, 0, true);
-		if(Hit&CCollision::COLFLAG_SOLID)
+		if(Hit < 4 && Hit != 2 && Hit != 0)
 		{
-            if(Hit&CCollision::COLFLAG_NOHOOK)
+            if(Hit == 3)
                 GoingToRetract = true;
             else
 				GoingToHitGround = true;

@@ -234,27 +234,26 @@ void CCollision::Init(class CLayers *pLayers)
 
 		switch(Index)
 		{
-		case TILE_DEATH:
-			m_pTiles[i].m_Index = COLFLAG_DEATH;
-			break;
-		case TILE_SOLID:
-			m_pTiles[i].m_Index = COLFLAG_SOLID;
-			if(m_pFront && (m_pFront[i].m_Index == TILE_THROUGH || m_pFront[i].m_Index == 66))
-			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
-			break;
+		// case TILE_DEATH:
+		// 	m_pTiles[i].m_Index = COLFLAG_DEATH;
+		// 	break;
+		// case TILE_SOLID:
+		// 	m_pTiles[i].m_Index = COLFLAG_SOLID;
+		// 	if(m_pFront && (m_pFront[i].m_Index == TILE_THROUGH || m_pFront[i].m_Index == 66))
+		// 	    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
+		// 	break;
 		case TILE_NOHOOK:
-			m_pTiles[i].m_Index = COLFLAG_SOLID|COLFLAG_NOHOOK;
 			if(m_pFront && (m_pFront[i].m_Index == TILE_THROUGH || m_pFront[i].m_Index == 66))
-			    m_pTiles[i].m_Index |= COLFLAG_THROUGH;
+			    m_pTiles[i].m_Index = 4;
 			break;
-		case TILE_FREEZE:
-			m_pTiles[i].m_Index = COLFLAG_FREEZE;
-			break;
-		case TILE_UNFREEZE:
-			m_pTiles[i].m_Index = COLFLAG_UNFREEZE;
-			break;
-		default:
-			m_pTiles[i].m_Index = 0;
+		// case TILE_FREEZE:
+		// 	m_pTiles[i].m_Index = COLFLAG_FREEZE;
+		// 	break;
+		// case TILE_UNFREEZE:
+		// 	m_pTiles[i].m_Index = COLFLAG_UNFREEZE;
+		// 	break;
+		// default:
+		// 	m_pTiles[i].m_Index = 0;
 		}
 	}
 }
@@ -267,10 +266,24 @@ int CCollision::GetTile(int x, int y)
 	return m_pTiles[Ny*m_Width+Nx].m_Index > 128 ? 0 : m_pTiles[Ny*m_Width+Nx].m_Index;
 }
 
-bool CCollision::IsTileSolid(int x, int y)
+int CCollision::GetTileF(int x, int y)
 {
-	return GetTile(x, y)&COLFLAG_SOLID;
+	if(!m_pFront)
+		return 0;
+
+	int Nx = clamp(x/32, 0, m_Width-1);
+	int Ny = clamp(y/32, 0, m_Height-1);
+
+	return m_pFront[Ny*m_Width+Nx].m_Index > 128 ? 0 : m_pFront[Ny*m_Width+Nx].m_Index;
 }
+
+bool CCollision::IsTileSolid(int x, int y)
+{	
+	int Tile = GetTile(x, y);
+	return Tile == TILE_SOLID || Tile == TILE_NOHOOK || Tile == 4;
+}
+
+
 
 int CCollision::IsSpeedup(int Index) const
 {
@@ -313,7 +326,7 @@ int CCollision::IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *p
 		if(CheckPoint(ix, iy))
 		{
 		    hit = GetCollisionAt(ix, iy);
-			if(TroughCheck && hit&COLFLAG_THROUGH)
+			if(TroughCheck && hit == 4)
 				hit = 0;
 		}
 		if(hit)

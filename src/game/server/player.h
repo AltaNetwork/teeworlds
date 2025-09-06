@@ -79,7 +79,8 @@ public:
 		DUEL_INVITED = 32,
 
 		EFFECT_BLIND = 1,
-		EFFECT_FORCENATURALPREDICTION = 2,
+		EFFECT_TEAMFIGHT = 2,
+		EFFECT_SHOWHEALTH = 4,
 
 		INVENTORY_VIP = 1,
 	};
@@ -104,6 +105,7 @@ public:
 	int m_DuelFlags;
 
 	int m_Effects;
+	int m_FFState;
 
 	int m_SpawnVTeam;
 	//

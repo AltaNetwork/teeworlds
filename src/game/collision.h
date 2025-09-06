@@ -30,6 +30,7 @@ class CCollision
 	bool IsTileSolid(int x, int y);
 	// bool IsThrough(int x, int y, int OffsetX, int OffsetY, vec2 Pos0, vec2 Pos1) const;
 	int GetTile(int x, int y);
+	int GetTileF(int x, int y);
 	int GetPureMapIndex(float x, float y) const;
 	int GetPureMapIndex(vec2 Pos) const { return GetPureMapIndex(Pos.x, Pos.y); }
 
@@ -50,6 +51,7 @@ public:
 	bool CheckPoint(float x, float y) { return IsTileSolid(round_to_int(x), round_to_int(y)); }
 	bool CheckPoint(vec2 Pos) { return CheckPoint(Pos.x, Pos.y); }
 	int GetCollisionAt(float x, float y) { return GetTile(round_to_int(x), round_to_int(y)); }
+	int GetCollisionAtFront(float x, float y) { return GetTileF(round_to_int(x), round_to_int(y)); }
 	int GetWidth() { return m_Width; };
 	int GetHeight() { return m_Height; };
 	int IntersectLine(vec2 Pos0, vec2 Pos1, vec2 *pOutCollision, vec2 *pOutBeforeCollision, bool TroughCheck = false);
