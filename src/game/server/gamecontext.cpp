@@ -12,6 +12,7 @@
 #include "entities/events/lmb.h"
 #include "entities/events/duel.h"
 #include "gamemodes/mod.h"
+#include "gamemodes/bomb.h"
 #include "gameworld.h"
 #include "player.h"
 
@@ -863,10 +864,10 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			int Timeleft = pPlayer->m_LastVoteCall + Server()->TickSpeed()*60 - Now;
 			if(pPlayer->m_LastVoteCall && Timeleft > 0)
 			{
-				char aChatmsg[512] = {0};
+				char aChatmsg[512];
 				int Seconds = (Timeleft/Server()->TickSpeed())+1;
-				str_format(aChatmsg, sizeof(aChatmsg), _("You must wait %d seconds before making another vote"), Seconds);
-				SendChatTarget(ClientID, _("You must wait {int}:Time} seconds before making another vote"), "Time", &Seconds, NULL);
+				str_format(aChatmsg, sizeof(aChatmsg), _("%d"), Seconds);
+				SendChatTarget(ClientID, _("You must wait {int}:Time} seconds before making another vote"), "Time", aChatmsg, NULL);
 				return;
 			}
 
@@ -1759,38 +1760,28 @@ void CGameContext::ConAcceptDuel(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConAbout(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext* pThis = (CGameContext*) pUserData;
-
-	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "%s %s by %s", MOD_NAME, MOD_VERSION, MOD_AUTHORS);
-	pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
-
-	if(MOD_CREDITS[0])
-	{
-		str_format(aBuf, sizeof(aBuf), "Credits: %s", MOD_CREDITS);
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
-	}
-	if(MOD_THANKS[0])
-	{
-		str_format(aBuf, sizeof(aBuf), "Thanks to: %s", MOD_THANKS);
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
-	}
+	int ClientID = pResult->GetClientID();
+	pThis->SendChatTarget(ClientID, _("{str:A} {str:B} by {str:C}"), "A", MOD_NAME, "B", MOD_VERSION, "C", MOD_AUTHORS);
 	if(MOD_BUILDDATE[0])
-	{
-    	str_format(aBuf, sizeof(aBuf), "Server's build date: %s", MOD_BUILDDATE);
-    	pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
-	}
+		pThis->SendChatTarget(ClientID, _("Server's version {str:A}"), "A", MOD_BUILDDATE);	
+	if(MOD_CREDITS[0])
+		pThis->SendChatTarget(ClientID, _("Credits to: {str:A}"), "A", MOD_CREDITS);
+	if(MOD_THANKS[0])
+		pThis->SendChatTarget(ClientID, _("Thanks to: {str:A}"), "A", MOD_THANKS);
 	if(MOD_SOURCES[0])
-	{
-		str_format(aBuf, sizeof(aBuf), "Sources: %s", MOD_SOURCES);
-		pThis->Console()->Print(IConsole::OUTPUT_LEVEL_CHAT, "chat", aBuf);
-	}
+		pThis->SendChatTarget(ClientID, _("Sources: {str:A}"), "A", MOD_SOURCES);
 }
 
 void CGameContext::ConSpec(IConsole::IResult *pResult, void *pUserData)
 {
     CGameContext *pSelf = (CGameContext *)pUserData;
     int ClientID = pResult->GetClientID();
-    pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+	if(pSelf->m_apPlayers[ClientID]->m_Effects&CPlayer::EFFECT_NOSPEC)
+	{
+		pSelf->SendChatTarget(ClientID, _("Cannot spectate at the moment"));
+	} else {
+    	pSelf->m_apPlayers[ClientID]->SetTeam(abs(pSelf->m_apPlayers[ClientID]->GetTeam())-1, false, false);
+	}
 }
 
 void CGameContext::ConDeathnote(IConsole::IResult *pResult, void *pUserData)
@@ -2096,9 +2087,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("leave", "", CFGFLAG_CHAT, ConLeave, this, "leave event");
 	Console()->Register("val", "?s", CFGFLAG_CHAT, ConValDebug, this, "set value debug");
 	Console()->Register("team", "?i", CFGFLAG_CHAT, ConVTeam, this, "change team");
-	Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
-	Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
-
 	Console()->Register("weapons", "", CFGFLAG_CHAT, ConWeapons, this, "weapons kit");
 	Console()->Register("deathnote", "s", CFGFLAG_CHAT, ConDeathnote, this, "deathnote");
 	Console()->Register("pages", "", CFGFLAG_CHAT, ConDeathnote, this, "list deathnote pages");
@@ -2127,7 +2115,34 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_ZoneHandle_Death = m_Collision.GetZoneHandle("death");
 	m_ZoneHandle_Zones = m_Collision.GetZoneHandle("zones");
 
-	m_pController = new CGameControllerMOD(this);
+	if(str_comp_nocase(g_Config.m_SvGametype, "bomb") == 0)
+		m_pController = new CGameControllerBOMB(this);
+	// else if(str_comp_nocase(g_Config.m_SvGametype, "ctf") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "ctf+"))		// CTF
+	// 	m_pController = new CGameControllerCTF(this, IGameController::GAMETYPE_VANILLA);
+	// else if(str_comp_nocase(g_Config.m_SvGametype, "tdm") == 0 || !str_comp_nocase(g_Config.m_SvGametype, "tdm+"))		// TDM
+	// 	m_pController = new CGameControllerTDM(this, IGameController::GAMETYPE_VANILLA);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "ictf") || !str_comp_nocase(g_Config.m_SvGametype, "ictf+"))		// iCTF
+	// 	m_pController = new CGameControllerCTF(this, IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "idm") || !str_comp_nocase(g_Config.m_SvGametype, "idm+"))			// iDM
+	// 	m_pController = new CGameControllerDM(this, IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "itdm") || !str_comp_nocase(g_Config.m_SvGametype, "itdm+"))		// iTDM
+	// 	m_pController = new CGameControllerTDM(this, IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "gctf") || !str_comp_nocase(g_Config.m_SvGametype, "gctf+"))		// gCTF
+	// 	m_pController = new CGameControllerGCTF(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "gdm") || !str_comp_nocase(g_Config.m_SvGametype, "gdm+"))			// gDM
+	// 	m_pController = new CGameControllerGDM(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "gtdm") || !str_comp_nocase(g_Config.m_SvGametype, "gtdm+"))		// gTDM
+	// 	m_pController = new CGameControllerGTDM(this, IGameController::GAMETYPE_GCTF|IGameController::GAMETYPE_INSTAGIB);
+	// else if(!str_comp_nocase(g_Config.m_SvGametype, "ifreeze") || !str_comp_nocase(g_Config.m_SvGametype, "ifreeze+"))	// iFreeze
+	// 	m_pController = new CGameControllerIFreeze(this, IGameController::GAMETYPE_IFREEZE|IGameController::GAMETYPE_INSTAGIB);
+	else
+		m_pController = new CGameControllerMOD(this);
+
+	if(m_pController->IsBlock())
+	{
+		Console()->Register("spec", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
+		Console()->Register("pause", "", CFGFLAG_CHAT, ConSpec, this, "spectate");
+	}
 
 	// create all entities from the game layer
 	CMapItemLayerTilemap *pTileMap = m_Layers.GameLayer();

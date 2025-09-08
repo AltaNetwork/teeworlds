@@ -79,6 +79,12 @@ public:
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
 
+	// __BOMB
+	virtual bool IsBomb() const { return false; }
+	virtual int GetTeam(int ClientID) const;
+	// __BLOCK
+	virtual bool IsBlock() const { return false; }
+
 	virtual void DoWincheck();
 
 	void DoWarmup(int Seconds);

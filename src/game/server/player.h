@@ -41,8 +41,6 @@ public:
 	const char* GetLanguage();
 	void SetLanguage(const char* pLanguage);
 
-	int PlayerEvent(); // Returns
-
 	bool OnVote(int Vote);
 	bool OnCallVote(const char* pVote, const char* pReason);
 	void SendVoteMenu();
@@ -78,9 +76,10 @@ public:
 		DUEL_DIED = 16,
 		DUEL_INVITED = 32,
 
-		EFFECT_BLIND = 1,
+		EFFECT_HIDDEN = 1,
 		EFFECT_TEAMFIGHT = 2,
-		EFFECT_SHOWHEALTH = 4,
+		EFFECT_NORESPAWN = 4,
+		EFFECT_NOSPEC = 8,
 
 		INVENTORY_VIP = 1,
 	};
@@ -100,6 +99,7 @@ public:
 
 	bool m_IsReady;
 	bool m_Mute = false; // muted on entering
+	bool m_Paused;
 
 	int m_LMBState;
 	int m_DuelFlags;

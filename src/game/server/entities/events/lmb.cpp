@@ -68,7 +68,7 @@ bool CLmb::StartLMB()
 			GameServer()->m_apPlayers[i]->m_DieTick = 0;
 			GameServer()->m_apPlayers[i]->m_SpawnVTeam = GameServer()->m_pController->VTeamDuel(MAX_CLIENTS+1, MAX_CLIENTS);;
 		    GameServer()->m_apPlayers[i]->m_LMBState = CPlayer::LMB_PLAYING;
-			GameServer()->m_apPlayers[i]->m_Effects = CPlayer::EFFECT_BLIND;
+			GameServer()->m_apPlayers[i]->m_Effects = CPlayer::EFFECT_HIDDEN;
 		}
 	}
     return true;

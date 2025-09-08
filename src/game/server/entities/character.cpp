@@ -6,6 +6,7 @@
 #include <game/server/gamecontext.h>
 #include <game/mapitems.h>
 #include <unicode/unum.h>
+#include <game/server/gamemodes/bomb.h>
 
 #include "character.h"
 #include "laser.h"
@@ -341,6 +342,28 @@ void CCharacter::FireWeapon()
 				pTarget->TakeDamage(vec2(0.f, -1.f) + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f,
 					m_pPlayer->GetCID(), m_ActiveWeapon);
 				Hits++;
+
+				// __BOMB
+				if(GameServer()->m_pController->IsBomb())
+				{
+					CGameControllerBOMB *pController = (CGameControllerBOMB *)GameServer()->m_pController;
+					if(pController->m_Bomb.m_ClientID == m_pPlayer->GetCID())
+					{
+						pController->MakeBomb(pTarget->m_pPlayer->GetCID());
+						pTarget->m_ReloadTimer = Server()->TickSpeed()/2;
+					}
+					else if(pController->m_Bomb.m_ClientID == pTarget->m_pPlayer->GetCID())
+					{
+						pController->m_Bomb.m_Tick -= SERVER_TICK_SPEED;
+						if(pController->m_Bomb.m_Tick < 1)
+							pController->m_Bomb.m_Tick = 1;
+					}
+					else
+					{
+						if(!pTarget->IsFrozen())
+							pTarget->Freeze();
+					}
+				}
 			}
 
 			// if we Hit anything, we have to wait for the reload
@@ -925,7 +948,7 @@ void CCharacter::HandleZones()
 	// 	m_pPlayer->m_FFState = 0;
 	// 	break;
 	// 	case 2:
-	// 	m_pPlayer->m_Effects = CPlayer::EFFECT_BLIND;
+	// 	m_pPlayer->m_Effects = CPlayer::EFFECT_HIDDEN;
 	// 	break;
 	// 	case 3:
 	// 	m_pPlayer->m_Effects = CPlayer::EFFECT_TEAMFIGHT;

@@ -3,8 +3,8 @@
 #include <engine/shared/config.h>
 #include "player.h"
 #include "entities/character.h"
-// #include "tournament.h"
 #include <cstring>
+#include <game/server/gamemodes/bomb.h>
 
 MACRO_ALLOC_POOL_ID_IMPL(CPlayer, MAX_CLIENTS)
 
@@ -46,6 +46,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 
 	m_Hat = -1;
 	m_GunDesign = -1;
+	
+	m_Paused = false;
 
 	SetLanguage(Server()->GetClientLanguage(ClientID));
 
@@ -203,14 +205,15 @@ void CPlayer::Snap(int SnappingClient)
 
 	int Effects = GameServer()->m_apPlayers[SnappingClient]->m_Effects;
 
-    StrToInts(&pClientInfo->m_Name0, 4, Effects&EFFECT_BLIND ? " " : Server()->ClientName(m_ClientID));
+    char aBuf[24];
+    snprintf(aBuf, 12 /* clan's max is 12 characters */, "%s", ProccessClan());
+    StrToInts(&pClientInfo->m_Clan0, 4, aBuf);
+	snprintf(aBuf, 16 /* name's max is 16 characters */, "%s", ProccessName());
+	StrToInts(&pClientInfo->m_Name0, 4, aBuf);
+	snprintf(aBuf, 24 /* name's max is 24 characters */, "%s", ProccessSkin());
+	StrToInts(&pClientInfo->m_Skin0, 6, aBuf);
 
-    char aBufClan[12];
-    snprintf(aBufClan, sizeof(aBufClan), "%s", Effects&EFFECT_BLIND ? " " : ProccessClan());
-    StrToInts(&pClientInfo->m_Clan0, 4, aBufClan);
-
-	StrToInts(&pClientInfo->m_Skin0, 6, Effects&EFFECT_BLIND ? "default" : m_Cosmetics&COSM_RANDOMSKIN ? aSkins[Server()->Tick()/50%15] : m_TeeInfos.m_SkinName);//ProccessSkin());
-	if(~Effects&EFFECT_BLIND)
+	if(~Effects&EFFECT_HIDDEN)
 	{
 	    int Colour = 0xff32 + GameServer()->m_pController->m_RainbowColor * 0x010000;
     	pClientInfo->m_UseCustomColor = m_Cosmetics&COSM_RAINBOW || m_Cosmetics&COSM_RAINBOWFEET ? true : m_TeeInfos.m_UseCustomColor; // has to be on if any cosmetics is on
@@ -218,6 +221,13 @@ void CPlayer::Snap(int SnappingClient)
     	pClientInfo->m_ColorFeet = m_Cosmetics&COSM_RAINBOWFEET ? Colour : m_TeeInfos.m_ColorFeet;
         pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
     }
+	// __BOMB
+	if(GameServer()->m_pController->IsBomb())
+	{
+		CGameControllerBOMB *pController = (CGameControllerBOMB *)GameServer()->m_pController;
+		if(pController->m_Bomb.m_ClientID == m_ClientID)
+			pClientInfo->m_UseCustomColor = 0;
+	}
 
 	CNetObj_PlayerInfo *pPlayerInfo = static_cast<CNetObj_PlayerInfo *>(Server()->SnapNewItem(NETOBJTYPE_PLAYERINFO, m_ClientID, sizeof(CNetObj_PlayerInfo)));
 	if(!pPlayerInfo)
@@ -226,7 +236,7 @@ void CPlayer::Snap(int SnappingClient)
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_ClientID = m_ClientID;
 	pPlayerInfo->m_Score = m_AccData.m_BPWager;//m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
-	pPlayerInfo->m_Team =  Effects&EFFECT_BLIND ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
+	pPlayerInfo->m_Team =  GameServer()->m_pController->GetTeam(m_ClientID);//Effects&EFFECT_HIDDEN ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
 	if(m_Team == TEAM_SPECTATORS)
@@ -255,7 +265,7 @@ void CPlayer::Snap(int SnappingClient)
 	if(!pDDNetPlayer)
 		return;
 
-	if(m_Team == TEAM_SPECTATORS)
+	if(m_Team == TEAM_SPECTATORS && GetCharacter())
     	pDDNetPlayer->m_Flags |= EXPLAYERFLAG_SPEC;
 }
 
@@ -358,6 +368,8 @@ CCharacter *CPlayer::GetCharacter()
 
 void CPlayer::KillCharacter(int Weapon, int Flags)
 {
+	if(m_Effects&EFFECT_NORESPAWN)
+		SetTeam(TEAM_SPECTATORS);
 	if(m_pCharacter)
 	{
 		m_pCharacter->Die(m_ClientID, Weapon, Flags);
@@ -423,6 +435,9 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
+	if(m_Team == TEAM_SPECTATORS)
+		return;
+
 	if(!GameServer()->m_pController->CanSpawn(m_SpawnTeam, &SpawnPos))
 		return;
 
@@ -446,55 +461,38 @@ void CPlayer::SetLanguage(const char* pLanguage)
 	str_copy(m_aLanguage, pLanguage, sizeof(m_aLanguage));
 }
 
-int CPlayer::PlayerEvent()
-{
-    return EVENT_NONE;
-}
-
-    // if(GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter() && m_pCharacter)
-    // {
-    //     CCharacter *DuelPlayer = GameServer()->m_apPlayers[m_DuelPlayer]->GetCharacter();
-    //     if(m_pCharacter->m_DeepFrozen && m_pCharacter->IsGrounded()
-    //        && DuelPlayer->m_DeepFrozen && DuelPlayer->IsGrounded())
-    //     {
-    //         KillCharacter(WEAPON_GAME);
-    //         GameServer()->m_apPlayers[m_DuelPlayer]->KillCharacter(WEAPON_GAME);
-    //         GameServer()->SendChatTarget(m_DuelPlayer, _("Draw!"));
-    //         GameServer()->SendChatTarget(GetCID(), _("Draw!"));
-    //     }
-    // }
-
 const char* CPlayer::ProccessName() const
 {
-    static char s_aBuf[24]; // Static to avoid returning pointer to local, but not thread-safe if called concurrently for different players
+    static char s_aBuf[16]; // Static to avoid returning pointer to local, but not thread-safe if called concurrently for different players
 
     str_format(s_aBuf, sizeof(s_aBuf), "");
+	str_format(s_aBuf, sizeof(s_aBuf), Server()->ClientName(m_ClientID));
 
     return s_aBuf;
 }
 
 const char* CPlayer::ProccessClan() const
 {
-    static char s_aBuf[24]; // Static to avoid returning pointer to local
+    static char s_aBuf[12]; // Static to avoid returning pointer to local
 
-    if (m_PlayerFlags & PLAYERFLAG_CHATTING) {
-        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 3) + m_ClientID) % 4) {
-            case 3: str_format(s_aBuf, sizeof(s_aBuf), "...✍"); break;
-            case 2: str_format(s_aBuf, sizeof(s_aBuf), "..✍"); break;
-            case 1: str_format(s_aBuf, sizeof(s_aBuf), ".✍"); break;
-            case 0: str_format(s_aBuf, sizeof(s_aBuf), "✍"); break;
-            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
-        }
-    } else if (m_PlayerFlags & PLAYERFLAG_IN_MENU) {
-        switch ((Server()->Tick() / (SERVER_TICK_SPEED / 2) + m_ClientID) % 4) {
-            case 3: str_format(s_aBuf, sizeof(s_aBuf), "zzz"); break;
-            case 2: str_format(s_aBuf, sizeof(s_aBuf), "zz"); break;
-            case 1: str_format(s_aBuf, sizeof(s_aBuf), "z"); break;
-            default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
-        }
-    } else {
-        str_format(s_aBuf, sizeof(s_aBuf), Server()->ClientClan(m_ClientID)); // No animation
-    }
+    // if (m_PlayerFlags & PLAYERFLAG_CHATTING) {
+    //     switch ((Server()->Tick() / (SERVER_TICK_SPEED / 3) + m_ClientID) % 4) {
+    //         case 3: str_format(s_aBuf, sizeof(s_aBuf), "...✍"); break;
+    //         case 2: str_format(s_aBuf, sizeof(s_aBuf), "..✍"); break;
+    //         case 1: str_format(s_aBuf, sizeof(s_aBuf), ".✍"); break;
+    //         case 0: str_format(s_aBuf, sizeof(s_aBuf), "✍"); break;
+    //         default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
+    //     }
+    // } else if (m_PlayerFlags & PLAYERFLAG_IN_MENU) {
+    //     switch ((Server()->Tick() / (SERVER_TICK_SPEED / 2) + m_ClientID) % 4) {
+    //         case 3: str_format(s_aBuf, sizeof(s_aBuf), "zzz"); break;
+    //         case 2: str_format(s_aBuf, sizeof(s_aBuf), "zz"); break;
+    //         case 1: str_format(s_aBuf, sizeof(s_aBuf), "z"); break;
+    //         default: str_format(s_aBuf, sizeof(s_aBuf), ""); break; // Should not happen
+    //     }
+    // } else {
+    str_format(s_aBuf, sizeof(s_aBuf), Server()->ClientClan(m_ClientID)); // No animation
+    // }
     return s_aBuf;
 }
 
@@ -502,27 +500,22 @@ const char* CPlayer::ProccessSkin() const
 {
     static char s_aBuf[24]; // Static to avoid returning pointer to local
     str_format(s_aBuf, sizeof(s_aBuf), "default");
-    str_format(s_aBuf, sizeof(s_aBuf), m_TeeInfos.m_SkinName);
-    // if(m_Cosmetics&COSM_RANDOMSKINSANTA)
-    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsSanta[Server()->Tick()/50%15]);
-    //
-    //
-    // if(m_Cosmetics&COSM_RANDOMSKIN)
-    //     str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
-        //
-        //
-        //
-    // if(m_Cosmetics&COSM_RANDOMSKINCOALA)
-    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsCoala[Server()->Tick()/50%15]);
-    // if(m_Cosmetics&COSM_RANDOMSKINKITTY)
-    //     str_format(s_aBuf, sizeof(s_aBuf), aSkinsKitty[Server()->Tick()/50%15]);
-
+	if(~m_Effects&EFFECT_HIDDEN)
+		str_format(s_aBuf, sizeof(s_aBuf), m_TeeInfos.m_SkinName);
+	if(m_Cosmetics&COSM_RANDOMSKIN)
+		str_format(s_aBuf, sizeof(s_aBuf), aSkins[Server()->Tick()/50%15]);
 	// float fval = 256-abs(cos(Server()->Tick()/50.0f)) * 256.0f;
 	// int m_PulseColor = static_cast<int>(fval);
-
 	// BaseColor = 96000;
 	// if(m_Cosmetics&COSM_PULSEREDFEET)
- //        pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
+    //     pClientInfo->m_ColorFeet = BaseColor + m_PulseColor;
+	// __BOMB
+	if(GameServer()->m_pController->IsBomb())
+	{
+		CGameControllerBOMB *pController = (CGameControllerBOMB *)GameServer()->m_pController;
+		if(pController->m_Bomb.m_ClientID == m_ClientID)
+			str_format(s_aBuf, sizeof(s_aBuf), "bomb");
+	}
     return s_aBuf;
 }
 

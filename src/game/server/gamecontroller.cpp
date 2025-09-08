@@ -102,14 +102,7 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type)
 bool IGameController::CanSpawn(int Team, vec2 *pOutPos)
 {
 	CSpawnEval Eval;
-
-	// spectators can't spawn
-	if(Team == TEAM_SPECTATORS)
-		return false;
-
 	EvaluateSpawnType(&Eval, Team);
-	// EvaluateSpawnType(&Eval, 0);
-
 	*pOutPos = Eval.m_Pos;
 	return Eval.m_Got;
 }
@@ -198,7 +191,7 @@ void IGameController::EndRound()
 		return;
 
 	GameServer()->m_World.m_Paused = true;
-	m_GameOverTick = Server()->Tick();
+	m_GameOverTick = Server()->Tick()-SERVER_TICK_SPEED*8;
 	m_SuddenDeath = 0;
 }
 
@@ -369,8 +362,8 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
         m_pVictim->m_SpawnTeam = 0;
         if(m_pVictim->m_LMBState == CPlayer::LMB_PLAYING)
             GameServer()->SendChatTarget(m_pVictim->GetCID(), _("You are eliminated"));
-        if(m_pVictim->m_Effects&CPlayer::EFFECT_BLIND)
-            m_pVictim->m_Effects-=CPlayer::EFFECT_BLIND;
+        if(m_pVictim->m_Effects&CPlayer::EFFECT_HIDDEN)
+            m_pVictim->m_Effects-=CPlayer::EFFECT_HIDDEN;
     }
 
     if(Weapon == WEAPON_GAME)
@@ -480,8 +473,6 @@ void IGameController::Tick()
 			StartRound();
 	}
 
-	m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
-
 	if(m_GameOverTick != -1)
 	{
 		// game over.. wait for restart
@@ -491,8 +482,7 @@ void IGameController::Tick()
 			StartRound();
 			m_RoundCount++;
 		}
-	}
-	else if(GameServer()->m_World.m_Paused && m_UnpauseTimer)
+	} else if(GameServer()->m_World.m_Paused && m_UnpauseTimer)
 	{
 		--m_UnpauseTimer;
 		if(!m_UnpauseTimer)
@@ -599,13 +589,20 @@ void IGameController::Tick()
 		}
 	}
 
-	//DoWincheck();
+	DoWincheck();
+
+	m_RainbowColor = g_Config.m_SvRainbowSpeed*Server()->Tick()%256 % 256;
 }
 
 
 bool IGameController::IsTeamplay() const
 {
 	return m_GameFlags&GAMEFLAG_TEAMS;
+}
+
+int IGameController::GetTeam(int ClientID) const
+{
+	return GameServer()->m_apPlayers[ClientID]->GetTeam();
 }
 
 void IGameController::Snap(int SnappingClient)
@@ -762,51 +759,50 @@ bool IGameController::CanChangeTeam(CPlayer *pPlayer, int JoinTeam)
 
 void IGameController::DoWincheck()
 {
+	if(m_GameOverTick == -1 && !m_Warmup && !GameServer()->m_World.m_ResetRequested)
+	{
+		if(IsTeamplay())
+		{
+			// check score win condition
+			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			{
+				if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
+					EndRound();
+				else
+					m_SuddenDeath = 1;
+			}
+		}
+		else
+		{
+			// gather some stats
+			int Topscore = 0;
+			int TopscoreCount = 0;
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i])
+				{
+					if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
+					{
+						Topscore = GameServer()->m_apPlayers[i]->m_Score;
+						TopscoreCount = 1;
+					}
+					else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
+						TopscoreCount++;
+				}
+			}
 
-	// if(m_GameOverTick == -1 && !m_Warmup && !GameServer()->m_World.m_ResetRequested)
-	// {
-	// 	if(IsTeamplay())
-	// 	{
-	// 		// check score win condition
-	// 		if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
-	// 			(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
-	// 		{
-	// 			if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
-	// 				EndRound();
-	// 			else
-	// 				m_SuddenDeath = 1;
-	// 		}
-	// 	}
-	// 	else
-	// 	{
-	// 		// gather some stats
-	// 		int Topscore = 0;
-	// 		int TopscoreCount = 0;
-	// 		for(int i = 0; i < MAX_CLIENTS; i++)
-	// 		{
-	// 			if(GameServer()->m_apPlayers[i])
-	// 			{
-	// 				if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
-	// 				{
-	// 					Topscore = GameServer()->m_apPlayers[i]->m_Score;
-	// 					TopscoreCount = 1;
-	// 				}
-	// 				else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
-	// 					TopscoreCount++;
-	// 			}
-	// 		}
-
-	// 		// check score win condition
-	// 		if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
-	// 			(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
-	// 		{
-	// 			if(TopscoreCount == 1)
-	// 				EndRound();
-	// 			else
-	// 				m_SuddenDeath = 1;
-	// 		}
-	// 	}
-	// }
+			// check score win condition
+			if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
+				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			{
+				if(TopscoreCount == 1)
+					EndRound();
+				else
+					m_SuddenDeath = 1;
+			}
+		}
+	}
 }
 
 int IGameController::ClampTeam(int Team)

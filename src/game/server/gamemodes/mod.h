@@ -8,5 +8,6 @@ class CGameControllerMOD : public IGameController
 {
 public:
 	CGameControllerMOD(class CGameContext *pGameServer);
+	virtual bool IsBlock() const { return true; }
 };
 #endif
