@@ -21,7 +21,7 @@ public:
 
 	void TryRespawn();
 	void Respawn();
-	void SetTeam(int Team, bool DoChatMsg = true, bool KillChr = true);
+	void SetTeam(int Team, bool DoChatMsg = true, bool KillChr = false);
 	int GetTeam() const { return m_Team; };
 	int GetCID() const { return m_ClientID; };
 
@@ -78,7 +78,6 @@ public:
 
 		EFFECT_HIDDEN = 1,
 		EFFECT_TEAMFIGHT = 2,
-		EFFECT_NORESPAWN = 4,
 		EFFECT_NOSPEC = 8,
 
 		INVENTORY_VIP = 1,

@@ -7,3 +7,5 @@ CGameControllerMOD::CGameControllerMOD(class CGameContext *pGameServer)
 {
 	m_pGameType = "Block        BW"; // 16 characters max
 }
+
+// m_AccData.m_BPWager;

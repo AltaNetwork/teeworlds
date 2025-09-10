@@ -107,7 +107,7 @@ void CPlayer::Tick()
  //    	m_Score = m_AccData.m_BPWager;
 	// else
 	//     m_AccData.m_BPWager = m_Score;
-	m_Score = m_AccData.m_Level;
+	// m_Score = m_AccData.m_Level;
 
 	// do latency stuff
 	{
@@ -235,7 +235,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	pPlayerInfo->m_Latency = SnappingClient == -1 ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aActLatency[m_ClientID];
 	pPlayerInfo->m_ClientID = m_ClientID;
-	pPlayerInfo->m_Score = m_AccData.m_BPWager;//m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
+	pPlayerInfo->m_Score = m_Score;//m_Score; // BELOW LOGIC IF IS TEAM 0 OR SPECTATING EVERYONE SHOWN; IF BLIND EVERYONE HIDDEN; IF IN EVENT EVERYONE OUTSIDE EVENT IS SPEC
 	pPlayerInfo->m_Team =  GameServer()->m_pController->GetTeam(m_ClientID);//Effects&EFFECT_HIDDEN ? TEAM_BLUE : GameServer()->m_apPlayers[SnappingClient]->m_WTeam < 1 ? TEAM_RED : GameServer()->m_apPlayers[SnappingClient]->m_WTeam == GameServer()->m_apPlayers[m_ClientID]->m_WTeam ? TEAM_RED : TEAM_BLUE;
 	pPlayerInfo->m_Local = m_ClientID == SnappingClient ? 1 : 0;
 
@@ -368,8 +368,6 @@ CCharacter *CPlayer::GetCharacter()
 
 void CPlayer::KillCharacter(int Weapon, int Flags)
 {
-	if(m_Effects&EFFECT_NORESPAWN)
-		SetTeam(TEAM_SPECTATORS);
 	if(m_pCharacter)
 	{
 		m_pCharacter->Die(m_ClientID, Weapon, Flags);
@@ -409,8 +407,8 @@ void CPlayer::SetTeam(int Team, bool DoChatMsg, bool KillChr)
 	// 	}
 	// }
 
-	// if(KillChr)
-	//     KillCharacter();
+	if(KillChr)
+	    KillCharacter();
 
 	m_Team = Team;
 	m_LastActionTick = Server()->Tick();

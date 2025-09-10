@@ -63,7 +63,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_ActiveWeapon = WEAPON_GUN;
+	m_ActiveWeapon = WEAPON_HAMMER;
 	m_LastWeapon = WEAPON_HAMMER;
 	m_QueuedWeapon = -1;
 
@@ -788,7 +788,8 @@ void CCharacter::Die(int Killer, int Weapon, int Flags)
 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_DIE, m_WTeam);
 
 	// this is for auto respawn after 3 secs
-	m_pPlayer->m_DieTick = Server()->Tick();
+	if(m_pPlayer->m_DieTick > 0)
+		m_pPlayer->m_DieTick = Server()->Tick();
 
 	m_Alive = false;
 	GameServer()->m_World.RemoveEntity(this);

@@ -1074,7 +1074,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			}
 			else
 			{
-				SendBroadcast_VL(_("Only {str:ID} active players are allowed"), ClientID, "ID", ClientID);
+				SendBroadcast_VL(_("Only {str:ID} active players are allowed"), ClientID, "ID", "69 nigga?");
 			}
 		}
 		else if (MsgID == NETMSGTYPE_CL_SETSPECTATORMODE && !m_World.m_Paused)

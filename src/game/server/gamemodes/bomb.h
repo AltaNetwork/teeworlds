@@ -25,7 +25,7 @@ public: CGameControllerBOMB(class CGameContext *pGameServer);
 	// virtual bool CanJoinTeam(int Team, int NotThisID);
 	// virtual void OnPlayerInfoChange(class CPlayer *pPlayer);
 	virtual void OnCharacterSpawn(class CCharacter *pChr);
-	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
+	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon, int Flags = 0);
 
 	struct
 	{
@@ -33,20 +33,7 @@ public: CGameControllerBOMB(class CGameContext *pGameServer);
 		int m_Tick;
 	} m_Bomb;
 
-	enum
-	{
-		STATE_SPECTATING=-1,
-		STATE_ACTIVE,
-		STATE_ALIVE,
-	};
-
-	struct
-	{
-		int m_State;
-	} m_aClients[MAX_CLIENTS];
-
 	bool m_Running;
-
 	int m_BombEndTick;
 };
 
