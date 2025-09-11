@@ -3,7 +3,6 @@
 #include <csignal>
 #include <engine/shared/config.h>
 #include <game/mapitems.h>
-#include <game/zones.h>
 
 #include <game/generated/protocol.h>
 

@@ -15,7 +15,7 @@ function CHash(output, ...) -- used in generated files only
     output = Path(output)
 
     -- compile all the files
-    local cmd = Script("scripts/cmd5.py") .. " "
+    local cmd = Script("datasrc/cmd5.py") .. " "
     for index, inname in ipairs(inputs) do
         cmd = cmd .. Path(inname) .. " "
     end
@@ -26,7 +26,7 @@ function CHash(output, ...) -- used in generated files only
     for index, inname in ipairs(inputs) do
         AddDependency(output, inname)
     end
-    AddDependency(output, "scripts/cmd5.py")
+    AddDependency(output, "datasrc/cmd5.py")
     return output
 end
 
