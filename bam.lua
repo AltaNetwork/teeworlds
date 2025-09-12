@@ -110,9 +110,9 @@ json_comp = Compile(settings, Collect("src/engine/external/json/*.c", "src/engin
 
 settings.cc.includes:Add("src/engine/external/md5")
 settings.cc.includes:Add("src/engine/external/json")
-settings.cc.defines:Add("CONF_OPENSSL")
-settings.cc.flags:Add("`pkg-config --cflags openssl`")
-settings.link.flags:Add("`pkg-config --libs openssl`")
+-- settings.cc.defines:Add("CONF_OPENSSL")
+-- settings.cc.flags:Add("`pkg-config --cflags openssl`")
+-- settings.link.flags:Add("`pkg-config --libs openssl`")
 
 external = Compile(settings, Collect("src/engine/external/*.c", "src/engine/external/*.cpp"))
 
@@ -123,5 +123,5 @@ server_exe = Link(server_settings, "teeworlds_srv", engine, server,
 -- make targets
 s = PseudoTarget("server" .. "_" .. settings.config_name, server_exe, serverlaunch, icu_depends)
 
-all = PseudoTarget(settings.config_name, c, s, v, m, t)
-return all
+-- all = PseudoTarget(settings.config_name, s)
+return s
