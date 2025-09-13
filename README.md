@@ -1,5 +1,4 @@
-### ⚠️ *This project migrated to [AltaSport](https://github.com/AltaNetwork)*⚠️
-# LonerStuff
+# ComuniTee
 This is a multi gamemode modification with accounts ( *built in Serbia by veqi* )
 
 # Building the server and installing dependencies

@@ -7,3 +7,4 @@ objs/
 src/game/generated
 teeworlds_srv*
 logs.txt
+data/
